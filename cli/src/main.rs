@@ -13,6 +13,9 @@ enum Commands {
     Serve {
         #[arg(short, long, default_value = "3377")]
         port: u16,
+        /// Path to frontend dist directory (auto-detected if not specified)
+        #[arg(long)]
+        frontend_dir: Option<String>,
     },
     /// Initialize a new program workspace
     Init {
@@ -119,9 +122,13 @@ async fn main() -> anyhow::Result<()> {
     let cli = Cli::parse();
 
     match cli.command {
-        Commands::Serve { port } => {
+        Commands::Serve { port, frontend_dir } => {
             let state = std::sync::Arc::new(server::state::AppState::new());
-            let app = server::create_router(state);
+            let frontend_dist = resolve_frontend_dist(frontend_dir);
+            if let Some(ref dist) = frontend_dist {
+                println!("Serving frontend from: {}", dist.display());
+            }
+            let app = server::create_router_with_frontend(state, frontend_dist);
             let addr = std::net::SocketAddr::from(([127, 0, 0, 1], port));
             println!("LearnKit server running on http://{}", addr);
             let listener = tokio::net::TcpListener::bind(addr).await?;
@@ -188,3 +195,41 @@ mod db;
 mod commands;
 mod scope;
 mod server;
+
+/// Resolve the frontend dist directory.
+///
+/// Priority:
+/// 1. Explicit `--frontend-dir` argument
+/// 2. `LEARNKIT_FRONTEND_DIR` environment variable
+/// 3. Auto-detect: `../web/dist` relative to the binary
+fn resolve_frontend_dist(explicit: Option<String>) -> Option<std::path::PathBuf> {
+    // 1. Explicit argument
+    if let Some(dir) = explicit {
+        let p = std::path::PathBuf::from(dir);
+        if p.is_dir() {
+            return Some(p);
+        }
+        eprintln!("Warning: --frontend-dir '{}' not found, ignoring", p.display());
+        return None;
+    }
+
+    // 2. Environment variable
+    if let Ok(dir) = std::env::var("LEARNKIT_FRONTEND_DIR") {
+        let p = std::path::PathBuf::from(dir);
+        if p.is_dir() {
+            return Some(p);
+        }
+    }
+
+    // 3. Auto-detect relative to binary
+    if let Ok(exe) = std::env::current_exe() {
+        if let Some(bin_dir) = exe.parent() {
+            let candidate = bin_dir.join("../web/dist");
+            if candidate.is_dir() {
+                return Some(candidate);
+            }
+        }
+    }
+
+    None
+}

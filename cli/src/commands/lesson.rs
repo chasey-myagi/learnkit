@@ -27,12 +27,20 @@ pub fn write(program: &str, subject: &str, lesson: &str, content_file: &str) -> 
     // 2. Build title from lesson slug
     let title = lesson.replace('-', " ").replace('_', " ");
 
-    // 3. Try to load _template.html, fallback to simple wrapper
-    let templates_dir = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("templates");
-    let template_path = templates_dir.join("_template.html");
+    // 3. Load template: LEARNKIT_TEMPLATE_DIR override > embedded template
+    const EMBEDDED_TEMPLATE: &str = include_str!("../../templates/_template.html");
 
-    let html = if template_path.exists() {
-        let template = fs::read_to_string(&template_path)?;
+    let html = {
+        let template = if let Ok(dir) = std::env::var("LEARNKIT_TEMPLATE_DIR") {
+            let override_path = std::path::Path::new(&dir).join("_template.html");
+            if override_path.exists() {
+                fs::read_to_string(&override_path)?
+            } else {
+                EMBEDDED_TEMPLATE.to_string()
+            }
+        } else {
+            EMBEDDED_TEMPLATE.to_string()
+        };
         template
             .replace("{{content}}", &content)
             .replace("{{lesson_title}}", &title)
@@ -46,10 +54,6 @@ pub fn write(program: &str, subject: &str, lesson: &str, content_file: &str) -> 
             .replace("{{prev_title}}", "")
             .replace("{{next_title}}", "")
             .replace("{{api_base}}", &format!("/api/programs/{}", program))
-    } else {
-        format!(
-            "<!DOCTYPE html>\n<html lang=\"zh-CN\">\n<head>\n<meta charset=\"UTF-8\">\n<meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">\n<title>{title}</title>\n</head>\n<body>\n{content}\n</body>\n</html>"
-        )
     };
 
     // 4. Create directory and write file
@@ -110,24 +114,23 @@ pub fn list(program: &str, status: Option<&str>) -> Result<()> {
     Ok(())
 }
 
-/// Open a lesson HTML file in the browser
+/// Open a lesson in the browser via the backend HTTP server
 pub fn open(program: &str, subject: &str, lesson: &str) -> Result<()> {
-    let file_path = lesson_file_path(program, subject, lesson);
-
-    if !file_path.exists() {
-        anyhow::bail!("Lesson file not found: {}", file_path.display());
-    }
+    let url = format!(
+        "http://localhost:13135/lessons/{}/lessons/{}/{}.html",
+        program, subject, lesson
+    );
 
     // Use `open` command on macOS
     let status = std::process::Command::new("open")
-        .arg(&file_path)
+        .arg(&url)
         .status()?;
 
     if !status.success() {
         anyhow::bail!("Failed to open lesson in browser");
     }
 
-    println!("Opened: {}", file_path.display());
+    println!("Opened: {}", url);
     Ok(())
 }
 

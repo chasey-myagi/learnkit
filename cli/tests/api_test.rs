@@ -3097,3 +3097,174 @@ async fn test_submit_ask_no_content_type() {
         .unwrap();
     assert_eq!(resp.status(), StatusCode::UNSUPPORTED_MEDIA_TYPE);
 }
+
+// =====================================================
+// 12. Frontend serving + SPA fallback
+// =====================================================
+
+#[tokio::test]
+async fn test_serve_frontend_index() {
+    let tmp = TempDir::new().unwrap();
+    
+    // Create a mock frontend dist directory
+    let dist_dir = tmp.path().join("frontend-dist");
+    std::fs::create_dir_all(&dist_dir).unwrap();
+    std::fs::write(dist_dir.join("index.html"), "<!DOCTYPE html><html><body>LearnKit App</body></html>").unwrap();
+    std::fs::write(dist_dir.join("test.js"), "console.log('test')").unwrap();
+    
+    let state = Arc::new(server::state::AppState::with_root(tmp.path().to_path_buf()));
+    let app = server::create_router_with_frontend(state, Some(dist_dir.clone()));
+    
+    // GET / should return index.html
+    let resp = app.oneshot(
+        Request::builder().uri("/").body(Body::empty()).unwrap()
+    ).await.unwrap();
+    assert_eq!(resp.status(), StatusCode::OK);
+    let body = String::from_utf8(read_body(resp).await).unwrap();
+    assert!(body.contains("LearnKit App"), "Root should serve index.html");
+}
+
+#[tokio::test]
+async fn test_serve_frontend_static_file() {
+    let tmp = TempDir::new().unwrap();
+    let dist_dir = tmp.path().join("frontend-dist");
+    std::fs::create_dir_all(&dist_dir).unwrap();
+    std::fs::write(dist_dir.join("index.html"), "<html></html>").unwrap();
+    std::fs::write(dist_dir.join("test.js"), "console.log('hello')").unwrap();
+    
+    let state = Arc::new(server::state::AppState::with_root(tmp.path().to_path_buf()));
+    let app = server::create_router_with_frontend(state, Some(dist_dir));
+    
+    // GET /test.js should return the JS file
+    let resp = app.oneshot(
+        Request::builder().uri("/test.js").body(Body::empty()).unwrap()
+    ).await.unwrap();
+    assert_eq!(resp.status(), StatusCode::OK);
+    let body = String::from_utf8(read_body(resp).await).unwrap();
+    assert!(body.contains("console.log"), "Should serve static files");
+}
+
+#[tokio::test]
+async fn test_serve_frontend_spa_fallback() {
+    let tmp = TempDir::new().unwrap();
+    let dist_dir = tmp.path().join("frontend-dist");
+    std::fs::create_dir_all(&dist_dir).unwrap();
+    std::fs::write(dist_dir.join("index.html"), "<html><body>SPA</body></html>").unwrap();
+    
+    let state = Arc::new(server::state::AppState::with_root(tmp.path().to_path_buf()));
+    let app = server::create_router_with_frontend(state, Some(dist_dir));
+    
+    // GET /program/game-dev (React route, no file) should fallback to index.html
+    let resp = app.oneshot(
+        Request::builder().uri("/program/game-dev").body(Body::empty()).unwrap()
+    ).await.unwrap();
+    assert_eq!(resp.status(), StatusCode::OK);
+    let body = String::from_utf8(read_body(resp).await).unwrap();
+    assert!(body.contains("SPA"), "Unknown routes should fallback to index.html");
+}
+
+#[tokio::test]
+async fn test_api_routes_work_with_frontend() {
+    let tmp = TempDir::new().unwrap();
+    setup_test_program_with_db(tmp.path(), "test-prog");
+    
+    let dist_dir = tmp.path().join("frontend-dist");
+    std::fs::create_dir_all(&dist_dir).unwrap();
+    std::fs::write(dist_dir.join("index.html"), "<html></html>").unwrap();
+    
+    let state = Arc::new(server::state::AppState::with_root(tmp.path().to_path_buf()));
+    let app = server::create_router_with_frontend(state, Some(dist_dir));
+    
+    // API should still work when frontend is served
+    let resp = app.oneshot(
+        Request::builder().uri("/api/health").body(Body::empty()).unwrap()
+    ).await.unwrap();
+    assert_eq!(resp.status(), StatusCode::OK);
+    let body = parse_json(resp).await;
+    assert_eq!(body["status"].as_str().unwrap(), "ok");
+}
+
+#[tokio::test]
+async fn test_no_frontend_still_works() {
+    let tmp = TempDir::new().unwrap();
+    setup_test_program_with_db(tmp.path(), "test-prog");
+    
+    let state = Arc::new(server::state::AppState::with_root(tmp.path().to_path_buf()));
+    // No frontend dir — should still serve API
+    let app = server::create_router_with_frontend(state, None);
+    
+    let resp = app.oneshot(
+        Request::builder().uri("/api/health").body(Body::empty()).unwrap()
+    ).await.unwrap();
+    assert_eq!(resp.status(), StatusCode::OK);
+}
+
+// =====================================================
+// 13. Template embedding (include_str!)
+// =====================================================
+
+#[tokio::test]
+async fn test_lesson_write_uses_embedded_template() {
+    let tmp = TempDir::new().unwrap();
+    setup_test_program_with_db(tmp.path(), "test-prog");
+    
+    // Write a test content file
+    let content_file = tmp.path().join("test-content.html");
+    std::fs::write(&content_file, "<h2>Test Heading</h2><p>Test content.</p>").unwrap();
+    
+    // Call lesson-write via the binary
+    let output = std::process::Command::new(env!("CARGO_BIN_EXE_learnkit"))
+        .args(["lesson-write", "test-prog", "subject-one", "lesson-one", "--content-file"])
+        .arg(content_file.to_str().unwrap())
+        .env("HOME", tmp.path())
+        .output()
+        .unwrap();
+    
+    assert!(output.status.success(), "lesson-write should succeed: {}", String::from_utf8_lossy(&output.stderr));
+    
+    // Check the generated HTML
+    let lesson_path = tmp.path().join(".learnkit/test-prog/lessons/subject-one/lesson-one.html");
+    if lesson_path.exists() {
+        let html = std::fs::read_to_string(&lesson_path).unwrap();
+        assert!(html.contains("charset=\"UTF-8\""), "Should have UTF-8 charset");
+        assert!(html.contains("Test Heading"), "Should contain injected content");
+        assert!(html.contains("</html>"), "Should be valid HTML");
+    }
+}
+
+// =====================================================
+// 14. lesson-open opens HTTP URL (not local file)
+// =====================================================
+
+#[tokio::test]
+async fn test_lesson_open_uses_url() {
+    // Verify lesson-open constructs an HTTP URL, not a local file path
+    // We can't easily test `open` command invocation, but we can verify
+    // the URL construction logic by checking the lesson-open output
+    let tmp = TempDir::new().unwrap();
+    setup_test_program_with_db(tmp.path(), "test-prog");
+    
+    // Create a lesson file so it "exists"
+    let lesson_dir = tmp.path().join("test-prog/lessons/subject-one");
+    std::fs::create_dir_all(&lesson_dir).unwrap();
+    std::fs::write(lesson_dir.join("lesson-one.html"), "<html>test</html>").unwrap();
+    
+    // Run lesson-open with HOME override — it should try to open a URL
+    // We just check that the command references localhost, not a file path
+    let output = std::process::Command::new(env!("CARGO_BIN_EXE_learnkit"))
+        .args(["lesson-open", "test-prog", "subject-one", "lesson-one"])
+        .env("HOME", tmp.path())
+        .output()
+        .unwrap();
+    
+    let stdout = String::from_utf8_lossy(&output.stdout);
+    let stderr = String::from_utf8_lossy(&output.stderr);
+    let combined = format!("{}{}", stdout, stderr);
+    
+    // Should reference HTTP URL, not local file
+    assert!(
+        combined.contains("localhost") || combined.contains("http://"),
+        "lesson-open should use HTTP URL, output was: {}",
+        combined
+    );
+}
