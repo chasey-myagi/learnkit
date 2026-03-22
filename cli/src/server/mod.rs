@@ -25,6 +25,20 @@ pub fn create_router_with_frontend(
     state: Arc<state::AppState>,
     frontend_dist: Option<PathBuf>,
 ) -> Router {
+    // Resolve static files directory for ServeDir.
+    // Priority: {learnkit_root}/templates/ > LEARNKIT_TEMPLATE_DIR env > embedded (not applicable for ServeDir)
+    let templates_dir = {
+        let root_templates = state.learnkit_root.join("templates");
+        if root_templates.exists() {
+            root_templates
+        } else if let Ok(dir) = std::env::var("LEARNKIT_TEMPLATE_DIR") {
+            PathBuf::from(dir)
+        } else {
+            // Fallback: templates dir doesn't exist, ServeDir will 404 naturally
+            state.learnkit_root.join("templates")
+        }
+    };
+
     // NOTE: Axum 0.7 uses `:param` syntax for path parameters.
     // Migrate to `{param}` syntax when upgrading to Axum 0.8+.
     let api_router = Router::new()
@@ -39,8 +53,10 @@ pub fn create_router_with_frontend(
         .route("/api/programs/:slug/prepare", post(progress::trigger_prepare))
         .route("/api/programs/:slug/ask", post(ask::submit_ask))
         .route("/api/programs/:slug/answer/:request_id", get(ask::poll_answer))
-        // Static file serving for lesson HTML files
-        .nest_service("/lessons", ServeDir::new(state.learnkit_root.clone()))
+        // Dynamic lesson rendering (replaces static file serving)
+        .route("/lessons/:program/lessons/:subject/:lesson", get(lessons::serve_lesson))
+        // Static assets (CSS/JS for lesson pages)
+        .nest_service("/static", ServeDir::new(templates_dir))
         .layer(CorsLayer::permissive())
         .with_state(state);
 

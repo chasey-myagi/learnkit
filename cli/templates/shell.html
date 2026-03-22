@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>{{lesson_title}} — {{subject_title}} — LearnKit</title>
+<link rel="stylesheet" href="/static/lesson.css">
+<script>window.API_BASE = "{{api_base}}";</script>
+</head>
+<body>
+
+<!-- Top Navigation Bar -->
+<nav class="lesson-nav" id="lesson-nav">
+  <div class="nav-left">
+    <a href="/program/{{program}}" class="nav-back">&larr; 返回列表</a>
+    <div class="nav-sep"></div>
+    <div class="breadcrumb">{{subject_title}} / <span>{{lesson_title}}</span></div>
+  </div>
+  <div class="nav-right">
+    <a href="{{prev_link}}" class="nav-btn nav-prev" aria-label="上一篇">&larr; {{prev_title}}</a>
+    <a href="{{next_link}}" class="nav-btn nav-next" aria-label="下一篇">{{next_title}} &rarr;</a>
+    <button class="theme-toggle" id="themeToggle" title="切换主题" aria-label="切换明暗主题">
+      <span class="theme-toggle-icon"></span>
+    </button>
+  </div>
+</nav>
+
+<!-- Lesson Content -->
+<main id="lesson-content">
+{{content}}
+</main>
+
+<!-- Bottom Navigation -->
+<nav class="bottom-nav">
+  <a href="{{prev_link}}" class="bottom-nav-link prev">
+    <span class="bottom-nav-label">&larr; 上一篇</span>
+    <span class="bottom-nav-title">{{prev_title}}</span>
+  </a>
+  <a href="{{next_link}}" class="bottom-nav-link next">
+    <span class="bottom-nav-label">下一篇 &rarr;</span>
+    <span class="bottom-nav-title">{{next_title}}</span>
+  </a>
+</nav>
+
+<!-- Answer Float Card -->
+<div class="answer-card" id="answerCard">
+  <div class="answer-card-header">
+    <span class="answer-card-label">回答</span>
+    <button class="answer-card-close" id="answerClose" aria-label="关闭回答">&times;</button>
+  </div>
+  <div class="answer-card-body" id="answerBody"></div>
+</div>
+
+<!-- QA History -->
+<button class="qa-fab" id="qaFab" title="问答历史" aria-label="打开问答历史">
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+</button>
+
+<div class="qa-panel" id="qaPanel">
+  <div class="qa-panel-header">
+    <h3>问答历史</h3>
+    <button class="qa-panel-close" id="qaPanelClose" aria-label="关闭问答面板">&times;</button>
+  </div>
+  <div class="qa-panel-list" id="qaPanelList">
+    <div class="qa-panel-empty">暂无问答记录</div>
+  </div>
+</div>
+
+<script>
+(function() {
+  'use strict';
+
+  // Config
+  var API_BASE = '{{api_base}}';
+  var LESSON_PATH = '{{subject}}/{{lesson}}';
+
+  // Theme Toggle
+  var html = document.documentElement;
+  var themeBtn = document.getElementById('themeToggle');
+  var iconSpan = themeBtn.querySelector('.theme-toggle-icon');
+
+  function getPreferredTheme() {
+    var stored = localStorage.getItem('learnkit-theme');
+    if (stored) return stored;
+    return window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark';
+  }
+
+  function applyTheme(theme) {
+    html.setAttribute('data-theme', theme);
+    iconSpan.textContent = theme === 'dark' ? '\u2600' : '\u263D';
+    localStorage.setItem('learnkit-theme', theme);
+  }
+
+  applyTheme(getPreferredTheme());
+
+  themeBtn.addEventListener('click', function() {
+    var current = html.getAttribute('data-theme');
+    applyTheme(current === 'dark' ? 'light' : 'dark');
+  });
+
+  // Hide empty prev/next links
+  document.querySelectorAll('.nav-btn.nav-prev, .nav-btn.nav-next').forEach(function(el) {
+    if (!el.getAttribute('href') || el.getAttribute('href') === '') {
+      el.classList.add('hidden');
+    }
+  });
+  document.querySelectorAll('.bottom-nav-link').forEach(function(el) {
+    if (!el.getAttribute('href') || el.getAttribute('href') === '') {
+      el.classList.add('hidden');
+    }
+  });
+
+  // Quiz Interaction
+  document.addEventListener('click', function(e) {
+    var btn = e.target.closest('.quiz-option');
+    if (!btn || btn.classList.contains('answered')) return;
+
+    var block = btn.closest('.quiz-block');
+    var options = block.querySelectorAll('.quiz-option');
+    var feedback = block.querySelector('.quiz-feedback');
+    var isCorrect = btn.getAttribute('data-correct') === 'true';
+
+    options.forEach(function(opt) { opt.classList.add('answered'); });
+
+    if (isCorrect) {
+      btn.classList.add('correct');
+      if (feedback) {
+        var explanation = btn.getAttribute('data-explanation') || '';
+        feedback.innerHTML = '<strong style="color:var(--completed);">\u6b63\u786e\uff01</strong> ' + explanation;
+      }
+    } else {
+      btn.classList.add('wrong');
+      options.forEach(function(opt) {
+        if (opt.getAttribute('data-correct') === 'true') opt.classList.add('correct');
+      });
+      if (feedback) {
+        var correctBtn = block.querySelector('[data-correct="true"]');
+        var explanation = correctBtn ? (correctBtn.getAttribute('data-explanation') || '') : '';
+        feedback.innerHTML = '<strong style="color:var(--failed);">\u4e0d\u5bf9\u3002</strong> ' + explanation;
+      }
+    }
+  });
+
+  // Expandable Sections
+  document.addEventListener('click', function(e) {
+    var trigger = e.target.closest('.expandable-trigger');
+    if (!trigger) return;
+    var block = trigger.closest('.expandable');
+    block.classList.toggle('open');
+  });
+
+  // Ask Inline + Answer Card
+  var askInline = null;
+  var currentPollTimer = null;
+  var qaHistory = [];
+
+  document.addEventListener('mouseup', function(e) {
+    var sel = window.getSelection();
+    var text = sel.toString().trim();
+    if (text.length < 2) return;
+
+    if (e.target.closest('.ask-inline') || e.target.closest('.answer-card') ||
+        e.target.closest('.qa-panel') || e.target.closest('.qa-fab') ||
+        e.target.closest('.lesson-nav')) return;
+
+    if (askInline) { askInline.remove(); askInline = null; }
+
+    var range = sel.getRangeAt(0);
+    var rect = range.getBoundingClientRect();
+
+    askInline = document.createElement('div');
+    askInline.className = 'ask-inline';
+    askInline.style.left = rect.left + 'px';
+    askInline.style.top = (rect.bottom + window.scrollY + 8) + 'px';
+    askInline.innerHTML = '<input type="text" placeholder="\u8f93\u5165\u4f60\u7684\u95ee\u9898..." autofocus>';
+    document.body.appendChild(askInline);
+
+    var input = askInline.querySelector('input');
+    input.focus();
+
+    var selectionText = text;
+
+    input.addEventListener('keydown', function(ev) {
+      if (ev.key === 'Enter' && input.value.trim()) {
+        var question = input.value.trim();
+        askInline.classList.add('closing');
+        setTimeout(function() {
+          if (askInline) { askInline.remove(); askInline = null; }
+        }, 150);
+        window.getSelection().removeAllRanges();
+        submitQuestion(selectionText, question, rect);
+      }
+      if (ev.key === 'Escape') {
+        askInline.remove();
+        askInline = null;
+      }
+    });
+
+    input.addEventListener('blur', function() {
+      setTimeout(function() {
+        if (askInline && !askInline.contains(document.activeElement)) {
+          askInline.remove();
+          askInline = null;
+        }
+      }, 100);
+    });
+  });
+
+  function submitQuestion(selection, question, rect) {
+    closeAnswerCardImmediate();
+
+    fetch(API_BASE + '/ask', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        selection: selection,
+        question: question,
+        lessonPath: LESSON_PATH
+      })
+    })
+    .then(function(res) { return res.json(); })
+    .then(function(data) {
+      if (data.requestId) {
+        pollAnswer(data.requestId, question, rect);
+      }
+    })
+    .catch(function(err) {
+      console.error('Ask failed:', err);
+    });
+  }
+
+  function pollAnswer(requestId, question, rect) {
+    if (currentPollTimer) { clearTimeout(currentPollTimer); currentPollTimer = null; }
+
+    function poll() {
+      fetch(API_BASE + '/answer/' + requestId)
+        .then(function(res) { return res.json(); })
+        .then(function(data) {
+          if (data.status === 'pending') {
+            currentPollTimer = setTimeout(poll, 500);
+          } else if (data.status === 'done' && data.answer) {
+            showAnswerCard(data.answer, question, rect);
+          } else if (data.status === 'error') {
+            showAnswerCard('抱歉，回答生成失败，请稍后重试。', question, rect);
+          }
+        })
+        .catch(function() {
+          currentPollTimer = setTimeout(poll, 1000);
+        });
+    }
+
+    poll();
+  }
+
+  function showAnswerCard(answer, question, rect) {
+    var card = document.getElementById('answerCard');
+    var body = document.getElementById('answerBody');
+
+    card.style.left = Math.min(rect.left, window.innerWidth - 420) + 'px';
+    card.style.top = (rect.bottom + window.scrollY + 12) + 'px';
+    card.classList.remove('closing');
+    card.classList.add('visible');
+
+    streamAnswer(answer, body);
+
+    qaHistory.unshift({ question: question, answer: answer, time: new Date() });
+    renderQAPanel();
+  }
+
+  function streamAnswer(text, container) {
+    container.innerHTML = '';
+    var p = document.createElement('p');
+    container.appendChild(p);
+    var i = 0;
+
+    var interval = setInterval(function() {
+      if (i >= text.length) { clearInterval(interval); return; }
+      if (text[i] === '\n' && text[i + 1] === '\n') {
+        p = document.createElement('p');
+        container.appendChild(p);
+        i += 2;
+      } else {
+        p.textContent += text[i];
+        i++;
+      }
+      container.scrollTop = container.scrollHeight;
+    }, 30);
+  }
+
+  function closeAnswerCard() {
+    var card = document.getElementById('answerCard');
+    if (!card.classList.contains('visible')) return;
+    card.classList.add('closing');
+    card.addEventListener('animationend', function handler() {
+      card.classList.remove('visible', 'closing');
+      card.removeEventListener('animationend', handler);
+    });
+  }
+
+  function closeAnswerCardImmediate() {
+    var card = document.getElementById('answerCard');
+    card.classList.remove('visible', 'closing');
+  }
+
+  document.getElementById('answerClose').addEventListener('click', closeAnswerCard);
+
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+      closeAnswerCard();
+    }
+  });
+
+  // QA History Panel
+  var qaFab = document.getElementById('qaFab');
+  var qaPanel = document.getElementById('qaPanel');
+  var qaPanelClose = document.getElementById('qaPanelClose');
+
+  qaFab.addEventListener('click', function() {
+    qaPanel.classList.toggle('visible');
+  });
+
+  qaPanelClose.addEventListener('click', function() {
+    qaPanel.classList.remove('visible');
+  });
+
+  document.addEventListener('mousedown', function(e) {
+    if (qaPanel.classList.contains('visible') &&
+        !e.target.closest('.qa-panel') && !e.target.closest('.qa-fab')) {
+      qaPanel.classList.remove('visible');
+    }
+  });
+
+  function renderQAPanel() {
+    var list = document.getElementById('qaPanelList');
+    if (qaHistory.length === 0) {
+      list.innerHTML = '<div class="qa-panel-empty">\u6682\u65e0\u95ee\u7b54\u8bb0\u5f55</div>';
+      return;
+    }
+    list.innerHTML = qaHistory.map(function(item) {
+      var preview = item.answer.length > 80 ? item.answer.slice(0, 80) + '...' : item.answer;
+      var ago = getTimeAgo(item.time);
+      return '<div class="qa-item">' +
+        '<div class="qa-item-q">' + escapeHtml(item.question) + '</div>' +
+        '<div class="qa-item-preview">' + escapeHtml(preview) + '</div>' +
+        '<div class="qa-item-time">' + ago + '</div>' +
+      '</div>';
+    }).join('');
+  }
+
+  function getTimeAgo(date) {
+    var diff = Math.floor((Date.now() - date.getTime()) / 1000);
+    if (diff < 60) return '\u521a\u521a';
+    if (diff < 3600) return Math.floor(diff / 60) + ' \u5206\u949f\u524d';
+    return Math.floor(diff / 3600) + ' \u5c0f\u65f6\u524d';
+  }
+
+  function escapeHtml(str) {
+    var div = document.createElement('div');
+    div.textContent = str;
+    return div.innerHTML;
+  }
+
+})();
+</script>
+
+<script type="module">
+import { renderAllComponents } from '/static/lesson.js';
+document.addEventListener('DOMContentLoaded', () => {
+  const root = document.getElementById('lesson-content');
+  if (root) renderAllComponents(root);
+});
+</script>
+
+</body>
+</html>

@@ -11,5 +11,13 @@
     "interactive-lessons"
   ],
   "author": "Chasey",
-  "license": "MIT"
+  "license": "MIT",
+  "scripts": {
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "devDependencies": {
+    "jsdom": "^29.0.1",
+    "vitest": "^4.1.0"
+  }
 }
