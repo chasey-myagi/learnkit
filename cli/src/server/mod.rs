@@ -5,6 +5,7 @@
 use axum::{routing::{get, post}, Router};
 use std::sync::Arc;
 use tower_http::cors::CorsLayer;
+use tower_http::services::ServeDir;
 
 pub mod error;
 pub mod state;
@@ -29,6 +30,9 @@ pub fn create_router(state: Arc<state::AppState>) -> Router {
         // POST /api/programs/:slug/qa       — submit a new Q&A pair
         // POST /api/programs/:slug/prepare  — trigger lesson preparation
         // GET  /api/programs/:slug/resources — list learning resources
+        //
+        // Static file serving for lesson HTML files
+        .nest_service("/lessons", ServeDir::new(state.learnkit_root.clone()))
         .layer(CorsLayer::permissive())
         .with_state(state)
 }

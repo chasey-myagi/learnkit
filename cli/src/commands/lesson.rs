@@ -27,10 +27,30 @@ pub fn write(program: &str, subject: &str, lesson: &str, content_file: &str) -> 
     // 2. Build title from lesson slug
     let title = lesson.replace('-', " ").replace('_', " ");
 
-    // 3. Wrap in simple HTML template
-    let html = format!(
-        "<html>\n<head><title>{title}</title></head>\n<body>\n{content}\n</body>\n</html>"
-    );
+    // 3. Try to load _template.html, fallback to simple wrapper
+    let templates_dir = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("templates");
+    let template_path = templates_dir.join("_template.html");
+
+    let html = if template_path.exists() {
+        let template = fs::read_to_string(&template_path)?;
+        template
+            .replace("{{content}}", &content)
+            .replace("{{lesson_title}}", &title)
+            .replace("{{subject_title}}", subject)
+            .replace("{{program_title}}", program)
+            .replace("{{program}}", program)
+            .replace("{{subject}}", subject)
+            .replace("{{lesson}}", lesson)
+            .replace("{{prev_link}}", "")
+            .replace("{{next_link}}", "")
+            .replace("{{prev_title}}", "")
+            .replace("{{next_title}}", "")
+            .replace("{{api_base}}", &format!("/api/programs/{}", program))
+    } else {
+        format!(
+            "<!DOCTYPE html>\n<html lang=\"zh-CN\">\n<head>\n<meta charset=\"UTF-8\">\n<meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">\n<title>{title}</title>\n</head>\n<body>\n{content}\n</body>\n</html>"
+        )
+    };
 
     // 4. Create directory and write file
     let file_path = lesson_file_path(program, subject, lesson);

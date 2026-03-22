@@ -22,16 +22,16 @@ const statusLabels: Record<string, string> = {
 };
 
 export function LessonItem({ lesson, programSlug, isLast }: LessonItemProps) {
-  const hasContent = !!lesson.file_path;
+  const isClickable = lesson.status === 'prepared' || lesson.status === 'in_progress' || lesson.status === 'completed';
   const handleClick = () => {
-    if (hasContent) {
-      window.location.href = `/lessons/${programSlug}/${lesson.subject}/${lesson.lesson}.html`;
+    if (isClickable) {
+      window.location.href = `/lessons/${programSlug}/lessons/${lesson.subject}/${lesson.lesson}.html`;
     }
   };
 
   return (
     <div
-      className={`relative ${hasContent ? 'cursor-pointer' : 'cursor-default'}`}
+      className={`relative ${isClickable ? 'cursor-pointer' : 'cursor-default'}`}
       style={{
         padding: '10px 12px',
         minHeight: 44,
@@ -105,16 +105,12 @@ export function LessonItem({ lesson, programSlug, isLast }: LessonItemProps) {
         <StatusBadge status={lesson.status} />
       </div>
 
-      {lesson.status !== 'pending' && (
+      {lesson.status === 'completed' && lesson.completed_at && (
         <div
-          className="mt-1 flex flex-wrap items-center gap-2 text-xs"
+          className="mt-1 text-xs"
           style={{ color: 'var(--lk-text-secondary)', lineHeight: '1.6' }}
         >
-          {lesson.status === 'in_progress' && <span>学习中</span>}
-          {lesson.status === 'completed' && lesson.completed_at && (
-            <span>完成于 {lesson.completed_at}</span>
-          )}
-          {lesson.status === 'prepared' && <span>已就绪</span>}
+          完成于 {lesson.completed_at}
         </div>
       )}
     </div>
