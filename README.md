@@ -5,14 +5,23 @@
 ## 安装
 
 ```bash
-# 在 Claude Code 中安装 plugin
-/plugin chasey-myagi/learnkit
+# 1. 注册 marketplace
+claude plugin marketplace add chasey-myagi/learnkit
 
-# 重新加载
+# 2. 安装 plugin
+claude plugin install learnkit
+
+# 3. 在 Claude Code 会话中重载
 /reload-plugins
 ```
 
 安装后运行 `/learn-setup` 配置环境（编译 CLI + 启动 Backend）。
+
+### 更新
+
+```bash
+claude plugin update learnkit
+```
 
 ## 快速开始
 
