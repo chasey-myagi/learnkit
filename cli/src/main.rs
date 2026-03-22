@@ -120,8 +120,12 @@ async fn main() -> anyhow::Result<()> {
 
     match cli.command {
         Commands::Serve { port } => {
-            println!("Starting server on port {}...", port);
-            // TODO: implement
+            let state = std::sync::Arc::new(server::state::AppState::new());
+            let app = server::create_router(state);
+            let addr = std::net::SocketAddr::from(([127, 0, 0, 1], port));
+            println!("LearnKit server running on http://{}", addr);
+            let listener = tokio::net::TcpListener::bind(addr).await?;
+            axum::serve(listener, app).await?;
         }
         Commands::Init { slug } => {
             commands::init::run(&slug)?;
@@ -183,3 +187,4 @@ mod config;
 mod db;
 mod commands;
 mod scope;
+mod server;

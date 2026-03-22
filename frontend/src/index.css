@@ -1,0 +1,194 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
+
+@custom-variant dark (&:is([data-theme="dark"] *));
+
+/* ══════════════════════════════════════════════
+   Accessibility
+   ══════════════════════════════════════════════ */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* ══════════════════════════════════════════════
+   shadcn theme tokens (mapped to LearnKit palette)
+   ══════════════════════════════════════════════ */
+@theme inline {
+  --font-sans: system-ui, -apple-system, sans-serif;
+  --font-heading: system-ui, -apple-system, sans-serif;
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+
+  /* LearnKit custom colors */
+  --color-lk-bg: var(--lk-bg);
+  --color-lk-card: var(--lk-card);
+  --color-lk-border: var(--lk-border);
+  --color-lk-text: var(--lk-text);
+  --color-lk-text-secondary: var(--lk-text-secondary);
+  --color-lk-accent: var(--lk-accent);
+  --color-lk-accent-light: var(--lk-accent-light);
+  --color-lk-surface: var(--lk-surface);
+  --color-lk-completed: var(--lk-completed);
+  --color-lk-in-progress: var(--lk-in-progress);
+  --color-lk-prepared: var(--lk-prepared);
+  --color-lk-pending: var(--lk-pending);
+  --color-lk-failed: var(--lk-failed);
+
+  --radius-sm: calc(var(--radius) * 0.6);
+  --radius-md: calc(var(--radius) * 0.8);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) * 1.4);
+  --radius-2xl: calc(var(--radius) * 1.8);
+}
+
+/* ══════════════════════════════════════════════
+   LearnKit Design Tokens — Dark (default)
+   ══════════════════════════════════════════════ */
+:root {
+  /* LearnKit palette */
+  --lk-bg: #0a0a12;
+  --lk-card: #141425;
+  --lk-border: #1e1e3a;
+  --lk-text: #e0e0e8;
+  --lk-text-secondary: #8a8ab4;
+  --lk-accent: #6c5ce7;
+  --lk-accent-light: #a29bfe;
+  --lk-accent-glow: rgba(108, 92, 231, 0.3);
+  --lk-surface: #12121f;
+  --lk-completed: #10ac84;
+  --lk-in-progress: #feca57;
+  --lk-prepared: #48dbfb;
+  --lk-pending: #8a8ab4;
+  --lk-failed: #ff6b6b;
+
+  /* shadcn mapped */
+  --background: #0a0a12;
+  --foreground: #e0e0e8;
+  --card: #141425;
+  --card-foreground: #e0e0e8;
+  --popover: #141425;
+  --popover-foreground: #e0e0e8;
+  --primary: #6c5ce7;
+  --primary-foreground: #ffffff;
+  --secondary: #1e1e3a;
+  --secondary-foreground: #e0e0e8;
+  --muted: #1e1e3a;
+  --muted-foreground: #8a8ab4;
+  --accent: #6c5ce7;
+  --accent-foreground: #ffffff;
+  --destructive: #ff6b6b;
+  --border: #1e1e3a;
+  --input: #1e1e3a;
+  --ring: #6c5ce7;
+  --radius: 12px;
+}
+
+[data-theme="light"] {
+  --lk-bg: #f4f3fa;
+  --lk-card: #fdfcff;
+  --lk-border: #d8d5e8;
+  --lk-text: #1a1a2e;
+  --lk-text-secondary: #6e6a8a;
+  --lk-accent-glow: rgba(108, 92, 231, 0.12);
+  --lk-surface: #fdfcff;
+
+  --background: #f4f3fa;
+  --foreground: #1a1a2e;
+  --card: #fdfcff;
+  --card-foreground: #1a1a2e;
+  --popover: #fdfcff;
+  --popover-foreground: #1a1a2e;
+  --primary: #6c5ce7;
+  --primary-foreground: #ffffff;
+  --secondary: #d8d5e8;
+  --secondary-foreground: #1a1a2e;
+  --muted: #d8d5e8;
+  --muted-foreground: #6e6a8a;
+  --border: #d8d5e8;
+  --input: #d8d5e8;
+}
+
+/* ══════════════════════════════════════════════
+   Base Styles
+   ══════════════════════════════════════════════ */
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+
+  body {
+    background: var(--lk-bg);
+    color: var(--lk-text);
+    font-family: system-ui, -apple-system, sans-serif;
+    line-height: 1.6;
+    transition: background 0.3s ease, color 0.3s ease;
+    margin: 0;
+    min-height: 100vh;
+  }
+
+  html {
+    @apply font-sans;
+  }
+}
+
+/* ══════════════════════════════════════════════
+   Custom Scrollbar
+   ══════════════════════════════════════════════ */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--lk-border);
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--lk-text-secondary);
+}
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--lk-border) transparent;
+}
+
+/* ══════════════════════════════════════════════
+   Animations
+   ══════════════════════════════════════════════ */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes node-pulse {
+  0%, 100% { box-shadow: 0 0 0 3px rgba(254,202,87,0.2); }
+  50% { box-shadow: 0 0 0 8px rgba(254,202,87,0.08); }
+}
+
+@keyframes badge-breathe {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.7; }
+}
