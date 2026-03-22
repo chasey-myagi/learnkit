@@ -34,43 +34,30 @@ impl AppState {
 
     /// Open a DB connection for a program.
     ///
-    /// Returns `None` if the DB file doesn't exist yet. On first open per slug,
-    /// runs `ensure_tables`; subsequent opens skip schema setup for efficiency.
-    pub fn open_db(&self, slug: &str) -> Option<rusqlite::Connection> {
+    /// Returns `Ok(None)` if the DB file doesn't exist yet. Returns `Err` if the
+    /// file exists but cannot be opened. On first open per slug, runs
+    /// `ensure_tables`; subsequent opens skip schema setup for efficiency.
+    pub fn open_db(&self, slug: &str) -> Result<Option<rusqlite::Connection>, AppError> {
         let db_path = self.learnkit_root.join(slug).join("learnkit.db");
         if !db_path.exists() {
-            return None;
+            return Ok(None);
         }
 
-        let conn = match rusqlite::Connection::open(&db_path) {
-            Ok(c) => c,
-            Err(e) => {
-                eprintln!("[learnkit] failed to open DB for '{slug}': {e}");
-                return None;
-            }
-        };
+        let conn = rusqlite::Connection::open(&db_path)
+            .map_err(|e| AppError::Internal(format!("Failed to open DB: {}", e)))?;
 
-        if let Err(e) = conn.execute_batch("PRAGMA journal_mode=WAL;") {
-            eprintln!("[learnkit] failed to set WAL for '{slug}': {e}");
-            return None;
-        }
+        conn.execute_batch("PRAGMA journal_mode=WAL;")
+            .map_err(|e| AppError::Internal(format!("Failed to set WAL: {}", e)))?;
 
         // Only ensure_tables on first open per program slug in this process
-        let needs_init = {
-            let initialized = self.initialized_dbs.lock().unwrap_or_else(|e| e.into_inner());
-            !initialized.contains(slug)
-        };
-
-        if needs_init {
-            if let Err(e) = crate::db::schema::ensure_tables(&conn) {
-                eprintln!("[learnkit] failed to ensure tables for '{slug}': {e}");
-                return None;
-            }
-            let mut initialized = self.initialized_dbs.lock().unwrap_or_else(|e| e.into_inner());
+        let mut initialized = self.initialized_dbs.lock().unwrap_or_else(|e| e.into_inner());
+        if !initialized.contains(slug) {
+            crate::db::schema::ensure_tables(&conn)
+                .map_err(|e| AppError::Internal(format!("Failed to init schema: {}", e)))?;
             initialized.insert(slug.to_string());
         }
 
-        Some(conn)
+        Ok(Some(conn))
     }
 
     /// Open or create a DB connection for a program. Used when a write operation
@@ -102,6 +89,9 @@ impl AppState {
 
 /// Validate that a slug is safe (no path traversal, no special characters).
 pub fn validate_slug(slug: &str) -> Result<(), AppError> {
+    if slug.len() > 128 {
+        return Err(AppError::BadRequest("slug too long".to_string()));
+    }
     if slug.is_empty()
         || slug.contains("..")
         || slug.contains('/')

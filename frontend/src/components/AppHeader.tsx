@@ -12,42 +12,39 @@ export function AppHeader() {
         transition: 'background 0.2s ease, border-color 0.2s ease',
       }}
     >
-      {/* Gradient bottom line */}
-      <div
-        className="absolute bottom-[-1px] left-0 right-0 h-[2px]"
-        style={{
-          background: 'linear-gradient(90deg, var(--lk-accent) 0%, var(--lk-accent-light) 30%, transparent 50%)',
-        }}
-      />
-
-      {/* Logo */}
+      {/* Logo: plain text, no accent coloring */}
       <div className="flex items-center gap-2">
-        <span className="text-xl leading-none">📚</span>
         <span
-          className="text-[15px] font-bold tracking-tight"
-          style={{ color: 'var(--lk-text)', transition: 'color 0.2s ease', letterSpacing: '-0.3px' }}
+          className="text-[15px] font-semibold tracking-tight"
+          style={{
+            color: 'var(--lk-text)',
+            letterSpacing: '-0.3px',
+          }}
         >
-          <em className="not-italic" style={{ color: 'var(--lk-accent)' }}>
-            Learn
-          </em>
-          Kit
+          LearnKit
         </span>
       </div>
 
       {/* Theme toggle capsule */}
       <button
         onClick={toggle}
-        className="flex items-center rounded-full p-1 cursor-pointer border-none"
+        className="flex min-h-[44px] min-w-[44px] items-center justify-center rounded-full p-2 cursor-pointer border-none"
         style={{
-          background: theme === 'dark' ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)',
+          background:
+            theme === 'dark'
+              ? 'rgba(255,255,255,0.06)'
+              : 'rgba(0,0,0,0.06)',
           transition: 'background 0.2s ease',
         }}
-        aria-label="切换日夜模式"
+        aria-label={theme === 'dark' ? '切换到日间模式' : '切换到夜间模式'}
+        title={theme === 'dark' ? '切换到日间模式' : '切换到夜间模式'}
       >
         <span
           className="flex size-7 items-center justify-center rounded-full text-sm leading-none"
+          aria-hidden="true"
           style={{
-            background: theme === 'light' ? 'var(--lk-accent)' : 'transparent',
+            background:
+              theme === 'light' ? 'var(--lk-accent)' : 'transparent',
             transition: 'background 0.2s ease',
           }}
         >
@@ -55,8 +52,10 @@ export function AppHeader() {
         </span>
         <span
           className="flex size-7 items-center justify-center rounded-full text-sm leading-none"
+          aria-hidden="true"
           style={{
-            background: theme === 'dark' ? 'var(--lk-accent)' : 'transparent',
+            background:
+              theme === 'dark' ? 'var(--lk-accent)' : 'transparent',
             transition: 'background 0.2s ease',
           }}
         >

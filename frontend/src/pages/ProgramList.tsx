@@ -68,6 +68,7 @@ function EmptyState() {
         stroke="var(--lk-text-secondary)"
         strokeWidth="1.5"
         strokeLinecap="round"
+        aria-hidden="true"
       >
         <rect x="8" y="6" width="32" height="36" rx="4" />
         <path d="M16 16h16M16 22h12M16 28h8" />
@@ -88,12 +89,29 @@ function EmptyState() {
   );
 }
 
+function ErrorBanner({ message }: { message: string }) {
+  return (
+    <div
+      className="mb-4 rounded-lg px-4 py-3 text-sm"
+      role="alert"
+      style={{
+        background: 'rgba(234,179,8,0.1)',
+        border: '1px solid rgba(234,179,8,0.2)',
+        color: 'var(--lk-in-progress)',
+        animation: 'fadeIn 0.25s cubic-bezier(0.22,1,0.36,1)',
+      }}
+    >
+      {message}
+    </div>
+  );
+}
+
 export function ProgramList() {
-  const { programs, loading } = usePrograms();
+  const { programs, loading, error } = usePrograms();
 
   if (loading) {
     return (
-      <div className="mx-auto max-w-[1200px] px-6 py-8 sm:px-10">
+      <div className="mx-auto max-w-[1200px] px-6 py-8 sm:px-10" role="status" aria-busy="true" aria-label="加载中">
         <div className="flex items-baseline justify-between" style={{ marginBottom: 24 }}>
           <h1
             className="text-[22px] font-bold"
@@ -111,6 +129,15 @@ export function ProgramList() {
     );
   }
 
+  // Build renderable cards — programs without scope/progress data get a fallback card
+  const cards = programs.map((p) => {
+    const scope = mockScopes[p.slug];
+    const progress = mockProgress[p.slug];
+    return { program: p, scope, progress };
+  });
+
+  const hasRenderableCards = cards.some((c) => c.scope && c.progress);
+
   return (
     <main
       className="mx-auto max-w-[1200px] px-6 py-8 sm:px-10"
@@ -118,14 +145,14 @@ export function ProgramList() {
     >
       <div className="mb-6 flex items-baseline justify-between">
         <h1
-          className="text-[22px] font-bold"
+          className="min-w-0 truncate text-[22px] font-bold"
           style={{ letterSpacing: '-0.5px', lineHeight: '1.2' }}
         >
           我的学习
         </h1>
         {programs.length > 0 && (
           <span
-            className="text-sm"
+            className="shrink-0 text-sm"
             style={{
               color: 'var(--lk-text-secondary)',
               lineHeight: '1.6',
@@ -137,13 +164,13 @@ export function ProgramList() {
         )}
       </div>
 
-      {programs.length === 0 ? (
+      {error && <ErrorBanner message={error} />}
+
+      {programs.length === 0 || !hasRenderableCards ? (
         <EmptyState />
       ) : (
         <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
-          {programs.map((p) => {
-            const scope = mockScopes[p.slug];
-            const progress = mockProgress[p.slug];
+          {cards.map(({ program: p, scope, progress }) => {
             if (!scope || !progress) return null;
             return (
               <ProgramCard key={p.slug} slug={p.slug} scope={scope} progress={progress} />

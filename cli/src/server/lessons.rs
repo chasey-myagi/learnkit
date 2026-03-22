@@ -14,18 +14,18 @@ pub async fn list(
 ) -> Result<impl IntoResponse, AppError> {
     validate_slug(&slug)?;
 
-    let result = tokio::task::spawn_blocking(move || {
-        match state.open_db(&slug) {
+    let result = tokio::task::spawn_blocking(move || -> Result<serde_json::Value, AppError> {
+        match state.open_db(&slug)? {
             Some(conn) => {
                 let rows = crate::db::lessons::list_lessons(&conn, None)?;
-                serde_json::to_value(&rows).map_err(|e| anyhow::anyhow!(e))
+                serde_json::to_value(&rows)
+                    .map_err(|e| AppError::Internal(format!("serialization error: {e}")))
             }
             None => Ok(serde_json::json!([])),
         }
     })
     .await
-    .map_err(|e| AppError::Internal(format!("task join error: {e}")))?
-    .map_err(|e: anyhow::Error| AppError::Internal(format!("{e}")))?;
+    .map_err(|e| AppError::Internal(format!("task join error: {e}")))?;
 
-    Ok(Json(result))
+    Ok(Json(result?))
 }

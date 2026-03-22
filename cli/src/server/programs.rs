@@ -7,7 +7,7 @@ use serde::{Deserialize, Serialize};
 use std::sync::Arc;
 
 use super::error::AppError;
-use super::state::{validate_slug, AppState};
+use super::state::{validate_lesson_path, validate_slug, AppState};
 use crate::scope;
 
 #[derive(Serialize)]
@@ -98,19 +98,22 @@ pub async fn qa_history(
     Query(query): Query<QaHistoryQuery>,
 ) -> Result<impl IntoResponse, AppError> {
     validate_slug(&slug)?;
+    if let Some(ref lesson) = query.lesson {
+        validate_lesson_path(lesson)?;
+    }
 
-    let result = tokio::task::spawn_blocking(move || {
-        match state.open_db(&slug) {
+    let result = tokio::task::spawn_blocking(move || -> Result<serde_json::Value, AppError> {
+        match state.open_db(&slug)? {
             Some(conn) => {
                 let rows = crate::db::qa::list_qa(&conn, query.lesson.as_deref())?;
-                serde_json::to_value(&rows).map_err(|e| anyhow::anyhow!(e))
+                serde_json::to_value(&rows)
+                    .map_err(|e| AppError::Internal(format!("serialization error: {e}")))
             }
             None => Ok(serde_json::json!([])),
         }
     })
     .await
-    .map_err(|e| AppError::Internal(format!("task join error: {e}")))?
-    .map_err(|e: anyhow::Error| AppError::Internal(format!("{e}")))?;
+    .map_err(|e| AppError::Internal(format!("task join error: {e}")))?;
 
-    Ok(Json(result))
+    Ok(Json(result?))
 }

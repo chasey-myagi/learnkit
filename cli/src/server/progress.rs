@@ -15,8 +15,8 @@ pub async fn get_progress(
 ) -> Result<impl IntoResponse, AppError> {
     validate_slug(&slug)?;
 
-    let result = tokio::task::spawn_blocking(move || {
-        match state.open_db(&slug) {
+    let result = tokio::task::spawn_blocking(move || -> Result<serde_json::Value, AppError> {
+        match state.open_db(&slug)? {
             Some(conn) => {
                 let status_counts = crate::db::lessons::count_by_status(&conn)?;
                 let (sections_read, sections_total) =
@@ -40,10 +40,9 @@ pub async fn get_progress(
         }
     })
     .await
-    .map_err(|e| AppError::Internal(format!("task join error: {e}")))?
-    .map_err(|e: anyhow::Error| AppError::Internal(format!("{e}")))?;
+    .map_err(|e| AppError::Internal(format!("task join error: {e}")))?;
 
-    Ok(Json(result))
+    Ok(Json(result?))
 }
 
 #[derive(Deserialize)]
@@ -79,7 +78,7 @@ pub async fn update_progress(
             return Err(AppError::NotFound(format!("program '{slug}' not found")));
         }
 
-        let conn = match state.open_db(&slug) {
+        let conn = match state.open_db(&slug)? {
             Some(c) => c,
             None => state.open_or_create_db(&slug)?,
         };
@@ -152,8 +151,8 @@ pub async fn prepare_status(
 ) -> Result<impl IntoResponse, AppError> {
     validate_slug(&slug)?;
 
-    let result = tokio::task::spawn_blocking(move || {
-        match state.open_db(&slug) {
+    let result = tokio::task::spawn_blocking(move || -> Result<serde_json::Value, AppError> {
+        match state.open_db(&slug)? {
             Some(conn) => {
                 let ready_count = crate::db::lessons::count_prepared_unfinished(&conn)?;
 
@@ -176,8 +175,7 @@ pub async fn prepare_status(
         }
     })
     .await
-    .map_err(|e| AppError::Internal(format!("task join error: {e}")))?
-    .map_err(|e: anyhow::Error| AppError::Internal(format!("{e}")))?;
+    .map_err(|e| AppError::Internal(format!("task join error: {e}")))?;
 
-    Ok(Json(result))
+    Ok(Json(result?))
 }

@@ -49,6 +49,7 @@
   --color-lk-text-secondary: var(--lk-text-secondary);
   --color-lk-accent: var(--lk-accent);
   --color-lk-accent-light: var(--lk-accent-light);
+  --color-lk-accent-hover: var(--lk-accent-hover);
   --color-lk-surface: var(--lk-surface);
   --color-lk-completed: var(--lk-completed);
   --color-lk-in-progress: var(--lk-in-progress);
@@ -67,67 +68,67 @@
    LearnKit Design Tokens — Dark (default)
    ══════════════════════════════════════════════ */
 :root {
-  /* LearnKit palette */
-  --lk-bg: #0a0a12;
-  --lk-card: #141425;
-  --lk-border: #1e1e3a;
-  --lk-text: #e0e0e8;
-  --lk-text-secondary: #8a8ab4;
-  --lk-accent: #6c5ce7;
-  --lk-accent-light: #a29bfe;
-  --lk-accent-glow: rgba(108, 92, 231, 0.3);
-  --lk-surface: #12121f;
-  --lk-completed: #10ac84;
-  --lk-in-progress: #feca57;
-  --lk-prepared: #48dbfb;
-  --lk-pending: #8a8ab4;
-  --lk-failed: #ff6b6b;
+  /* LearnKit palette — neutral zinc tones, blue accent */
+  --lk-bg: #111113;
+  --lk-card: #1a1a1d;
+  --lk-border: #2a2a2e;
+  --lk-text: #e4e4e7;
+  --lk-text-secondary: #85858d;
+  --lk-accent: #3b82f6;
+  --lk-accent-light: #60a5fa;
+  --lk-accent-hover: rgba(59, 130, 246, 0.08);
+  --lk-surface: #161618;
+  --lk-completed: #22c55e;
+  --lk-in-progress: #eab308;
+  --lk-prepared: #06b6d4;
+  --lk-pending: #71717a;
+  --lk-failed: #ef4444;
 
   /* shadcn mapped */
-  --background: #0a0a12;
-  --foreground: #e0e0e8;
-  --card: #141425;
-  --card-foreground: #e0e0e8;
-  --popover: #141425;
-  --popover-foreground: #e0e0e8;
-  --primary: #6c5ce7;
+  --background: #111113;
+  --foreground: #e4e4e7;
+  --card: #1a1a1d;
+  --card-foreground: #e4e4e7;
+  --popover: #1a1a1d;
+  --popover-foreground: #e4e4e7;
+  --primary: #3b82f6;
   --primary-foreground: #ffffff;
-  --secondary: #1e1e3a;
-  --secondary-foreground: #e0e0e8;
-  --muted: #1e1e3a;
-  --muted-foreground: #8a8ab4;
-  --accent: #6c5ce7;
+  --secondary: #2a2a2e;
+  --secondary-foreground: #e4e4e7;
+  --muted: #2a2a2e;
+  --muted-foreground: #85858d;
+  --accent: #3b82f6;
   --accent-foreground: #ffffff;
-  --destructive: #ff6b6b;
-  --border: #1e1e3a;
-  --input: #1e1e3a;
-  --ring: #6c5ce7;
-  --radius: 12px;
+  --destructive: #ef4444;
+  --border: #2a2a2e;
+  --input: #2a2a2e;
+  --ring: #3b82f6;
+  --radius: 10px;
 }
 
 [data-theme="light"] {
-  --lk-bg: #f4f3fa;
-  --lk-card: #fdfcff;
-  --lk-border: #d8d5e8;
-  --lk-text: #1a1a2e;
-  --lk-text-secondary: #6e6a8a;
-  --lk-accent-glow: rgba(108, 92, 231, 0.12);
-  --lk-surface: #fdfcff;
+  --lk-bg: #fafafa;
+  --lk-card: #ffffff;
+  --lk-border: #e4e4e7;
+  --lk-text: #18181b;
+  --lk-text-secondary: #71717a;
+  --lk-accent-hover: rgba(59, 130, 246, 0.06);
+  --lk-surface: #ffffff;
 
-  --background: #f4f3fa;
-  --foreground: #1a1a2e;
-  --card: #fdfcff;
-  --card-foreground: #1a1a2e;
-  --popover: #fdfcff;
-  --popover-foreground: #1a1a2e;
-  --primary: #6c5ce7;
+  --background: #fafafa;
+  --foreground: #18181b;
+  --card: #ffffff;
+  --card-foreground: #18181b;
+  --popover: #ffffff;
+  --popover-foreground: #18181b;
+  --primary: #3b82f6;
   --primary-foreground: #ffffff;
-  --secondary: #d8d5e8;
-  --secondary-foreground: #1a1a2e;
-  --muted: #d8d5e8;
-  --muted-foreground: #6e6a8a;
-  --border: #d8d5e8;
-  --input: #d8d5e8;
+  --secondary: #e4e4e7;
+  --secondary-foreground: #18181b;
+  --muted: #e4e4e7;
+  --muted-foreground: #71717a;
+  --border: #e4e4e7;
+  --input: #e4e4e7;
 }
 
 /* ══════════════════════════════════════════════
@@ -183,16 +184,6 @@
   to { opacity: 1; transform: translateY(0); }
 }
 
-@keyframes node-pulse {
-  0%, 100% { box-shadow: 0 0 0 3px rgba(254,202,87,0.2); }
-  50% { box-shadow: 0 0 0 8px rgba(254,202,87,0.08); }
-}
-
-@keyframes badge-breathe {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.7; }
-}
-
 /* ══════════════════════════════════════════════
    Focus-visible styles
    ══════════════════════════════════════════════ */
@@ -204,4 +195,31 @@
 /* Remove default focus outline for mouse users */
 :focus:not(:focus-visible) {
   outline: none;
+}
+
+/* ══════════════════════════════════════════════
+   Responsive: prevent horizontal overflow
+   ══════════════════════════════════════════════ */
+html, body {
+  overflow-x: hidden;
+}
+
+/* ══════════════════════════════════════════════
+   Skip-to-content link (keyboard accessibility)
+   ══════════════════════════════════════════════ */
+.skip-to-content {
+  position: absolute;
+  left: -9999px;
+  top: 0;
+  z-index: 100;
+  padding: 8px 16px;
+  background: var(--lk-accent);
+  color: #fff;
+  font-weight: 600;
+  font-size: 14px;
+  border-radius: 0 0 8px 0;
+  text-decoration: none;
+}
+.skip-to-content:focus {
+  left: 0;
 }

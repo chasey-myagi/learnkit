@@ -1,15 +1,17 @@
-# LearnKit UI/UX 设计冻结规范
+# LearnKit UI/UX 设计规范
 
-> 实现时严格遵守，不可自由发挥。冻结日期：2026-03-22
+> 更新日期：2026-03-22
 
 ---
 
 ## 1. 设计原则
 
-- 禁止 AI slop：无 glow、shimmer、渐变文字、bounce/elastic easing
+- 禁止 AI slop：无 glow box-shadow、shimmer/pulse/breathe 装饰动画、渐变文字（background-clip: text）、bounce/elastic easing、紫色霓虹配色
 - 克制优雅，排版和信息层级说话
-- 深色优先，日间模式带紫色底色（非纯灰）
+- 深色优先，中性色调（zinc/gray），避免过度饱和
+- 日间模式用纯净浅灰，不带色彩偏向
 - 每个动效有目的，无装饰性动画
+- 进度条、圆环等使用实色，不使用渐变
 
 ---
 
@@ -18,34 +20,36 @@
 ### 深色模式
 
 ```css
---bg: #0a0a12;
---card: #141425;
---border: #1e1e3a;
---text: #e0e0e8;
---text-secondary: #8a8ab4;
---accent: #6c5ce7;
---accent-light: #a29bfe;
---surface: #12121f;
+--bg: #111113;
+--card: #1a1a1d;
+--border: #2a2a2e;
+--text: #e4e4e7;
+--text-secondary: #85858d;
+--accent: #3b82f6;
+--accent-light: #60a5fa;
+--accent-hover: rgba(59, 130, 246, 0.08);
+--surface: #161618;
 ```
 
 ### 日间模式
 
 ```css
---bg: #f4f3fa;
---card: #fdfcff;
---border: #d8d5e8;
---text: #1a1a2e;
---text-secondary: #6e6a8a;
+--bg: #fafafa;
+--card: #ffffff;
+--border: #e4e4e7;
+--text: #18181b;
+--text-secondary: #71717a;
+--accent-hover: rgba(59, 130, 246, 0.06);
 ```
 
 ### 状态色（通用）
 
 ```css
---completed: #10ac84;
---in-progress: #feca57;
---prepared: #48dbfb;
---pending: #8a8ab4;
---failed: #ff6b6b;
+--completed: #22c55e;
+--in-progress: #eab308;
+--prepared: #06b6d4;
+--pending: #71717a;
+--failed: #ef4444;
 ```
 
 ---
@@ -55,7 +59,7 @@
 | Token | 值 |
 |-------|-----|
 | 字体 | `system-ui, -apple-system, sans-serif` |
-| 圆角 | `--radius: 12px` / `--radius-sm: 6px` |
+| 圆角 | `--radius: 10px` / `--radius-sm: 6px` |
 | 大标题字间距 | `-0.5px` |
 | 中标题字间距 | `-0.3px` |
 | 标题行高 | `1.2 ~ 1.3` |
@@ -68,11 +72,11 @@
 
 | 组件 | 方案 | 规格 |
 |------|------|------|
-| **AppHeader** | D 渐变底边 | 高度 56px；纯色 accent logo；底部 2px 渐变线（accent → transparent，50% 宽度消失）；右侧胶囊形日/夜切换器 |
+| **AppHeader** | 简洁分隔线 | 高度 56px；纯文字 logo（font-semibold，不着色）；底部 1px border 分隔；右侧胶囊形日/夜切换器 |
 | **ProgramCard** | B+E 混合 | 两列网格；SVG 图标 + 环形进度指示；纵向排列（图标 → 标题 → 描述 → 进度） |
 | **SubjectGroup** | F 手风琴+时间线 | 手风琴折叠 subject；展开态左侧 3px accent 边框；lesson 用时间线串联；chevron 旋转 180°/250ms |
-| **ProgressBar** | C 渐变活力 | 静态双色渐变（`#6c5ce7 → #a29bfe`）；无 shimmer；圆角与容器一致 |
-| **StatusBadge** | C Ghost | 半透明彩色背景（各状态色 15% opacity）；无 glow box-shadow；字号 12px |
+| **ProgressBar** | 实色填充 | 实色 accent 填充（完成态用 completed 色）；无渐变、无 shimmer；圆角与容器一致 |
+| **StatusBadge** | Ghost 文字 | 半透明彩色背景（各状态色 12% opacity）；无 glow box-shadow；无呼吸/脉冲动画；字号 12px |
 
 ---
 

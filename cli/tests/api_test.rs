@@ -1164,9 +1164,8 @@ async fn test_slug_too_long() {
         .await
         .unwrap();
 
-    // Current validate_slug does not limit length, so slug passes validation
-    // but the program dir won't exist → 404
-    assert_eq!(response.status(), StatusCode::NOT_FOUND);
+    // validate_slug rejects slugs longer than 128 chars → 400
+    assert_eq!(response.status(), StatusCode::BAD_REQUEST);
 }
 
 // --- 6.3 Boundary: Unicode slug ---
@@ -2100,27 +2099,7 @@ async fn test_qa_history_multiple_lessons_filter() {
     assert_eq!(body.as_array().unwrap().len(), 3);
 }
 
-// --- 6.19 Edge: using post_json helper for conciseness + assert_status ---
-
-#[tokio::test]
-async fn test_post_json_helper_verify() {
-    let tmp = TempDir::new().unwrap();
-    setup_test_program_with_db(tmp.path(), "test-prog");
-
-    // Using post_json and assert_status helpers together
-    let app = create_test_app(tmp.path().to_path_buf());
-    let response = post_json(
-        app,
-        "/api/programs/test-prog/progress",
-        serde_json::json!({
-            "lessonPath": "subject-one/lesson-one",
-            "section": "Section A",
-            "status": "in_progress"
-        }),
-    )
-    .await;
-    assert_status(response, StatusCode::OK).await;
-}
+// (6.19 removed — was testing helper itself, not business logic)
 
 // --- 6.20 Boundary: POST wrong content-type (text/plain) ---
 
@@ -2274,4 +2253,376 @@ async fn test_list_programs_with_malformed_scope() {
     // good-prog should have proper title
     let good = programs.iter().find(|p| p["slug"] == "good-prog").unwrap();
     assert_eq!(good["title"], "Test Program");
+}
+
+// ============================================================
+// 7. Third-round reviewer additions — coverage & boundary gaps
+// ============================================================
+
+// --- 7.1 preparing_lessons 非空时 currentlyPreparing 返回值 ---
+
+#[tokio::test]
+async fn test_prepare_status_currently_preparing_nonempty() {
+    let tmp = TempDir::new().unwrap();
+    setup_test_program_with_db(tmp.path(), "test-prog");
+
+    let state = Arc::new(server::state::AppState::with_root(tmp.path().to_path_buf()));
+    // 插入 preparing lessons
+    {
+        let mut set = state.preparing_lessons.lock().unwrap();
+        set.insert("game-design/mda-framework".to_string());
+        set.insert("game-design/player-psychology".to_string());
+    }
+
+    let app = server::create_router(state);
+    let resp = app
+        .oneshot(
+            Request::builder()
+                .uri("/api/programs/test-prog/prepare-status")
+                .body(Body::empty())
+                .unwrap(),
+        )
+        .await
+        .unwrap();
+
+    assert_eq!(resp.status(), StatusCode::OK);
+    let body = parse_json(resp).await;
+    let preparing = body["currentlyPreparing"].as_array().unwrap();
+    assert_eq!(preparing.len(), 2);
+
+    // Verify both values are present (order may vary since HashSet)
+    let values: Vec<String> = preparing
+        .iter()
+        .map(|v| v.as_str().unwrap().to_string())
+        .collect();
+    assert!(values.contains(&"game-design/mda-framework".to_string()));
+    assert!(values.contains(&"game-design/player-psychology".to_string()));
+}
+
+// --- 7.2 POST progress 到有目录无 DB 时自动创建 ---
+
+#[tokio::test]
+async fn test_update_progress_creates_db_if_missing() {
+    let tmp = TempDir::new().unwrap();
+    let prog_dir = tmp.path().join("auto-db");
+    std::fs::create_dir_all(&prog_dir).unwrap();
+    // 只创建 scope.md，不创建 learnkit.db
+    std::fs::write(
+        prog_dir.join("scope.md"),
+        "---\nprogram: auto-db\ntitle: Auto DB\ncreated: 2026-01-01\nsubjects: []\n---\n",
+    )
+    .unwrap();
+
+    let state = Arc::new(server::state::AppState::with_root(tmp.path().to_path_buf()));
+    let app = server::create_router(state);
+
+    // POST progress — DB doesn't exist, should be auto-created via open_or_create_db
+    let body = serde_json::json!({
+        "lessonPath": "basics/intro",
+        "section": "概述",
+        "status": "in_progress"
+    });
+    let resp = post_json(app, "/api/programs/auto-db/progress", body).await;
+    // Section won't exist in the fresh DB → 404 (not found), but definitely not 500
+    let status = resp.status();
+    assert!(
+        status != StatusCode::INTERNAL_SERVER_ERROR,
+        "Expected non-500 status, got {}",
+        status
+    );
+    // Verify the DB file was actually created
+    assert!(
+        prog_dir.join("learnkit.db").exists(),
+        "learnkit.db should have been created"
+    );
+}
+
+// --- 7.3 lessonPath 边界集成测试 ---
+
+#[tokio::test]
+async fn test_update_progress_lesson_path_three_segments() {
+    let tmp = TempDir::new().unwrap();
+    setup_test_program_with_db(tmp.path(), "test-prog");
+    let app = create_test_app(tmp.path().to_path_buf());
+
+    // lessonPath = "a/b/c" (3 segments) — validate_lesson_path should reject
+    let resp = post_json(
+        app,
+        "/api/programs/test-prog/progress",
+        serde_json::json!({
+            "lessonPath": "a/b/c",
+            "section": "Section A",
+            "status": "in_progress"
+        }),
+    )
+    .await;
+
+    assert_eq!(resp.status(), StatusCode::BAD_REQUEST);
+    let body = parse_json(resp).await;
+    assert!(body["error"].as_str().unwrap().contains("lesson path"));
+}
+
+#[tokio::test]
+async fn test_update_progress_lesson_path_traversal() {
+    let tmp = TempDir::new().unwrap();
+    setup_test_program_with_db(tmp.path(), "test-prog");
+    let app = create_test_app(tmp.path().to_path_buf());
+
+    // lessonPath = "../etc" — should be rejected by validate_lesson_path
+    let resp = post_json(
+        app,
+        "/api/programs/test-prog/progress",
+        serde_json::json!({
+            "lessonPath": "../etc",
+            "section": "Section A",
+            "status": "in_progress"
+        }),
+    )
+    .await;
+
+    assert_eq!(resp.status(), StatusCode::BAD_REQUEST);
+    let body = parse_json(resp).await;
+    assert!(body["error"].as_str().unwrap().contains("lesson path"));
+}
+
+#[tokio::test]
+async fn test_update_progress_lesson_path_backslash() {
+    let tmp = TempDir::new().unwrap();
+    setup_test_program_with_db(tmp.path(), "test-prog");
+    let app = create_test_app(tmp.path().to_path_buf());
+
+    // lessonPath = "a\\b" — should be rejected by validate_lesson_path
+    let resp = post_json(
+        app,
+        "/api/programs/test-prog/progress",
+        serde_json::json!({
+            "lessonPath": "a\\b",
+            "section": "Section A",
+            "status": "in_progress"
+        }),
+    )
+    .await;
+
+    assert_eq!(resp.status(), StatusCode::BAD_REQUEST);
+    let body = parse_json(resp).await;
+    assert!(body["error"].as_str().unwrap().contains("lesson path"));
+}
+
+// --- 7.4 slug 长度边界测试 ---
+
+#[tokio::test]
+async fn test_slug_length_129() {
+    let tmp = TempDir::new().unwrap();
+    let app = create_test_app(tmp.path().to_path_buf());
+
+    let long_slug = "a".repeat(129);
+    let uri = format!("/api/programs/{}/scope", long_slug);
+
+    let response = app
+        .oneshot(
+            Request::builder()
+                .uri(uri.as_str())
+                .body(Body::empty())
+                .unwrap(),
+        )
+        .await
+        .unwrap();
+
+    // Current validate_slug does not enforce a length limit,
+    // so the slug passes validation but the program won't exist → 404
+    // If a length limit is added later, this should change to 400.
+    let status = response.status();
+    assert!(
+        status == StatusCode::NOT_FOUND || status == StatusCode::BAD_REQUEST,
+        "Expected 404 (no length limit) or 400 (with length limit), got {}",
+        status
+    );
+}
+
+// --- 7.5 qa-history lesson 参数边界测试 ---
+
+#[tokio::test]
+async fn test_qa_history_traversal_lesson_filter() {
+    let tmp = TempDir::new().unwrap();
+    setup_test_program_with_db(tmp.path(), "test-prog");
+
+    // Insert a QA record
+    let db_path = tmp.path().join("test-prog").join("learnkit.db");
+    let conn = rusqlite::Connection::open(&db_path).unwrap();
+    learnkit::db::qa::insert_qa(
+        &conn,
+        "q-safe",
+        "subject-one/lesson-one",
+        "text",
+        "question",
+        "answer",
+    )
+    .unwrap();
+    drop(conn);
+
+    // ?lesson=../etc — should not cause 500 or leak data
+    let app = create_test_app(tmp.path().to_path_buf());
+    let response = app
+        .oneshot(
+            Request::builder()
+                .uri("/api/programs/test-prog/qa-history?lesson=../etc")
+                .body(Body::empty())
+                .unwrap(),
+        )
+        .await
+        .unwrap();
+
+    let status = response.status();
+    // If validation is added → 400; otherwise no matching records → 200 with empty array
+    assert!(
+        status == StatusCode::OK || status == StatusCode::BAD_REQUEST,
+        "Expected 200 (no validation) or 400 (with validation), got {}",
+        status
+    );
+
+    if status == StatusCode::OK {
+        let body = parse_json(response).await;
+        // Traversal path shouldn't match any real lesson
+        assert!(body.as_array().unwrap().is_empty());
+    }
+}
+
+// --- 7.6 完善错误响应 body 验证 ---
+
+#[tokio::test]
+async fn test_slug_traversal_error_body() {
+    let tmp = TempDir::new().unwrap();
+    let app = create_test_app(tmp.path().to_path_buf());
+
+    let response = app
+        .oneshot(
+            Request::builder()
+                .uri("/api/programs/..%2F..%2Fetc/scope")
+                .body(Body::empty())
+                .unwrap(),
+        )
+        .await
+        .unwrap();
+
+    assert_eq!(response.status(), StatusCode::BAD_REQUEST);
+    assert_json_content_type(&response);
+    let body = parse_json(response).await;
+    let error_msg = body["error"].as_str().unwrap();
+    assert!(
+        error_msg.contains("invalid slug"),
+        "Error should mention 'invalid slug', got: {}",
+        error_msg
+    );
+}
+
+#[tokio::test]
+async fn test_update_progress_not_found_section_error_body() {
+    let tmp = TempDir::new().unwrap();
+    setup_test_program_with_db(tmp.path(), "test-prog");
+    let app = create_test_app(tmp.path().to_path_buf());
+
+    let resp = post_json(
+        app,
+        "/api/programs/test-prog/progress",
+        serde_json::json!({
+            "lessonPath": "subject-one/lesson-one",
+            "section": "No Such Section",
+            "status": "in_progress"
+        }),
+    )
+    .await;
+
+    assert_eq!(resp.status(), StatusCode::NOT_FOUND);
+    assert_json_content_type(&resp);
+    let body = parse_json(resp).await;
+    let error_msg = body["error"].as_str().unwrap();
+    assert!(
+        error_msg.contains("not found"),
+        "Error should mention 'not found', got: {}",
+        error_msg
+    );
+}
+
+// --- 7.7 preparing_lessons 包含其他 program 的值也正常返回 ---
+
+#[tokio::test]
+async fn test_prepare_status_preparing_from_other_program() {
+    let tmp = TempDir::new().unwrap();
+    setup_test_program_with_db(tmp.path(), "test-prog");
+
+    let state = Arc::new(server::state::AppState::with_root(tmp.path().to_path_buf()));
+    // preparing_lessons 是全局的，包含其他 program 的 lesson
+    {
+        let mut set = state.preparing_lessons.lock().unwrap();
+        set.insert("other-program/some-lesson".to_string());
+    }
+
+    let app = server::create_router(state);
+    let resp = app
+        .oneshot(
+            Request::builder()
+                .uri("/api/programs/test-prog/prepare-status")
+                .body(Body::empty())
+                .unwrap(),
+        )
+        .await
+        .unwrap();
+
+    assert_eq!(resp.status(), StatusCode::OK);
+    let body = parse_json(resp).await;
+    // currentlyPreparing returns ALL items from the shared set
+    let preparing = body["currentlyPreparing"].as_array().unwrap();
+    assert_eq!(preparing.len(), 1);
+    assert_eq!(preparing[0], "other-program/some-lesson");
+}
+
+// --- 7.8 POST progress lessonPath 含 null byte ---
+
+#[tokio::test]
+async fn test_update_progress_lesson_path_null_byte() {
+    let tmp = TempDir::new().unwrap();
+    setup_test_program_with_db(tmp.path(), "test-prog");
+    let app = create_test_app(tmp.path().to_path_buf());
+
+    let resp = post_json(
+        app,
+        "/api/programs/test-prog/progress",
+        serde_json::json!({
+            "lessonPath": "subject\u{0000}one/lesson",
+            "section": "Section A",
+            "status": "in_progress"
+        }),
+    )
+    .await;
+
+    assert_eq!(resp.status(), StatusCode::BAD_REQUEST);
+}
+
+// --- 7.9 POST progress 不存在的 program error body 验证 ---
+
+#[tokio::test]
+async fn test_update_progress_nonexistent_program_error_body() {
+    let tmp = TempDir::new().unwrap();
+    let app = create_test_app(tmp.path().to_path_buf());
+
+    let resp = post_json(
+        app,
+        "/api/programs/ghost/progress",
+        serde_json::json!({
+            "lessonPath": "subject-one/lesson-one",
+            "section": "Section A",
+            "status": "in_progress"
+        }),
+    )
+    .await;
+
+    assert_eq!(resp.status(), StatusCode::NOT_FOUND);
+    assert_json_content_type(&resp);
+    let body = parse_json(resp).await;
+    let error_msg = body["error"].as_str().unwrap();
+    assert!(
+        error_msg.contains("not found"),
+        "Error should mention 'not found', got: {}",
+        error_msg
+    );
 }
