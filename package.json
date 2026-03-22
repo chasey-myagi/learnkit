@@ -1,0 +1,15 @@
+{
+  "name": "learnkit",
+  "version": "0.1.0",
+  "type": "module",
+  "description": "Personal learning toolkit — Claude Code Skills + Rust CLI + React WebUI",
+  "keywords": [
+    "claude-code",
+    "learning",
+    "education",
+    "skills",
+    "interactive-lessons"
+  ],
+  "author": "Chasey",
+  "license": "MIT"
+}

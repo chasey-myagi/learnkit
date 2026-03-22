@@ -1,0 +1,30 @@
+{
+  "$schema": "https://anthropic.com/claude-code/marketplace.schema.json",
+  "name": "learnkit",
+  "metadata": {
+    "description": "Personal learning toolkit — Claude Code Skills + Rust CLI + React WebUI"
+  },
+  "owner": {
+    "name": "Chasey"
+  },
+  "plugins": [
+    {
+      "name": "learnkit",
+      "description": "Transform any topic into structured, interactive HTML lessons. Skills: /learn-create, /learn-research, /learn-prepare, /learn-answer",
+      "version": "0.1.0",
+      "author": {
+        "name": "Chasey"
+      },
+      "source": "./",
+      "category": "learning",
+      "tags": [
+        "learning",
+        "education",
+        "knowledge",
+        "study",
+        "lessons",
+        "interactive"
+      ]
+    }
+  ]
+}

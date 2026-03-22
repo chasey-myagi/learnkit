@@ -52,12 +52,12 @@ export function LessonItem({ lesson, programSlug, isLast }: LessonItemProps) {
       onMouseEnter={(e) => {
         e.currentTarget.style.background = 'var(--lk-accent-hover)';
         const arrow = e.currentTarget.querySelector('.lesson-arrow') as HTMLElement | null;
-        if (arrow) { arrow.style.opacity = '1'; }
+        if (arrow) { arrow.style.opacity = '1'; arrow.style.transform = 'translateX(0)'; }
       }}
       onMouseLeave={(e) => {
         e.currentTarget.style.background = 'transparent';
         const arrow = e.currentTarget.querySelector('.lesson-arrow') as HTMLElement | null;
-        if (arrow) { arrow.style.opacity = '0'; }
+        if (arrow) { arrow.style.opacity = '0'; arrow.style.transform = 'translateX(-2px)'; }
       }}
     >
       {/* Timeline node dot */}
@@ -77,32 +77,36 @@ export function LessonItem({ lesson, programSlug, isLast }: LessonItemProps) {
         }}
       />
 
-      {/* Hover arrow */}
-      <div
-        className="lesson-arrow pointer-events-none absolute text-xs"
-        aria-hidden="true"
-        style={{
-          right: 12,
-          top: '50%',
-          transform: 'translateY(-50%)',
-          color: 'var(--lk-text-secondary)',
-          opacity: 0,
-          transition: 'opacity 0.15s ease',
-        }}
-      >
-        &rarr;
-      </div>
-
       {/* Content */}
       <div className="flex items-center justify-between gap-3">
         <span
-          className="min-w-0 truncate text-sm font-medium"
-          style={{ lineHeight: '1.6' }}
+          className="min-w-0 truncate text-sm"
+          style={{
+            lineHeight: '1.6',
+            fontWeight: lesson.status === 'in_progress' ? 600 : 400,
+            color: lesson.status === 'pending' ? 'var(--lk-text-secondary)' : 'var(--lk-text)',
+          }}
           title={lesson.title}
         >
           {lesson.title || '未命名课时'}
         </span>
-        <StatusBadge status={lesson.status} />
+        <div className="flex items-center gap-2 shrink-0">
+          <StatusBadge status={lesson.status} />
+          {isClickable && (
+            <span
+              className="lesson-arrow text-xs"
+              aria-hidden="true"
+              style={{
+                color: 'var(--lk-text-secondary)',
+                opacity: 0,
+                transition: 'opacity 0.15s ease, transform 0.15s ease',
+                transform: 'translateX(-2px)',
+              }}
+            >
+              &rsaquo;
+            </span>
+          )}
+        </div>
       </div>
 
       {lesson.status === 'completed' && lesson.completed_at && (

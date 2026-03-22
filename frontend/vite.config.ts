@@ -12,8 +12,8 @@ export default defineConfig({
   },
   server: {
     proxy: {
-      '/api': 'http://localhost:3377',
-      '/lessons': 'http://localhost:3377',
+      '/api': 'http://localhost:13135',
+      '/lessons': 'http://localhost:13135',
     },
   },
 })

@@ -1,0 +1,11 @@
+{
+  "name": "learnkit",
+  "description": "Personal learning toolkit — transform any topic into structured, interactive HTML lessons with Claude Code",
+  "version": "0.1.0",
+  "author": {
+    "name": "Chasey",
+    "email": "chasey.myagi@gmail.com"
+  },
+  "repository": "https://github.com/chasey-myagi/learnkit",
+  "skills": "./.claude/skills"
+}

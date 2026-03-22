@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LearnKit — 应用图标设计方案</title>
+<style>
+  :root {
+    --bg: #0a0a12;
+    --card: #141425;
+    --border: #1e1e3a;
+    --text: #e0e0e8;
+    --sub: #7878a0;
+    --accent: #3b82f6;
+    --accent-dark: #2563eb;
+    --card-radius: 14px;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: system-ui, -apple-system, 'Segoe UI', sans-serif;
+    background: var(--bg); color: var(--text); line-height: 1.6;
+  }
+  .page-header { max-width: 1100px; margin: 0 auto; padding: 48px 32px 0; }
+  .page-header h1 { font-size: 30px; font-weight: 700; letter-spacing: -0.5px; }
+  .page-header h1 span { color: var(--accent); }
+  .page-header p { color: var(--sub); margin-top: 6px; font-size: 15px; }
+  .section { max-width: 1100px; margin: 48px auto 0; padding: 0 32px; }
+  .section-header { display: flex; align-items: baseline; gap: 14px; margin-bottom: 10px; }
+  .section-label {
+    font-size: 13px; font-weight: 700; color: var(--accent);
+    background: rgba(59,130,246,0.12); padding: 3px 10px; border-radius: 6px;
+    letter-spacing: 1px; text-transform: uppercase;
+  }
+  .section-title { font-size: 20px; font-weight: 600; }
+  .section-desc { color: var(--sub); font-size: 14px; margin-bottom: 24px; }
+  .icon-showcase { display: flex; gap: 24px; flex-wrap: wrap; }
+  .icon-panel {
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: var(--card-radius); padding: 28px 32px; flex: 1; min-width: 300px;
+  }
+  .icon-panel-label {
+    font-size: 12px; font-weight: 600; color: var(--sub);
+    text-transform: uppercase; letter-spacing: 1px; margin-bottom: 20px;
+  }
+  .icon-row { display: flex; align-items: flex-end; gap: 28px; }
+  .icon-cell { display: flex; flex-direction: column; align-items: center; gap: 8px; }
+  .icon-cell .size-label { font-size: 11px; color: var(--sub); font-variant-numeric: tabular-nums; }
+  .icon-panel.dark { background: #0d0d1a; }
+  .icon-panel.light { background: #f0f2f7; border-color: #d0d4e0; }
+  .icon-panel.light .icon-panel-label { color: #6b7280; }
+  .icon-panel.light .size-label { color: #9ca3af; }
+  .compare-section { max-width: 1100px; margin: 64px auto 0; padding: 0 32px 80px; }
+  .compare-title { font-size: 22px; font-weight: 700; margin-bottom: 8px; }
+  .compare-desc { color: var(--sub); font-size: 14px; margin-bottom: 28px; }
+  .compare-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 16px; }
+  .compare-card {
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: var(--card-radius); padding: 24px 16px;
+    display: flex; flex-direction: column; align-items: center; gap: 14px;
+    transition: border-color .2s, transform .2s; cursor: default;
+  }
+  .compare-card:hover { border-color: var(--accent); transform: translateY(-3px); }
+  .compare-card .badge { font-size: 11px; font-weight: 700; color: var(--accent); letter-spacing: 1.5px; }
+  .compare-card .icon-wrap { width: 72px; height: 72px; display: flex; align-items: center; justify-content: center; }
+  .compare-card .card-name { font-size: 13px; font-weight: 600; text-align: center; }
+  .compare-card .card-tags { display: flex; gap: 6px; flex-wrap: wrap; justify-content: center; }
+  .compare-card .tag { font-size: 10px; color: var(--sub); background: rgba(120,120,160,0.1); padding: 2px 8px; border-radius: 4px; }
+  .compare-light { display: grid; grid-template-columns: repeat(5, 1fr); gap: 16px; margin-top: 16px; }
+  .compare-light .compare-card { background: #f0f2f7; border-color: #d0d4e0; }
+  .compare-light .compare-card:hover { border-color: var(--accent); }
+  .compare-light .compare-card .card-name { color: #1a1a2e; }
+  .compare-light .compare-card .badge { color: var(--accent-dark); }
+  .compare-light .compare-card .tag { color: #6b7280; background: rgba(107,114,128,0.12); }
+  @media (max-width: 768px) {
+    .compare-grid, .compare-light { grid-template-columns: repeat(3, 1fr); }
+    .icon-showcase { flex-direction: column; }
+  }
+</style>
+</head>
+<body>
+
+<div class="page-header">
+  <div>
+    <h1>LearnKit — <span>应用图标</span>设计方案</h1>
+    <p>5 种风格方向，4 种尺寸预览（16 / 32 / 64 / 128 px），深色 + 浅色背景对照</p>
+  </div>
+</div>
+
+<script>
+// 图标 SVG 模板（纯内容，不含外层 <svg>）
+const icons = {
+  a: `<rect width="128" height="128" rx="28" fill="#2563eb"/>
+<rect width="128" height="128" rx="28" fill="url(#ga)"/>
+<defs><linearGradient id="ga" x1="0" y1="0" x2="128" y2="128" gradientUnits="userSpaceOnUse"><stop stop-color="#3b82f6"/><stop offset="1" stop-color="#1d4ed8"/></linearGradient></defs>
+<path d="M36 24 L36 96 L52 84 L68 96 L68 24 Z" fill="rgba(255,255,255,0.25)" stroke="#fff" stroke-width="5" stroke-linejoin="round" stroke-linecap="round"/>
+<line x1="44" y1="42" x2="60" y2="42" stroke="rgba(255,255,255,0.4)" stroke-width="3" stroke-linecap="round"/>
+<line x1="44" y1="52" x2="56" y2="52" stroke="rgba(255,255,255,0.3)" stroke-width="2.5" stroke-linecap="round"/>
+<path d="M84 88 A26 26 0 0 1 96 58" stroke="#fff" stroke-width="6" fill="none" stroke-linecap="round" opacity="0.85"/>
+<circle cx="96" cy="58" r="4.5" fill="#fff" opacity="0.85"/>
+<circle cx="84" cy="88" r="4.5" fill="#fff" opacity="0.85"/>`,
+
+  b: `<rect width="128" height="128" rx="28" fill="#2563eb"/>
+<rect width="128" height="128" rx="28" fill="url(#gb)"/>
+<defs><linearGradient id="gb" x1="0" y1="0" x2="128" y2="128" gradientUnits="userSpaceOnUse"><stop stop-color="#3b82f6"/><stop offset="1" stop-color="#1e40af"/></linearGradient></defs>
+<path d="M34 32 L34 96 C34 98 36 100 38 100 L62 100 C64 100 66 98 66 96 L66 32 C66 30 64 28 62 28 L38 28 C36 28 34 30 34 32Z" fill="rgba(255,255,255,0.15)" stroke="#fff" stroke-width="4.5" stroke-linejoin="round"/>
+<path d="M66 32 L66 96 C66 98 68 100 70 100 L90 100 C92 100 94 98 94 96 L94 32 C94 30 92 28 90 28 L70 28 C68 28 66 30 66 32Z" fill="rgba(255,255,255,0.25)" stroke="#fff" stroke-width="4.5" stroke-linejoin="round"/>
+<line x1="66" y1="28" x2="66" y2="100" stroke="#fff" stroke-width="4.5"/>
+<line x1="74" y1="44" x2="86" y2="44" stroke="rgba(255,255,255,0.5)" stroke-width="3" stroke-linecap="round"/>
+<line x1="74" y1="54" x2="86" y2="54" stroke="rgba(255,255,255,0.4)" stroke-width="2.5" stroke-linecap="round"/>
+<line x1="74" y1="64" x2="82" y2="64" stroke="rgba(255,255,255,0.3)" stroke-width="2.5" stroke-linecap="round"/>
+<polyline points="42,62 48,68 58,52" stroke="#fff" stroke-width="5" fill="none" stroke-linecap="round" stroke-linejoin="round" opacity="0.9"/>`,
+
+  c: `<rect width="128" height="128" rx="28" fill="#2563eb"/>
+<rect width="128" height="128" rx="28" fill="url(#gc)"/>
+<defs><linearGradient id="gc" x1="0" y1="0" x2="128" y2="128" gradientUnits="userSpaceOnUse"><stop stop-color="#3b82f6"/><stop offset="1" stop-color="#1d4ed8"/></linearGradient></defs>
+<rect x="40" y="24" width="58" height="76" rx="8" fill="rgba(255,255,255,0.12)" transform="rotate(-6 69 62)"/>
+<rect x="36" y="28" width="58" height="76" rx="8" fill="rgba(255,255,255,0.25)" transform="rotate(-3 65 66)"/>
+<rect x="30" y="32" width="58" height="76" rx="8" fill="#fff"/>
+<polyline points="44,70 54,80 74,54" stroke="#2563eb" stroke-width="7" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+<line x1="42" y1="44" x2="66" y2="44" stroke="#c0d0e8" stroke-width="3" stroke-linecap="round"/>
+<line x1="42" y1="52" x2="56" y2="52" stroke="#dde4ee" stroke-width="2.5" stroke-linecap="round"/>`,
+
+  d: `<rect width="128" height="128" rx="28" fill="#2563eb"/>
+<rect width="128" height="128" rx="28" fill="url(#gd)"/>
+<defs><linearGradient id="gd" x1="0" y1="0" x2="128" y2="128" gradientUnits="userSpaceOnUse"><stop stop-color="#3b82f6"/><stop offset="1" stop-color="#1d4ed8"/></linearGradient></defs>
+<polygon points="64,30 80,39.2 80,57.8 64,67 48,57.8 48,39.2" fill="rgba(255,255,255,0.9)" stroke="#fff" stroke-width="3.5" stroke-linejoin="round"/>
+<polygon points="42,62 58,71.2 58,89.8 42,99 26,89.8 26,71.2" fill="none" stroke="rgba(255,255,255,0.45)" stroke-width="3.5" stroke-linejoin="round"/>
+<polygon points="86,62 102,71.2 102,89.8 86,99 70,89.8 70,71.2" fill="none" stroke="rgba(255,255,255,0.45)" stroke-width="3.5" stroke-linejoin="round"/>
+<line x1="56" y1="61" x2="50" y2="67" stroke="rgba(255,255,255,0.6)" stroke-width="3" stroke-linecap="round"/>
+<line x1="72" y1="61" x2="78" y2="67" stroke="rgba(255,255,255,0.6)" stroke-width="3" stroke-linecap="round"/>`,
+
+  e: `<rect width="128" height="128" rx="28" fill="#2563eb"/>
+<rect width="128" height="128" rx="28" fill="url(#ge)"/>
+<defs><linearGradient id="ge" x1="0" y1="0" x2="128" y2="128" gradientUnits="userSpaceOnUse"><stop stop-color="#3b82f6"/><stop offset="1" stop-color="#1d4ed8"/></linearGradient></defs>
+<circle cx="64" cy="64" r="36" stroke="#fff" stroke-width="5" fill="none"/>
+<circle cx="64" cy="64" r="5" fill="rgba(255,255,255,0.5)" stroke="#fff" stroke-width="2.5"/>
+<polygon points="82,40 60,60 68,62 64,64" fill="#fff" stroke="#fff" stroke-width="2" stroke-linejoin="round"/>
+<polygon points="46,88 68,68 60,66 64,64" fill="rgba(255,255,255,0.4)" stroke="rgba(255,255,255,0.4)" stroke-width="2" stroke-linejoin="round"/>
+<line x1="64" y1="30" x2="64" y2="24" stroke="rgba(255,255,255,0.5)" stroke-width="3.5" stroke-linecap="round"/>
+<line x1="64" y1="104" x2="64" y2="98" stroke="rgba(255,255,255,0.3)" stroke-width="3.5" stroke-linecap="round"/>
+<line x1="28" y1="64" x2="24" y2="64" stroke="rgba(255,255,255,0.3)" stroke-width="3.5" stroke-linecap="round"/>
+<line x1="104" y1="64" x2="100" y2="64" stroke="rgba(255,255,255,0.3)" stroke-width="3.5" stroke-linecap="round"/>`
+};
+
+function makeSVG(key, size) {
+  // 每个实例用唯一 gradient id 防止冲突
+  const uid = key + '_' + size + '_' + Math.random().toString(36).slice(2,6);
+  const content = icons[key].replace(new RegExp(`id="g${key}"`, 'g'), `id="g${uid}"`)
+                              .replace(new RegExp(`url\\(#g${key}\\)`, 'g'), `url(#g${uid})`);
+  return `<svg width="${size}" height="${size}" viewBox="0 0 128 128" xmlns="http://www.w3.org/2000/svg">${content}</svg>`;
+}
+
+function renderSection(key, label, title, desc) {
+  const sizes = [16, 32, 64, 128];
+  const darkCells = sizes.map(s =>
+    `<div class="icon-cell">${makeSVG(key, s)}<span class="size-label">${s}px</span></div>`
+  ).join('');
+  const lightCells = sizes.map(s =>
+    `<div class="icon-cell">${makeSVG(key, s)}<span class="size-label">${s}px</span></div>`
+  ).join('');
+
+  return `<div class="section">
+  <div class="section-header">
+    <span class="section-label">${label}</span>
+    <span class="section-title">${title}</span>
+  </div>
+  <p class="section-desc">${desc}</p>
+  <div class="icon-showcase">
+    <div class="icon-panel dark">
+      <div class="icon-panel-label">深色背景</div>
+      <div class="icon-row">${darkCells}</div>
+    </div>
+    <div class="icon-panel light">
+      <div class="icon-panel-label">浅色背景</div>
+      <div class="icon-row">${lightCells}</div>
+    </div>
+  </div>
+</div>`;
+}
+
+const sections = [
+  ['a', 'A', '书签 + 进度弧', '书签形状搭配 1/4 圆弧，表示学习进度。两个简洁元素组合，传达"标记 + 进步"的含义。'],
+  ['b', 'B', '打开的笔记本', '打开的笔记本，左页有勾号标记，右页有横线表示内容。抽象简化，传达"学习笔记 + 完成"的含义。'],
+  ['c', 'C', '堆叠卡片', '三张微微错开的卡片堆叠，暗示多个学习教案。最前面的卡片有一个勾号，表示学习进度和完成感。'],
+  ['d', 'D', '六边形知识网络', '2-3 个六边形互相连接，类似知识图谱/蜂巢结构。中间高亮，线条连接表示知识关联。'],
+  ['e', 'E', '指南针/罗盘', '简化的指南针图标，表示学习方向与导航。指针朝右上方，象征向前进步。'],
+];
+
+document.write(sections.map(s => renderSection(...s)).join(''));
+
+// 对比区
+const compareItems = [
+  ['a', 'A', '书签 + 进度弧', '标记', '进度'],
+  ['b', 'B', '打开的笔记本', '笔记', '完成'],
+  ['c', 'C', '堆叠卡片', '教案', '进度'],
+  ['d', 'D', '六边形网络', '图谱', '关联'],
+  ['e', 'E', '指南针', '方向', '导航'],
+];
+
+function renderCompareCard(item) {
+  return `<div class="compare-card">
+    <span class="badge">${item[1]}</span>
+    <div class="icon-wrap">${makeSVG(item[0], 64)}</div>
+    <span class="card-name">${item[2]}</span>
+    <div class="card-tags"><span class="tag">${item[3]}</span><span class="tag">${item[4]}</span></div>
+  </div>`;
+}
+
+document.write(`<div class="compare-section">
+  <h2 class="compare-title">对比一览</h2>
+  <p class="compare-desc">深色背景 + 浅色背景，64px 尺寸并排对比</p>
+  <div class="compare-grid">${compareItems.map(renderCompareCard).join('')}</div>
+  <div class="compare-light">${compareItems.map(renderCompareCard).join('')}</div>
+</div>`);
+</script>
+
+</body>
+</html>

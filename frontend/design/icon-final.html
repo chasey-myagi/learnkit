@@ -1,0 +1,461 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LearnKit — 最终图标方案</title>
+<style>
+  :root {
+    --bg: #08080f;
+    --surface: #0d0d17;
+    --card: #141425;
+    --border: #1e1e3a;
+    --text: #e0e0e8;
+    --sub: #7878a0;
+    --accent: #3b82f6;
+    --radius: 14px;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: system-ui, -apple-system, 'Segoe UI', sans-serif;
+    background: var(--bg); color: var(--text); line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* Header */
+  .page-header {
+    max-width: 960px; margin: 0 auto; padding: 56px 32px 0;
+  }
+  .page-header h1 {
+    font-size: 32px; font-weight: 700; letter-spacing: -0.5px;
+  }
+  .page-header h1 span { color: var(--accent); }
+  .page-header p { color: var(--sub); margin-top: 6px; font-size: 15px; }
+
+  /* Sections */
+  .section {
+    max-width: 960px; margin: 48px auto 0; padding: 0 32px;
+  }
+  .section-title {
+    font-size: 18px; font-weight: 600; margin-bottom: 6px;
+    display: flex; align-items: center; gap: 10px;
+  }
+  .section-title::before {
+    content: ''; display: block; width: 3px; height: 18px;
+    background: var(--accent); border-radius: 2px;
+  }
+  .section-desc { color: var(--sub); font-size: 13px; margin-bottom: 20px; }
+
+  /* Icon grid */
+  .icon-row {
+    display: flex; align-items: flex-end; gap: 32px; flex-wrap: wrap;
+  }
+  .icon-cell {
+    display: flex; flex-direction: column; align-items: center; gap: 8px;
+  }
+  .icon-cell .label {
+    font-size: 11px; color: var(--sub); font-variant-numeric: tabular-nums;
+    font-family: 'SF Mono', 'Fira Code', monospace;
+  }
+
+  /* Panels */
+  .panel {
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 28px 32px;
+  }
+  .panel-label {
+    font-size: 11px; font-weight: 600; color: var(--sub);
+    text-transform: uppercase; letter-spacing: 1.2px; margin-bottom: 20px;
+  }
+  .panel.light {
+    background: #f2f4f8; border-color: #d4d8e0;
+  }
+  .panel.light .panel-label { color: #7b8298; }
+  .panel.light .label { color: #9ba2b0; }
+  .panel.colored {
+    background: linear-gradient(135deg, #1e3a5f 0%, #0f1b2d 100%);
+    border-color: #2a4a6a;
+  }
+
+  .panel-grid {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 16px;
+  }
+  @media (max-width: 640px) {
+    .panel-grid { grid-template-columns: 1fr; }
+  }
+
+  /* Header sim */
+  .header-sim {
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: var(--radius); overflow: hidden;
+  }
+  .header-bar {
+    display: flex; align-items: center; gap: 10px; padding: 0 20px;
+    height: 48px; border-bottom: 1px solid var(--border);
+  }
+  .header-bar .title {
+    font-size: 15px; font-weight: 600; letter-spacing: -0.3px;
+  }
+  .header-content {
+    padding: 32px 20px; color: var(--sub); font-size: 13px;
+    text-align: center;
+  }
+
+  .header-sim.light {
+    background: #fff; border-color: #e0e4ea;
+  }
+  .header-sim.light .header-bar {
+    border-bottom-color: #e8ecf0;
+  }
+  .header-sim.light .header-bar .title { color: #1a1a2e; }
+  .header-sim.light .header-content { color: #9ba2b0; }
+
+  /* Tab sim */
+  .tab-sim {
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 20px 24px;
+    display: flex; flex-direction: column; gap: 12px;
+  }
+  .tab-bar {
+    display: flex; gap: 2px;
+  }
+  .tab {
+    display: flex; align-items: center; gap: 6px;
+    padding: 6px 14px; border-radius: 8px 8px 0 0;
+    font-size: 12px; color: var(--sub);
+    background: rgba(255,255,255,0.04);
+    border: 1px solid var(--border); border-bottom: none;
+    position: relative;
+  }
+  .tab.active {
+    background: var(--surface);
+    color: var(--text);
+    border-color: var(--border);
+  }
+  .tab.active::after {
+    content: ''; position: absolute; bottom: -1px; left: 0; right: 0;
+    height: 1px; background: var(--surface);
+  }
+  .tab .x { color: var(--sub); font-size: 10px; margin-left: 8px; opacity: 0.5; }
+
+  .tab-sim.light {
+    background: #f0f2f7; border-color: #d0d4e0;
+  }
+  .tab-sim.light .tab {
+    background: #e4e8ee; color: #6b7280;
+    border-color: #d0d4e0;
+  }
+  .tab-sim.light .tab.active {
+    background: #fff; color: #1a1a2e;
+    border-color: #d0d4e0;
+  }
+  .tab-sim.light .tab.active::after { background: #fff; }
+
+  /* Comparison */
+  .compare-row {
+    display: flex; gap: 16px; align-items: center; flex-wrap: wrap;
+  }
+  .compare-item {
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 20px;
+    display: flex; flex-direction: column; align-items: center; gap: 8px;
+    flex: 1; min-width: 140px;
+  }
+  .compare-item .tag {
+    font-size: 10px; color: var(--sub); background: rgba(120,120,160,0.1);
+    padding: 2px 8px; border-radius: 4px;
+  }
+  .compare-item .name { font-size: 12px; font-weight: 600; }
+
+  /* Footer */
+  .footer {
+    max-width: 960px; margin: 64px auto 0; padding: 32px;
+    border-top: 1px solid var(--border);
+    color: var(--sub); font-size: 12px;
+    text-align: center;
+    padding-bottom: 80px;
+  }
+</style>
+</head>
+<body>
+
+<div class="page-header">
+  <h1>LearnKit — <span>最终图标</span></h1>
+  <p>方案 C「堆叠卡片」 — 打磨完成，多场景预览</p>
+</div>
+
+<!-- 1. 主图标 — 全尺寸展示 -->
+<div class="section">
+  <div class="section-title">主图标 icon.svg</div>
+  <p class="section-desc">viewBox 512x512，纯色蓝底，三张堆叠卡片 + 勾号。无渐变、无阴影、无发光。</p>
+
+  <div class="panel-grid">
+    <div class="panel">
+      <div class="panel-label">深色背景</div>
+      <div class="icon-row">
+        <div class="icon-cell">
+          <img src="../public/icon.svg" width="128" height="128">
+          <span class="label">128</span>
+        </div>
+        <div class="icon-cell">
+          <img src="../public/icon.svg" width="64" height="64">
+          <span class="label">64</span>
+        </div>
+        <div class="icon-cell">
+          <img src="../public/icon.svg" width="32" height="32">
+          <span class="label">32</span>
+        </div>
+        <div class="icon-cell">
+          <img src="../public/icon.svg" width="16" height="16">
+          <span class="label">16</span>
+        </div>
+      </div>
+    </div>
+    <div class="panel light">
+      <div class="panel-label">浅色背景</div>
+      <div class="icon-row">
+        <div class="icon-cell">
+          <img src="../public/icon.svg" width="128" height="128">
+          <span class="label">128</span>
+        </div>
+        <div class="icon-cell">
+          <img src="../public/icon.svg" width="64" height="64">
+          <span class="label">64</span>
+        </div>
+        <div class="icon-cell">
+          <img src="../public/icon.svg" width="32" height="32">
+          <span class="label">32</span>
+        </div>
+        <div class="icon-cell">
+          <img src="../public/icon.svg" width="16" height="16">
+          <span class="label">16</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 2. 大尺寸特写 -->
+<div class="section">
+  <div class="section-title">大尺寸特写</div>
+  <p class="section-desc">256px + 512px — 检查细节和光学平衡</p>
+
+  <div class="panel" style="display: flex; justify-content: center; gap: 48px; align-items: flex-end; flex-wrap: wrap;">
+    <div class="icon-cell">
+      <img src="../public/icon.svg" width="256" height="256">
+      <span class="label">256</span>
+    </div>
+    <div class="icon-cell">
+      <img src="../public/icon.svg" width="512" height="512">
+      <span class="label">512</span>
+    </div>
+  </div>
+</div>
+
+<!-- 3. Favicon — 全尺寸展示 -->
+<div class="section">
+  <div class="section-title">Favicon favicon.svg</div>
+  <p class="section-desc">为 16px 优化的简化版 — 单张卡片 + 文字线 + 粗勾号。三张卡片在 16px 太密，简化为单张保证清晰度。</p>
+
+  <div class="panel-grid">
+    <div class="panel">
+      <div class="panel-label">深色背景</div>
+      <div class="icon-row">
+        <div class="icon-cell">
+          <img src="../public/favicon.svg" width="128" height="128">
+          <span class="label">128 (放大)</span>
+        </div>
+        <div class="icon-cell">
+          <img src="../public/favicon.svg" width="64" height="64">
+          <span class="label">64</span>
+        </div>
+        <div class="icon-cell">
+          <img src="../public/favicon.svg" width="32" height="32">
+          <span class="label">32</span>
+        </div>
+        <div class="icon-cell">
+          <img src="../public/favicon.svg" width="16" height="16">
+          <span class="label">16</span>
+        </div>
+      </div>
+    </div>
+    <div class="panel light">
+      <div class="panel-label">浅色背景</div>
+      <div class="icon-row">
+        <div class="icon-cell">
+          <img src="../public/favicon.svg" width="128" height="128">
+          <span class="label">128 (放大)</span>
+        </div>
+        <div class="icon-cell">
+          <img src="../public/favicon.svg" width="64" height="64">
+          <span class="label">64</span>
+        </div>
+        <div class="icon-cell">
+          <img src="../public/favicon.svg" width="32" height="32">
+          <span class="label">32</span>
+        </div>
+        <div class="icon-cell">
+          <img src="../public/favicon.svg" width="16" height="16">
+          <span class="label">16</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 4. 浏览器标签模拟 -->
+<div class="section">
+  <div class="section-title">浏览器标签模拟</div>
+  <p class="section-desc">favicon 在真实浏览器标签中的效果</p>
+
+  <div class="panel-grid">
+    <div class="tab-sim">
+      <div class="panel-label">深色浏览器</div>
+      <div class="tab-bar">
+        <div class="tab active">
+          <img src="../public/favicon.svg" width="14" height="14">
+          <span>LearnKit</span>
+          <span class="x">x</span>
+        </div>
+        <div class="tab">
+          <span>New Tab</span>
+          <span class="x">x</span>
+        </div>
+      </div>
+    </div>
+    <div class="tab-sim light">
+      <div class="panel-label" style="color:#7b8298;">浅色浏览器</div>
+      <div class="tab-bar">
+        <div class="tab active">
+          <img src="../public/favicon.svg" width="14" height="14">
+          <span>LearnKit</span>
+          <span class="x">x</span>
+        </div>
+        <div class="tab">
+          <span>New Tab</span>
+          <span class="x">x</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 5. AppHeader 模拟 -->
+<div class="section">
+  <div class="section-title">AppHeader 集成效果</div>
+  <p class="section-desc">图标在应用顶栏旁边的效果</p>
+
+  <div class="panel-grid">
+    <!-- Dark header -->
+    <div class="header-sim">
+      <div class="header-bar">
+        <img src="../public/icon.svg" width="24" height="24">
+        <span class="title">LearnKit</span>
+      </div>
+      <div class="header-content">应用内容区域</div>
+    </div>
+
+    <!-- Light header -->
+    <div class="header-sim light">
+      <div class="header-bar">
+        <img src="../public/icon.svg" width="24" height="24">
+        <span class="title">LearnKit</span>
+      </div>
+      <div class="header-content">应用内容区域</div>
+    </div>
+  </div>
+</div>
+
+<!-- 6. 彩色背景测试 -->
+<div class="section">
+  <div class="section-title">彩色背景适应性</div>
+  <p class="section-desc">在不同背景色下的视觉效果</p>
+
+  <div style="display: flex; gap: 16px; flex-wrap: wrap;">
+    <div class="panel" style="background: #0f172a; flex: 1; min-width: 120px; display: flex; flex-direction: column; align-items: center; gap: 8px;">
+      <img src="../public/icon.svg" width="64" height="64">
+      <span class="label">#0f172a</span>
+    </div>
+    <div class="panel" style="background: #1e1b4b; border-color: #312e81; flex: 1; min-width: 120px; display: flex; flex-direction: column; align-items: center; gap: 8px;">
+      <img src="../public/icon.svg" width="64" height="64">
+      <span class="label">#1e1b4b</span>
+    </div>
+    <div class="panel" style="background: #f8fafc; border-color: #e2e8f0; flex: 1; min-width: 120px; display: flex; flex-direction: column; align-items: center; gap: 8px;">
+      <img src="../public/icon.svg" width="64" height="64">
+      <span class="label" style="color:#94a3b8;">#f8fafc</span>
+    </div>
+    <div class="panel" style="background: #fef3c7; border-color: #fbbf24; flex: 1; min-width: 120px; display: flex; flex-direction: column; align-items: center; gap: 8px;">
+      <img src="../public/icon.svg" width="64" height="64">
+      <span class="label" style="color:#92400e;">#fef3c7</span>
+    </div>
+    <div class="panel" style="background: #ecfdf5; border-color: #6ee7b7; flex: 1; min-width: 120px; display: flex; flex-direction: column; align-items: center; gap: 8px;">
+      <img src="../public/icon.svg" width="64" height="64">
+      <span class="label" style="color:#065f46;">#ecfdf5</span>
+    </div>
+  </div>
+</div>
+
+<!-- 7. icon vs favicon 对比 -->
+<div class="section">
+  <div class="section-title">主图标 vs Favicon 对比</div>
+  <p class="section-desc">两个版本在相同尺寸下的对比 — 验证视觉一致性</p>
+
+  <div class="panel" style="display: flex; gap: 48px; justify-content: center; flex-wrap: wrap;">
+    <div style="display: flex; flex-direction: column; align-items: center; gap: 16px;">
+      <span class="label">icon.svg (完整版)</span>
+      <div style="display: flex; gap: 20px; align-items: flex-end;">
+        <div class="icon-cell"><img src="../public/icon.svg" width="64" height="64"><span class="label">64</span></div>
+        <div class="icon-cell"><img src="../public/icon.svg" width="32" height="32"><span class="label">32</span></div>
+        <div class="icon-cell"><img src="../public/icon.svg" width="16" height="16"><span class="label">16</span></div>
+      </div>
+    </div>
+    <div style="width: 1px; background: var(--border); align-self: stretch;"></div>
+    <div style="display: flex; flex-direction: column; align-items: center; gap: 16px;">
+      <span class="label">favicon.svg (简化版)</span>
+      <div style="display: flex; gap: 20px; align-items: flex-end;">
+        <div class="icon-cell"><img src="../public/favicon.svg" width="64" height="64"><span class="label">64</span></div>
+        <div class="icon-cell"><img src="../public/favicon.svg" width="32" height="32"><span class="label">32</span></div>
+        <div class="icon-cell"><img src="../public/favicon.svg" width="16" height="16"><span class="label">16</span></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 8. 设计说明 -->
+<div class="section">
+  <div class="section-title">设计规格</div>
+  <div class="panel" style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px; font-size: 13px;">
+    <div>
+      <div style="color: var(--accent); font-weight: 600; font-size: 12px; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 12px;">icon.svg</div>
+      <div style="display: flex; flex-direction: column; gap: 6px; color: var(--sub);">
+        <div><span style="color: var(--text);">ViewBox:</span> 0 0 512 512</div>
+        <div><span style="color: var(--text);">背景:</span> #3b82f6, rx=112 (~22%)</div>
+        <div><span style="color: var(--text);">前景卡片:</span> #fff, rx=20</div>
+        <div><span style="color: var(--text);">中层卡片:</span> rgba(255,255,255,0.30), -3.5deg</div>
+        <div><span style="color: var(--text);">后层卡片:</span> rgba(255,255,255,0.14), -7deg</div>
+        <div><span style="color: var(--text);">勾号:</span> #2563eb, stroke-width=28</div>
+        <div><span style="color: var(--text);">文字行:</span> #b0c4d8 / #ccd8e4</div>
+        <div><span style="color: var(--text);">效果:</span> 无渐变、无阴影、无发光</div>
+      </div>
+    </div>
+    <div>
+      <div style="color: var(--accent); font-weight: 600; font-size: 12px; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 12px;">favicon.svg</div>
+      <div style="display: flex; flex-direction: column; gap: 6px; color: var(--sub);">
+        <div><span style="color: var(--text);">ViewBox:</span> 0 0 32 32</div>
+        <div><span style="color: var(--text);">背景:</span> #3b82f6, rx=7 (~22%)</div>
+        <div><span style="color: var(--text);">卡片:</span> #fff, rx=3 (简化为单张)</div>
+        <div><span style="color: var(--text);">文字线:</span> #c0d0e4, stroke-width=2</div>
+        <div><span style="color: var(--text);">勾号:</span> #2563eb, stroke-width=3</div>
+        <div><span style="color: var(--text);">策略:</span> 去掉堆叠，保证 16px 清晰</div>
+        <div><span style="color: var(--text);">线条:</span> 所有 stroke >= 2px (16px 下 >= 1px)</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="footer">
+  LearnKit Icon — 方案 C「堆叠卡片」最终版
+</div>
+
+</body>
+</html>
