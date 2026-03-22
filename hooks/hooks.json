@@ -1,0 +1,45 @@
+{
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "file_path=$(echo '$TOOL_INPUT' | jq -r '.file_path // empty'); if [ -n \"$file_path\" ] && echo \"$file_path\" | grep -q '\\.learnkit/.*/lessons/.*\\.html$'; then learnkit lesson-verify $(echo \"$file_path\" | sed 's|.*/\\.learnkit/||' | sed 's|/lessons/| |' | sed 's|/| |' | sed 's|\\.html$||') 2>&1 || echo '[LearnKit] ⚠️ 教案验证失败，请检查模板完整性'; fi"
+          }
+        ]
+      },
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "output=$(echo '$TOOL_OUTPUT' | head -20); if echo \"$output\" | grep -q 'Lesson written\\|progress-update\\|scope-write'; then programs=$(ls ~/.learnkit/ 2>/dev/null); for p in $programs; do result=$(learnkit check-prepare \"$p\" 2>/dev/null); if [ $? -eq 1 ]; then echo \"[LearnKit] 📚 $p 需要备课 — 教案不足，建议运行 /learn-prepare $p\"; fi; done; fi"
+          }
+        ]
+      }
+    ],
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "cmd=$(echo '$TOOL_INPUT' | jq -r '.command // empty'); if echo \"$cmd\" | grep -q '^learnkit serve'; then if curl -s http://localhost:13135/api/health > /dev/null 2>&1; then echo '[LearnKit] ℹ️ Backend 已在运行中'; fi; fi"
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "if which learnkit > /dev/null 2>&1; then programs=$(ls ~/.learnkit/ 2>/dev/null); for p in $programs; do result=$(learnkit check-prepare \"$p\" 2>&1); if [ $? -eq 1 ]; then echo \"[LearnKit] 💡 提醒: $p 的教案库存不足，下次记得 /learn-prepare\"; fi; done; fi"
+          }
+        ]
+      }
+    ]
+  }
+}
