@@ -2,6 +2,37 @@
 
 个人学习工具 — 将任何主题转化为结构化的交互式学习体验。
 
+## 安装
+
+```bash
+# 在 Claude Code 中安装 plugin
+/plugin chasey-myagi/learnkit
+
+# 重新加载
+/reload-plugins
+```
+
+安装后运行 `/learn-setup` 配置环境（编译 CLI + 启动 Backend）。
+
+## 快速开始
+
+```bash
+# 1. 配置环境（首次）
+/learn-setup
+
+# 2. 创建学习教程
+/learn-create 游戏开发
+
+# 3. 收集教学资源
+/learn-research
+
+# 4. 备课生成教案
+/learn-prepare
+
+# 5. 打开浏览器学习
+open http://localhost:13135
+```
+
 ## 架构
 
 ```
