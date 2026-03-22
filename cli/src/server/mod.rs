@@ -7,6 +7,7 @@ use std::sync::Arc;
 use tower_http::cors::CorsLayer;
 use tower_http::services::ServeDir;
 
+pub mod ask;
 pub mod error;
 pub mod state;
 pub mod health;
@@ -26,6 +27,8 @@ pub fn create_router(state: Arc<state::AppState>) -> Router {
         .route("/api/programs/:slug/progress", post(progress::update_progress))
         .route("/api/programs/:slug/qa-history", get(programs::qa_history))
         .route("/api/programs/:slug/prepare-status", get(progress::prepare_status))
+        .route("/api/programs/:slug/ask", post(ask::submit_ask))
+        .route("/api/programs/:slug/answer/:request_id", get(ask::poll_answer))
         // Planned endpoints:
         // POST /api/programs/:slug/qa       — submit a new Q&A pair
         // POST /api/programs/:slug/prepare  — trigger lesson preparation

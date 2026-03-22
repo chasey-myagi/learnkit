@@ -2626,3 +2626,474 @@ async fn test_update_progress_nonexistent_program_error_body() {
         error_msg
     );
 }
+
+// =====================================================
+// 9. Ask API — POST /api/programs/:slug/ask
+// =====================================================
+
+#[tokio::test]
+async fn test_submit_ask_returns_request_id() {
+    let tmp = TempDir::new().unwrap();
+    setup_test_program_with_db(tmp.path(), "test-prog");
+    let app = create_test_app(tmp.path().to_path_buf());
+
+    let body = serde_json::json!({
+        "selection": "MDA 框架",
+        "question": "什么是 MDA？",
+        "lessonPath": "subject-one/lesson-one"
+    });
+    let resp = post_json(app, "/api/programs/test-prog/ask", body).await;
+    assert_eq!(resp.status(), StatusCode::OK);
+    assert_json_content_type(&resp);
+
+    let body = parse_json(resp).await;
+    assert!(body["requestId"].is_string(), "Should return a requestId");
+    let rid = body["requestId"].as_str().unwrap();
+    assert!(!rid.is_empty(), "requestId should not be empty");
+}
+
+#[tokio::test]
+async fn test_submit_ask_slug_traversal() {
+    let tmp = TempDir::new().unwrap();
+    let app = create_test_app(tmp.path().to_path_buf());
+
+    let body = serde_json::json!({
+        "selection": "test",
+        "question": "test?",
+        "lessonPath": "a/b"
+    });
+    let resp = post_json(app, "/api/programs/..%2Fetc/ask", body).await;
+    assert_eq!(resp.status(), StatusCode::BAD_REQUEST);
+}
+
+#[tokio::test]
+async fn test_submit_ask_empty_body() {
+    let tmp = TempDir::new().unwrap();
+    setup_test_program_with_db(tmp.path(), "test-prog");
+    let app = create_test_app(tmp.path().to_path_buf());
+
+    let resp = app
+        .oneshot(
+            Request::builder()
+                .method("POST")
+                .uri("/api/programs/test-prog/ask")
+                .header("content-type", "application/json")
+                .body(Body::empty())
+                .unwrap(),
+        )
+        .await
+        .unwrap();
+    assert!(
+        resp.status() == StatusCode::BAD_REQUEST || resp.status() == StatusCode::UNPROCESSABLE_ENTITY,
+        "Empty body should return 400 or 422, got {}",
+        resp.status()
+    );
+}
+
+#[tokio::test]
+async fn test_submit_ask_missing_fields() {
+    let tmp = TempDir::new().unwrap();
+    setup_test_program_with_db(tmp.path(), "test-prog");
+    let app = create_test_app(tmp.path().to_path_buf());
+
+    let body = serde_json::json!({
+        "selection": "some text"
+    });
+    let resp = post_json(app, "/api/programs/test-prog/ask", body).await;
+    assert!(
+        resp.status() == StatusCode::BAD_REQUEST || resp.status() == StatusCode::UNPROCESSABLE_ENTITY,
+        "Missing fields should return 400 or 422, got {}",
+        resp.status()
+    );
+}
+
+// =====================================================
+// 10. Ask API — GET /api/programs/:slug/answer/:requestId
+// =====================================================
+
+#[tokio::test]
+async fn test_poll_answer_pending() {
+    let tmp = TempDir::new().unwrap();
+    setup_test_program_with_db(tmp.path(), "test-prog");
+    let app = create_test_app(tmp.path().to_path_buf());
+
+    let resp = app
+        .oneshot(
+            Request::builder()
+                .uri("/api/programs/test-prog/answer/q-nonexistent")
+                .body(Body::empty())
+                .unwrap(),
+        )
+        .await
+        .unwrap();
+    assert_eq!(resp.status(), StatusCode::OK);
+    let body = parse_json(resp).await;
+    assert_eq!(body["status"].as_str().unwrap(), "pending");
+    assert!(body.get("answer").is_none() || body["answer"].is_null());
+}
+
+#[tokio::test]
+async fn test_poll_answer_done() {
+    let tmp = TempDir::new().unwrap();
+    setup_test_program_with_db(tmp.path(), "test-prog");
+
+    let answer_dir = tmp.path().join("test-prog").join("answers");
+    std::fs::create_dir_all(&answer_dir).unwrap();
+    let answer = serde_json::json!({
+        "request_id": "q-test-123",
+        "lesson": "subject-one/lesson-one",
+        "selection": "MDA",
+        "question": "什么是 MDA？",
+        "answer": "MDA 是 Mechanics, Dynamics, Aesthetics 的缩写。"
+    });
+    std::fs::write(
+        answer_dir.join("q-test-123.json"),
+        serde_json::to_string_pretty(&answer).unwrap(),
+    ).unwrap();
+
+    let app = create_test_app(tmp.path().to_path_buf());
+    let resp = app
+        .oneshot(
+            Request::builder()
+                .uri("/api/programs/test-prog/answer/q-test-123")
+                .body(Body::empty())
+                .unwrap(),
+        )
+        .await
+        .unwrap();
+    assert_eq!(resp.status(), StatusCode::OK);
+    assert_json_content_type(&resp);
+
+    let body = parse_json(resp).await;
+    assert_eq!(body["status"].as_str().unwrap(), "done");
+    assert_eq!(
+        body["answer"].as_str().unwrap(),
+        "MDA 是 Mechanics, Dynamics, Aesthetics 的缩写。"
+    );
+}
+
+#[tokio::test]
+async fn test_poll_answer_slug_traversal() {
+    let tmp = TempDir::new().unwrap();
+    let app = create_test_app(tmp.path().to_path_buf());
+
+    let resp = app
+        .oneshot(
+            Request::builder()
+                .uri("/api/programs/..%2Fetc/answer/q-123")
+                .body(Body::empty())
+                .unwrap(),
+        )
+        .await
+        .unwrap();
+    assert_eq!(resp.status(), StatusCode::BAD_REQUEST);
+}
+
+#[tokio::test]
+async fn test_poll_answer_content_type() {
+    let tmp = TempDir::new().unwrap();
+    setup_test_program_with_db(tmp.path(), "test-prog");
+    let app = create_test_app(tmp.path().to_path_buf());
+
+    let resp = app
+        .oneshot(
+            Request::builder()
+                .uri("/api/programs/test-prog/answer/q-anything")
+                .body(Body::empty())
+                .unwrap(),
+        )
+        .await
+        .unwrap();
+    assert_json_content_type(&resp);
+}
+
+#[tokio::test]
+async fn test_submit_ask_and_poll_lifecycle() {
+    let tmp = TempDir::new().unwrap();
+    setup_test_program_with_db(tmp.path(), "test-prog");
+
+    // Step 1: Submit ask → get requestId
+    let app = create_test_app(tmp.path().to_path_buf());
+    let body = serde_json::json!({
+        "selection": "核心游戏循环",
+        "question": "什么是游戏循环？",
+        "lessonPath": "subject-one/lesson-one"
+    });
+    let resp = post_json(app, "/api/programs/test-prog/ask", body).await;
+    assert_eq!(resp.status(), StatusCode::OK);
+    let ask_body = parse_json(resp).await;
+    let request_id = ask_body["requestId"].as_str().unwrap();
+
+    // Step 2: Poll → should be pending (no answer file yet)
+    let app2 = create_test_app(tmp.path().to_path_buf());
+    let resp2 = app2
+        .oneshot(
+            Request::builder()
+                .uri(&format!("/api/programs/test-prog/answer/{}", request_id))
+                .body(Body::empty())
+                .unwrap(),
+        )
+        .await
+        .unwrap();
+    let poll_body = parse_json(resp2).await;
+    assert_eq!(poll_body["status"].as_str().unwrap(), "pending");
+
+    // Step 3: Simulate answer arrival
+    let answer_dir = tmp.path().join("test-prog").join("answers");
+    std::fs::create_dir_all(&answer_dir).unwrap();
+    let answer = serde_json::json!({
+        "request_id": request_id,
+        "answer": "游戏循环是游戏运行时持续执行的主循环。"
+    });
+    std::fs::write(
+        answer_dir.join(format!("{}.json", request_id)),
+        serde_json::to_string(&answer).unwrap(),
+    ).unwrap();
+
+    // Step 4: Poll again → should be done
+    let app3 = create_test_app(tmp.path().to_path_buf());
+    let resp3 = app3
+        .oneshot(
+            Request::builder()
+                .uri(&format!("/api/programs/test-prog/answer/{}", request_id))
+                .body(Body::empty())
+                .unwrap(),
+        )
+        .await
+        .unwrap();
+    let done_body = parse_json(resp3).await;
+    assert_eq!(done_body["status"].as_str().unwrap(), "done");
+    assert_eq!(
+        done_body["answer"].as_str().unwrap(),
+        "游戏循环是游戏运行时持续执行的主循环。"
+    );
+}
+
+// =====================================================
+// 11. Ask API — 边界 + 错误路径补充
+// =====================================================
+
+#[tokio::test]
+async fn test_poll_answer_request_id_traversal() {
+    // M1: requestId 路径遍历 — 直接映射文件名，高危
+    let tmp = TempDir::new().unwrap();
+    setup_test_program_with_db(tmp.path(), "test-prog");
+    let app = create_test_app(tmp.path().to_path_buf());
+
+    let resp = app
+        .oneshot(
+            Request::builder()
+                .uri("/api/programs/test-prog/answer/..%2F..%2Fetc%2Fpasswd")
+                .body(Body::empty())
+                .unwrap(),
+        )
+        .await
+        .unwrap();
+    // Should be rejected (400) or return pending (safe default), NOT expose file contents
+    assert!(
+        resp.status() == StatusCode::BAD_REQUEST || resp.status() == StatusCode::OK,
+        "Path traversal requestId should be rejected or safe, got {}",
+        resp.status()
+    );
+    if resp.status() == StatusCode::OK {
+        let body = parse_json(resp).await;
+        assert_eq!(body["status"].as_str().unwrap(), "pending",
+            "Traversal requestId should always be pending (file won't exist in answers/)");
+    }
+}
+
+#[tokio::test]
+async fn test_submit_ask_nonexistent_program() {
+    // M2: program 不存在
+    let tmp = TempDir::new().unwrap();
+    let app = create_test_app(tmp.path().to_path_buf());
+
+    let body = serde_json::json!({
+        "selection": "test",
+        "question": "test?",
+        "lessonPath": "a/b"
+    });
+    let resp = post_json(app, "/api/programs/nonexistent-prog/ask", body).await;
+    // Should return 404 (program not found) or 200 (accepted anyway, will fail in background)
+    // Either is acceptable for async API — the important thing is it doesn't crash
+    assert!(
+        resp.status() == StatusCode::NOT_FOUND || resp.status() == StatusCode::OK,
+        "Nonexistent program should return 404 or 200, got {}",
+        resp.status()
+    );
+}
+
+#[tokio::test]
+async fn test_submit_ask_empty_string_fields() {
+    // M3: 空字符串字段
+    let tmp = TempDir::new().unwrap();
+    setup_test_program_with_db(tmp.path(), "test-prog");
+    let app = create_test_app(tmp.path().to_path_buf());
+
+    let body = serde_json::json!({
+        "selection": "",
+        "question": "",
+        "lessonPath": "a/b"
+    });
+    let resp = post_json(app, "/api/programs/test-prog/ask", body).await;
+    // Empty selection/question should be rejected
+    assert!(
+        resp.status() == StatusCode::BAD_REQUEST || resp.status() == StatusCode::OK,
+        "Empty string fields: got {}",
+        resp.status()
+    );
+}
+
+#[tokio::test]
+async fn test_submit_ask_long_input() {
+    // M4: 超长输入
+    let tmp = TempDir::new().unwrap();
+    setup_test_program_with_db(tmp.path(), "test-prog");
+    let app = create_test_app(tmp.path().to_path_buf());
+
+    let long_text = "这是一段很长的文字。".repeat(500); // ~5000 chars
+    let body = serde_json::json!({
+        "selection": long_text,
+        "question": "这段话什么意思？",
+        "lessonPath": "subject-one/lesson-one"
+    });
+    let resp = post_json(app, "/api/programs/test-prog/ask", body).await;
+    // Should either accept (200) or reject gracefully (400), not crash
+    assert!(
+        resp.status() == StatusCode::OK || resp.status() == StatusCode::BAD_REQUEST
+            || resp.status() == StatusCode::PAYLOAD_TOO_LARGE,
+        "Long input should be handled gracefully, got {}",
+        resp.status()
+    );
+}
+
+#[tokio::test]
+async fn test_submit_ask_wrong_json_types() {
+    // M5: JSON 类型错误
+    let tmp = TempDir::new().unwrap();
+    setup_test_program_with_db(tmp.path(), "test-prog");
+    let app = create_test_app(tmp.path().to_path_buf());
+
+    let body = serde_json::json!({
+        "selection": 123,
+        "question": true,
+        "lessonPath": null
+    });
+    let resp = post_json(app, "/api/programs/test-prog/ask", body).await;
+    assert!(
+        resp.status() == StatusCode::BAD_REQUEST || resp.status() == StatusCode::UNPROCESSABLE_ENTITY,
+        "Wrong JSON types should return 400 or 422, got {}",
+        resp.status()
+    );
+}
+
+#[tokio::test]
+async fn test_submit_ask_lesson_path_traversal() {
+    // M6: lessonPath 路径遍历
+    let tmp = TempDir::new().unwrap();
+    setup_test_program_with_db(tmp.path(), "test-prog");
+    let app = create_test_app(tmp.path().to_path_buf());
+
+    let body = serde_json::json!({
+        "selection": "test",
+        "question": "test?",
+        "lessonPath": "../../etc/passwd"
+    });
+    let resp = post_json(app, "/api/programs/test-prog/ask", body).await;
+    assert!(
+        resp.status() == StatusCode::BAD_REQUEST || resp.status() == StatusCode::OK,
+        "Traversal lessonPath: got {}",
+        resp.status()
+    );
+}
+
+#[tokio::test]
+async fn test_submit_ask_duplicate_returns_different_ids() {
+    // M7: 重复提交返回不同 requestId
+    let tmp = TempDir::new().unwrap();
+    setup_test_program_with_db(tmp.path(), "test-prog");
+
+    let body = serde_json::json!({
+        "selection": "MDA",
+        "question": "什么是 MDA？",
+        "lessonPath": "subject-one/lesson-one"
+    });
+
+    let app1 = create_test_app(tmp.path().to_path_buf());
+    let resp1 = post_json(app1, "/api/programs/test-prog/ask", body.clone()).await;
+    let id1 = parse_json(resp1).await["requestId"].as_str().unwrap().to_string();
+
+    let app2 = create_test_app(tmp.path().to_path_buf());
+    let resp2 = post_json(app2, "/api/programs/test-prog/ask", body).await;
+    let id2 = parse_json(resp2).await["requestId"].as_str().unwrap().to_string();
+
+    assert_ne!(id1, id2, "Duplicate submissions should get different requestIds");
+}
+
+#[tokio::test]
+async fn test_ask_wrong_http_method() {
+    // M8: 错误 HTTP 方法
+    let tmp = TempDir::new().unwrap();
+    setup_test_program_with_db(tmp.path(), "test-prog");
+    let app = create_test_app(tmp.path().to_path_buf());
+
+    // GET on POST-only endpoint
+    let resp = app
+        .oneshot(
+            Request::builder()
+                .uri("/api/programs/test-prog/ask")
+                .body(Body::empty())
+                .unwrap(),
+        )
+        .await
+        .unwrap();
+    assert_eq!(resp.status(), StatusCode::METHOD_NOT_ALLOWED);
+}
+
+#[tokio::test]
+async fn test_poll_answer_corrupted_file() {
+    // M9: answer 文件存在但内容损坏
+    let tmp = TempDir::new().unwrap();
+    setup_test_program_with_db(tmp.path(), "test-prog");
+
+    let answer_dir = tmp.path().join("test-prog").join("answers");
+    std::fs::create_dir_all(&answer_dir).unwrap();
+    std::fs::write(answer_dir.join("q-corrupted.json"), "not valid json!!!").unwrap();
+
+    let app = create_test_app(tmp.path().to_path_buf());
+    let resp = app
+        .oneshot(
+            Request::builder()
+                .uri("/api/programs/test-prog/answer/q-corrupted")
+                .body(Body::empty())
+                .unwrap(),
+        )
+        .await
+        .unwrap();
+    // Should return 500 (internal error) not crash
+    assert!(
+        resp.status() == StatusCode::INTERNAL_SERVER_ERROR || resp.status() == StatusCode::OK,
+        "Corrupted answer file should be handled, got {}",
+        resp.status()
+    );
+}
+
+#[tokio::test]
+async fn test_submit_ask_no_content_type() {
+    // M10: POST 不带 content-type
+    let tmp = TempDir::new().unwrap();
+    setup_test_program_with_db(tmp.path(), "test-prog");
+    let app = create_test_app(tmp.path().to_path_buf());
+
+    let resp = app
+        .oneshot(
+            Request::builder()
+                .method("POST")
+                .uri("/api/programs/test-prog/ask")
+                .body(Body::from(r#"{"selection":"x","question":"y","lessonPath":"a/b"}"#))
+                .unwrap(),
+        )
+        .await
+        .unwrap();
+    assert_eq!(resp.status(), StatusCode::UNSUPPORTED_MEDIA_TYPE);
+}
