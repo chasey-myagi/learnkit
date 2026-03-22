@@ -1,6 +1,8 @@
+import { useState, useEffect } from 'react';
 import { usePrograms } from '@/hooks/useApi';
 import { ProgramCard } from '@/components/ProgramCard';
-import { mockScopes, mockProgress } from '@/api/mock';
+import { api } from '@/api/client';
+import type { ScopeData } from '@/api/client';
 
 function SkeletonCard() {
   return (
@@ -109,34 +111,52 @@ function ErrorBanner({ message }: { message: string }) {
 export function ProgramList() {
   const { programs, loading, error } = usePrograms();
 
-  if (loading) {
+  // All hooks MUST be before any early return (React rules of hooks)
+  const [scopeMap, setScopeMap] = useState<Record<string, ScopeData>>({});
+  const [progressMap, setProgressMap] = useState<Record<string, any>>({});
+  const [dataLoading, setDataLoading] = useState(true);
+
+  useEffect(() => {
+    if (loading || programs.length === 0) { setDataLoading(false); return; }
+    let cancelled = false;
+    setDataLoading(true);
+    Promise.all(
+      programs.map(async (p) => {
+        const [scope, progress] = await Promise.all([
+          api.getScope(p.slug).catch(() => null),
+          api.getProgress(p.slug).catch(() => null),
+        ]);
+        return { slug: p.slug, scope, progress };
+      })
+    ).then((results) => {
+      if (cancelled) return;
+      const scopes: Record<string, ScopeData> = {};
+      const progresses: Record<string, any> = {};
+      for (const r of results) {
+        if (r.scope) scopes[r.slug] = r.scope;
+        if (r.progress) progresses[r.slug] = r.progress;
+      }
+      setScopeMap(scopes);
+      setProgressMap(progresses);
+      setDataLoading(false);
+    });
+    return () => { cancelled = true; };
+  }, [programs, loading]);
+
+  if (loading || dataLoading) {
     return (
       <div className="mx-auto max-w-[1200px] px-6 py-8 sm:px-10" role="status" aria-busy="true" aria-label="加载中">
         <div className="flex items-baseline justify-between" style={{ marginBottom: 24 }}>
-          <h1
-            className="text-[22px] font-bold"
-            style={{ letterSpacing: '-0.5px', lineHeight: '1.2' }}
-          >
-            我的学习
-          </h1>
+          <h1 className="text-[22px] font-bold" style={{ letterSpacing: '-0.5px', lineHeight: '1.2' }}>我的学习</h1>
         </div>
         <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
-          {[1, 2, 3].map((i) => (
-            <SkeletonCard key={i} />
-          ))}
+          {[1, 2].map((i) => <SkeletonCard key={i} />)}
         </div>
       </div>
     );
   }
 
-  // Build renderable cards — programs without scope/progress data get a fallback card
-  const cards = programs.map((p) => {
-    const scope = mockScopes[p.slug];
-    const progress = mockProgress[p.slug];
-    return { program: p, scope, progress };
-  });
-
-  const hasRenderableCards = cards.some((c) => c.scope && c.progress);
+  const hasRenderableCards = programs.some((p) => scopeMap[p.slug]);
 
   return (
     <main
@@ -170,8 +190,10 @@ export function ProgramList() {
         <EmptyState />
       ) : (
         <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
-          {cards.map(({ program: p, scope, progress }) => {
-            if (!scope || !progress) return null;
+          {programs.map((p) => {
+            const scope = scopeMap[p.slug];
+            const progress = progressMap[p.slug];
+            if (!scope) return null;
             return (
               <ProgramCard key={p.slug} slug={p.slug} scope={scope} progress={progress} />
             );

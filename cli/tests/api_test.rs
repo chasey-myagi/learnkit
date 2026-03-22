@@ -75,6 +75,7 @@ async fn post_json(
 }
 
 /// Helper: assert status code with diagnostic body output on failure
+#[allow(dead_code)]
 async fn assert_status(response: axum::http::Response<Body>, expected: StatusCode) {
     let status = response.status();
     if status != expected {
@@ -647,13 +648,8 @@ async fn test_slug_empty_string() {
         .await
         .unwrap();
 
-    // Either 400 (validate_slug catches empty) or 404 (route doesn't match)
-    let status = response.status();
-    assert!(
-        status == StatusCode::BAD_REQUEST || status == StatusCode::NOT_FOUND,
-        "Expected 400 or 404, got {}",
-        status
-    );
+    // validate_slug catches empty slug → 400
+    assert_eq!(response.status(), StatusCode::BAD_REQUEST);
 }
 
 // --- 5.3 Boundary: slug with special characters ---
@@ -2428,15 +2424,8 @@ async fn test_slug_length_129() {
         .await
         .unwrap();
 
-    // Current validate_slug does not enforce a length limit,
-    // so the slug passes validation but the program won't exist → 404
-    // If a length limit is added later, this should change to 400.
-    let status = response.status();
-    assert!(
-        status == StatusCode::NOT_FOUND || status == StatusCode::BAD_REQUEST,
-        "Expected 404 (no length limit) or 400 (with length limit), got {}",
-        status
-    );
+    // validate_slug rejects slugs longer than 128 chars → 400
+    assert_eq!(response.status(), StatusCode::BAD_REQUEST);
 }
 
 // --- 7.5 qa-history lesson 参数边界测试 ---
@@ -2472,19 +2461,8 @@ async fn test_qa_history_traversal_lesson_filter() {
         .await
         .unwrap();
 
-    let status = response.status();
-    // If validation is added → 400; otherwise no matching records → 200 with empty array
-    assert!(
-        status == StatusCode::OK || status == StatusCode::BAD_REQUEST,
-        "Expected 200 (no validation) or 400 (with validation), got {}",
-        status
-    );
-
-    if status == StatusCode::OK {
-        let body = parse_json(response).await;
-        // Traversal path shouldn't match any real lesson
-        assert!(body.as_array().unwrap().is_empty());
-    }
+    // validate_lesson_path rejects path traversal → 400
+    assert_eq!(response.status(), StatusCode::BAD_REQUEST);
 }
 
 // --- 7.6 完善错误响应 body 验证 ---

@@ -118,40 +118,42 @@ enum Commands {
 }
 
 #[tokio::main]
-async fn main() -> anyhow::Result<()> {
+async fn main() {
     let cli = Cli::parse();
 
-    match cli.command {
-        Commands::Serve { port, frontend_dir } => {
-            let state = std::sync::Arc::new(server::state::AppState::new());
-            let frontend_dist = resolve_frontend_dist(frontend_dir);
-            if let Some(ref dist) = frontend_dist {
-                println!("Serving frontend from: {}", dist.display());
-            }
-            let app = server::create_router_with_frontend(state.clone(), frontend_dist);
+    let result: anyhow::Result<()> = async {
+        match cli.command {
+            Commands::Serve { port, frontend_dir } => {
+                let state = std::sync::Arc::new(server::state::AppState::new());
+                let frontend_dist = resolve_frontend_dist(frontend_dir);
+                if let Some(ref dist) = frontend_dist {
+                    println!("Serving frontend from: {}", dist.display());
+                }
+                let app = server::create_router_with_frontend(state.clone(), frontend_dist);
 
-            // Spawn auto-prepare check timer
-            let state_for_timer = state.clone();
-            tokio::spawn(async move {
-                let mut interval = tokio::time::interval(std::time::Duration::from_secs(60));
-                loop {
-                    interval.tick().await;
-                    // Scan all programs for prepare status
-                    let root = state_for_timer.learnkit_root.clone();
-                    if let Ok(entries) = std::fs::read_dir(&root) {
-                        for entry in entries.flatten() {
-                            if entry.path().is_dir() {
-                                let slug = entry.file_name().to_string_lossy().to_string();
-                                if let Ok(Some(conn)) = state_for_timer.open_db(&slug) {
-                                    if let Ok(ready_count) = db::lessons::count_prepared_unfinished(&conn) {
-                                        if ready_count <= 1 {
-                                            if let Ok(pending) = db::lessons::get_pending_lessons(&conn, 3) {
-                                                if !pending.is_empty() {
-                                                    let ids: Vec<&str> = pending.iter().map(|l| l.id.as_str()).collect();
-                                                    eprintln!(
-                                                        "[learnkit] Auto-prepare: program '{}' needs preparation. Pending: {:?}",
-                                                        slug, ids
-                                                    );
+                // Spawn auto-prepare check timer
+                let state_for_timer = state.clone();
+                tokio::spawn(async move {
+                    let mut interval = tokio::time::interval(std::time::Duration::from_secs(60));
+                    loop {
+                        interval.tick().await;
+                        // Scan all programs for prepare status
+                        let root = state_for_timer.learnkit_root.clone();
+                        if let Ok(entries) = std::fs::read_dir(&root) {
+                            for entry in entries.flatten() {
+                                if entry.path().is_dir() {
+                                    let slug = entry.file_name().to_string_lossy().to_string();
+                                    if let Ok(Some(conn)) = state_for_timer.open_db(&slug) {
+                                        if let Ok(ready_count) = db::lessons::count_prepared_unfinished(&conn) {
+                                            if ready_count <= 1 {
+                                                if let Ok(pending) = db::lessons::get_pending_lessons(&conn, 3) {
+                                                    if !pending.is_empty() {
+                                                        let ids: Vec<&str> = pending.iter().map(|l| l.id.as_str()).collect();
+                                                        eprintln!(
+                                                            "[learnkit] Auto-prepare: program '{}' needs preparation. Pending: {:?}",
+                                                            slug, ids
+                                                        );
+                                                    }
                                                 }
                                             }
                                         }
@@ -160,69 +162,73 @@ async fn main() -> anyhow::Result<()> {
                             }
                         }
                     }
-                }
-            });
+                });
 
-            let addr = std::net::SocketAddr::from(([127, 0, 0, 1], port));
-            println!("LearnKit server running on http://{}", addr);
-            let listener = tokio::net::TcpListener::bind(addr).await?;
-            axum::serve(listener, app).await?;
+                let addr = std::net::SocketAddr::from(([127, 0, 0, 1], port));
+                println!("LearnKit server running on http://{}", addr);
+                let listener = tokio::net::TcpListener::bind(addr).await?;
+                axum::serve(listener, app).await?;
+            }
+            Commands::Init { slug } => {
+                commands::init::run(&slug)?;
+            }
+            Commands::List => {
+                commands::list::run()?;
+            }
+            Commands::Info { program } => {
+                commands::info::run(&program)?;
+            }
+            Commands::ScopeWrite { program, file } => {
+                commands::scope::write(&program, &file)?;
+            }
+            Commands::ScopeRead { program } => {
+                commands::scope::read(&program)?;
+            }
+            Commands::LessonWrite { program, subject, lesson, content_file } => {
+                commands::lesson::write(&program, &subject, &lesson, &content_file)?;
+            }
+            Commands::LessonVerify { program, subject, lesson } => {
+                commands::lesson::verify(&program, &subject, &lesson)?;
+            }
+            Commands::LessonList { program, status } => {
+                commands::lesson::list(&program, status.as_deref())?;
+            }
+            Commands::LessonOpen { program, subject, lesson } => {
+                ensure_server_running();
+                commands::lesson::open(&program, &subject, &lesson)?;
+            }
+            Commands::Next { program } => {
+                commands::lesson::next(&program)?;
+            }
+            Commands::ResourceAdd { program, url, r#type } => {
+                commands::resource::add(&program, &url, &r#type)?;
+            }
+            Commands::ResourceList { program } => {
+                commands::resource::list(&program)?;
+            }
+            Commands::Progress { program } => {
+                commands::progress::show(&program)?;
+            }
+            Commands::ProgressUpdate { program, subject, lesson, status } => {
+                commands::progress::update(&program, &subject, &lesson, &status)?;
+            }
+            Commands::CheckPrepare { program } => {
+                commands::progress::check_prepare(&program)?;
+            }
+            Commands::AnswerWrite { program, request_id, lesson, selection, question, answer } => {
+                commands::answer::write(&program, &request_id, &lesson, &selection, &question, &answer)?;
+            }
+            Commands::QaHistory { program, lesson } => {
+                commands::answer::history(&program, lesson.as_deref())?;
+            }
         }
-        Commands::Init { slug } => {
-            commands::init::run(&slug)?;
-        }
-        Commands::List => {
-            commands::list::run()?;
-        }
-        Commands::Info { program } => {
-            commands::info::run(&program)?;
-        }
-        Commands::ScopeWrite { program, file } => {
-            commands::scope::write(&program, &file)?;
-        }
-        Commands::ScopeRead { program } => {
-            commands::scope::read(&program)?;
-        }
-        Commands::LessonWrite { program, subject, lesson, content_file } => {
-            commands::lesson::write(&program, &subject, &lesson, &content_file)?;
-        }
-        Commands::LessonVerify { program, subject, lesson } => {
-            commands::lesson::verify(&program, &subject, &lesson)?;
-        }
-        Commands::LessonList { program, status } => {
-            commands::lesson::list(&program, status.as_deref())?;
-        }
-        Commands::LessonOpen { program, subject, lesson } => {
-            ensure_server_running();
-            commands::lesson::open(&program, &subject, &lesson)?;
-        }
-        Commands::Next { program } => {
-            commands::lesson::next(&program)?;
-        }
-        Commands::ResourceAdd { program, url, r#type } => {
-            commands::resource::add(&program, &url, &r#type)?;
-        }
-        Commands::ResourceList { program } => {
-            commands::resource::list(&program)?;
-        }
-        Commands::Progress { program } => {
-            commands::progress::show(&program)?;
-        }
-        Commands::ProgressUpdate { program, subject, lesson, status } => {
-            commands::progress::update(&program, &subject, &lesson, &status)?;
-        }
-        Commands::CheckPrepare { program } => {
-            commands::progress::check_prepare(&program)?;
-        }
-        Commands::AnswerWrite { program, request_id, lesson, selection, question, answer } => {
-            commands::answer::write(&program, &request_id, &lesson, &selection, &question, &answer)?;
-        }
-        Commands::QaHistory { program, lesson } => {
-            commands::answer::history(&program, lesson.as_deref())?;
-        }
+        Ok(())
+    }.await;
+
+    if let Err(e) = result {
+        eprintln!("Error: {e}");
+        std::process::exit(1);
     }
-
-    Ok(())
 }
 
 mod config;

@@ -41,19 +41,7 @@ pub fn write(program: &str, subject: &str, lesson: &str, content_file: &str) -> 
         } else {
             EMBEDDED_TEMPLATE.to_string()
         };
-        template
-            .replace("{{content}}", &content)
-            .replace("{{lesson_title}}", &title)
-            .replace("{{subject_title}}", subject)
-            .replace("{{program_title}}", program)
-            .replace("{{program}}", program)
-            .replace("{{subject}}", subject)
-            .replace("{{lesson}}", lesson)
-            .replace("{{prev_link}}", "")
-            .replace("{{next_link}}", "")
-            .replace("{{prev_title}}", "")
-            .replace("{{next_title}}", "")
-            .replace("{{api_base}}", &format!("/api/programs/{}", program))
+        apply_template(&template, &content, &title, subject, program, lesson)
     };
 
     // 4. Create directory and write file
@@ -73,32 +61,56 @@ pub fn write(program: &str, subject: &str, lesson: &str, content_file: &str) -> 
     Ok(())
 }
 
+/// Apply template substitutions.
+///
+/// IMPORTANT: `{{content}}` must be replaced LAST because the content itself
+/// may contain placeholder-like strings (e.g., `{{program}}`) that must not
+/// be substituted by the template engine.
+fn apply_template(
+    template: &str,
+    content: &str,
+    title: &str,
+    subject: &str,
+    program: &str,
+    lesson: &str,
+) -> String {
+    template
+        .replace("{{lesson_title}}", title)
+        .replace("{{subject_title}}", subject)
+        .replace("{{program_title}}", program)
+        .replace("{{program}}", program)
+        .replace("{{subject}}", subject)
+        .replace("{{lesson}}", lesson)
+        .replace("{{prev_link}}", "")
+        .replace("{{next_link}}", "")
+        .replace("{{prev_title}}", "")
+        .replace("{{next_title}}", "")
+        .replace("{{api_base}}", &format!("/api/programs/{}", program))
+        .replace("{{content}}", content)
+}
+
 /// Verify a lesson HTML file's integrity
 pub fn verify(program: &str, subject: &str, lesson: &str) -> Result<()> {
     let file_path = lesson_file_path(program, subject, lesson);
 
     // Check file exists
     if !file_path.exists() {
-        eprintln!("FAIL: file not found: {}", file_path.display());
-        std::process::exit(1);
+        anyhow::bail!("FAIL: file not found: {}", file_path.display());
     }
 
     // Check file size > 0
     let metadata = fs::metadata(&file_path)?;
     if metadata.len() == 0 {
-        eprintln!("FAIL: file is empty: {}", file_path.display());
-        std::process::exit(1);
+        anyhow::bail!("FAIL: file is empty: {}", file_path.display());
     }
 
     // Check contains <html and </html> tags
     let content = fs::read_to_string(&file_path)?;
     if !content.contains("<html") {
-        eprintln!("FAIL: missing <html tag");
-        std::process::exit(1);
+        anyhow::bail!("FAIL: missing <html tag");
     }
     if !content.contains("</html>") {
-        eprintln!("FAIL: missing </html> tag");
-        std::process::exit(1);
+        anyhow::bail!("FAIL: missing </html> tag");
     }
 
     println!("OK");
@@ -148,13 +160,50 @@ pub fn next(program: &str) -> Result<()> {
     // No prepared lessons — check if there are pending ones
     let pending = db::lessons::get_pending_lessons(&conn, 3)?;
     if !pending.is_empty() {
-        eprintln!("No prepared lessons. {} pending lesson(s) need preparation:", pending.len());
-        for l in &pending {
-            eprintln!("  - {} ({})", l.id, l.title);
-        }
-        std::process::exit(1);
+        let ids: Vec<String> = pending.iter().map(|l| format!("  - {} ({})", l.id, l.title)).collect();
+        anyhow::bail!(
+            "No prepared lessons. {} pending lesson(s) need preparation:\n{}",
+            pending.len(),
+            ids.join("\n")
+        );
     }
 
     eprintln!("All lessons completed!");
     Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_apply_template_content_with_placeholder_text() {
+        // Regression test for Issue 4: if lesson content contains {{program}},
+        // it should NOT be replaced by template substitution.
+        let template = "<html><body>{{content}}</body><script>var p='{{program}}';</script></html>";
+        let content = "This lesson teaches you about {{program}} placeholder syntax.";
+
+        let result = apply_template(template, content, "My Lesson", "math", "test-prog", "intro");
+
+        // The content should be injected as-is, preserving {{program}} in the content
+        assert!(
+            result.contains("about {{program}} placeholder syntax"),
+            "Content's {{{{program}}}} was wrongly replaced. Got: {}",
+            result
+        );
+        // But the template's own {{program}} should be replaced
+        assert!(
+            result.contains("var p='test-prog'"),
+            "Template's {{{{program}}}} was not replaced. Got: {}",
+            result
+        );
+    }
+
+    #[test]
+    fn test_apply_template_basic() {
+        let template = "<title>{{lesson_title}} — {{subject_title}}</title><div>{{content}}</div>";
+        let result = apply_template(template, "Hello World", "My Lesson", "math", "prog", "intro");
+        assert!(result.contains("<title>My Lesson — math</title>"));
+        assert!(result.contains("<div>Hello World</div>"));
+    }
 }

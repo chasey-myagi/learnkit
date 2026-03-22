@@ -148,7 +148,10 @@ pub async fn poll_answer(
         return Ok(Json(serde_json::json!({ "status": "pending" })));
     }
 
-    let content = std::fs::read_to_string(&answer_path)
+    let path_clone = answer_path.clone();
+    let content = tokio::task::spawn_blocking(move || std::fs::read_to_string(&path_clone))
+        .await
+        .map_err(|e| AppError::Internal(format!("blocking task failed: {e}")))?
         .map_err(|e| AppError::Internal(format!("failed to read answer file: {e}")))?;
 
     let parsed: serde_json::Value = serde_json::from_str(&content)

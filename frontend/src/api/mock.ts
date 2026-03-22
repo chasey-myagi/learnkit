@@ -142,27 +142,15 @@ export const mockLessons: Record<string, LessonRow[]> = {
 
 export const mockProgress: Record<string, ProgressData> = {
   'game-dev': {
-    lessons: {},
-    total: 12,
-    completed: 3,
-    in_progress: 1,
-    prepared: 2,
-    pending: 6,
+    lessons: { completed: 3, in_progress: 1, prepared: 2, pending: 6 },
+    sections: { read: 8, total: 35 },
   },
   'reinforcement-learning': {
-    lessons: {},
-    total: 8,
-    completed: 0,
-    in_progress: 0,
-    prepared: 0,
-    pending: 8,
+    lessons: { completed: 0, in_progress: 0, prepared: 0, pending: 8 },
+    sections: { read: 0, total: 28 },
   },
   'rust-systems': {
-    lessons: {},
-    total: 8,
-    completed: 8,
-    in_progress: 0,
-    prepared: 0,
-    pending: 0,
+    lessons: { completed: 8, in_progress: 0, prepared: 0, pending: 0 },
+    sections: { read: 24, total: 24 },
   },
 };

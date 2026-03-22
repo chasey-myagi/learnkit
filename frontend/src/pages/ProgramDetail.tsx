@@ -59,15 +59,9 @@ function BackLink() {
   return (
     <Link
       to="/"
-      className="mb-4 inline-flex items-center gap-2 text-[13px] no-underline"
-      style={{ color: 'var(--lk-text-secondary)', transition: 'color 0.2s ease' }}
+      className="mb-4 inline-flex items-center gap-2 text-[13px] no-underline transition-colors hover:text-[var(--lk-accent)]"
+      style={{ color: 'var(--lk-text-secondary)' }}
       aria-label="返回教程列表"
-      onMouseEnter={(e) => {
-        (e.currentTarget as HTMLElement).style.color = 'var(--lk-accent)';
-      }}
-      onMouseLeave={(e) => {
-        (e.currentTarget as HTMLElement).style.color = 'var(--lk-text-secondary)';
-      }}
     >
       <svg className="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true">
         <path d="M15 18l-6-6 6-6" />
@@ -158,7 +152,9 @@ export function ProgramDetail() {
     );
   }
 
-  const rawPercent = progress.total > 0 ? (progress.completed / progress.total) * 100 : 0;
+  const completedLessons = progress.lessons?.completed ?? 0;
+  const totalLessons = (progress.lessons?.completed ?? 0) + (progress.lessons?.in_progress ?? 0) + (progress.lessons?.prepared ?? 0) + (progress.lessons?.pending ?? 0);
+  const rawPercent = totalLessons > 0 ? (completedLessons / totalLessons) * 100 : 0;
   const safePercent = Math.min(100, Math.max(0, isFinite(rawPercent) ? rawPercent : 0));
 
   // Group lessons by subject
@@ -207,9 +203,9 @@ export function ProgramDetail() {
               className="text-base"
               style={{ color: 'var(--lk-accent)', transition: 'color 0.2s ease', fontVariantNumeric: 'tabular-nums' }}
             >
-              {progress.completed}
+              {completedLessons}
             </strong>
-            /{progress.total}
+            /{totalLessons}
             {scope.difficulty && (
               <span
                 className="ml-3 rounded-md px-2 py-0.5 text-[11px] font-medium"
@@ -225,7 +221,7 @@ export function ProgramDetail() {
         </div>
 
         <div className="mt-1">
-          <ProgressBar percent={safePercent} label={`${scope.title || '教程'} 总进度 ${progress.completed}/${progress.total}`} />
+          <ProgressBar percent={safePercent} label={`${scope.title || '教程'} 总进度 ${completedLessons}/${totalLessons}`} />
         </div>
       </div>
 

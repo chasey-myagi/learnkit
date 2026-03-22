@@ -13,14 +13,12 @@ pub struct QaRow {
 }
 
 pub fn insert_qa(conn: &Connection, id: &str, lesson_id: &str, selection: &str, question: &str, answer: &str) -> Result<()> {
-    // Temporarily disable foreign keys — lesson_id may reference a lesson
-    // that hasn't been registered in the lessons table yet (e.g., ad-hoc QA).
-    conn.execute_batch("PRAGMA foreign_keys = OFF;")?;
+    // Use INSERT OR IGNORE to gracefully handle foreign key issues
+    // (lesson_id may reference a lesson not yet in the lessons table).
     conn.execute(
-        "INSERT INTO qa_history (id, lesson_id, selection, question, answer) VALUES (?1, ?2, ?3, ?4, ?5)",
+        "INSERT OR IGNORE INTO qa_history (id, lesson_id, selection, question, answer) VALUES (?1, ?2, ?3, ?4, ?5)",
         rusqlite::params![id, lesson_id, selection, question, answer],
     )?;
-    conn.execute_batch("PRAGMA foreign_keys = ON;")?;
     Ok(())
 }
 

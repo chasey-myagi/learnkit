@@ -65,12 +65,14 @@ export function SubjectGroup({ programSlug, title, lessons, totalLessons, defaul
         if (!open) e.currentTarget.style.borderColor = 'rgba(59,130,246,0.3)';
       }}
       onMouseLeave={(e) => {
-        if (!open) e.currentTarget.style.borderColor = 'var(--lk-border)';
+        if (!open) {
+          e.currentTarget.style.borderColor = 'var(--lk-border)';
+        }
       }}
     >
       {/* Header */}
       <div
-        className="flex cursor-pointer select-none items-center gap-3 px-5 py-4"
+        className="flex cursor-pointer select-none items-center gap-3 px-5 py-4 transition-colors hover:bg-[var(--lk-accent-hover)]"
         role="button"
         tabIndex={0}
         id={headerId}
@@ -83,13 +85,6 @@ export function SubjectGroup({ programSlug, title, lessons, totalLessons, defaul
             e.preventDefault();
             setOpen(!open);
           }
-        }}
-        style={{ transition: 'background 0.2s ease' }}
-        onMouseEnter={(e) => {
-          e.currentTarget.style.background = 'var(--lk-accent-hover)';
-        }}
-        onMouseLeave={(e) => {
-          e.currentTarget.style.background = 'transparent';
         }}
       >
         <h3

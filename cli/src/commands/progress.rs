@@ -48,16 +48,16 @@ pub fn check_prepare(program: &str) -> Result<()> {
     if ready_count <= 1 {
         // Need more lessons to be prepared
         let pending = db::lessons::get_pending_lessons(&conn, 5)?;
-        println!("NEED_PREPARE");
+        let mut msg = String::from("NEED_PREPARE\n");
         if !pending.is_empty() {
-            println!("Next pending lessons:");
+            msg.push_str("Next pending lessons:\n");
             for l in &pending {
-                println!("  {} - {}", l.id, l.title);
+                msg.push_str(&format!("  {} - {}\n", l.id, l.title));
             }
         } else {
-            println!("No more pending lessons.");
+            msg.push_str("No more pending lessons.\n");
         }
-        std::process::exit(1);
+        anyhow::bail!("{}", msg.trim());
     }
 
     println!("OK");

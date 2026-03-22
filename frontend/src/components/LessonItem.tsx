@@ -31,7 +31,7 @@ export function LessonItem({ lesson, programSlug, isLast }: LessonItemProps) {
 
   return (
     <div
-      className={`relative ${isClickable ? 'cursor-pointer' : 'cursor-default'}`}
+      className={`group relative hover:bg-[var(--lk-accent-hover)] ${isClickable ? 'cursor-pointer' : 'cursor-default'}`}
       style={{
         padding: '10px 12px',
         minHeight: 44,
@@ -48,16 +48,6 @@ export function LessonItem({ lesson, programSlug, isLast }: LessonItemProps) {
           e.preventDefault();
           handleClick();
         }
-      }}
-      onMouseEnter={(e) => {
-        e.currentTarget.style.background = 'var(--lk-accent-hover)';
-        const arrow = e.currentTarget.querySelector('.lesson-arrow') as HTMLElement | null;
-        if (arrow) { arrow.style.opacity = '1'; arrow.style.transform = 'translateX(0)'; }
-      }}
-      onMouseLeave={(e) => {
-        e.currentTarget.style.background = 'transparent';
-        const arrow = e.currentTarget.querySelector('.lesson-arrow') as HTMLElement | null;
-        if (arrow) { arrow.style.opacity = '0'; arrow.style.transform = 'translateX(-2px)'; }
       }}
     >
       {/* Timeline node dot */}
@@ -94,14 +84,9 @@ export function LessonItem({ lesson, programSlug, isLast }: LessonItemProps) {
           <StatusBadge status={lesson.status} />
           {isClickable && (
             <span
-              className="lesson-arrow text-xs"
+              className="text-xs opacity-0 -translate-x-0.5 transition-all group-hover:opacity-100 group-hover:translate-x-0"
               aria-hidden="true"
-              style={{
-                color: 'var(--lk-text-secondary)',
-                opacity: 0,
-                transition: 'opacity 0.15s ease, transform 0.15s ease',
-                transform: 'translateX(-2px)',
-              }}
+              style={{ color: 'var(--lk-text-secondary)' }}
             >
               &rsaquo;
             </span>

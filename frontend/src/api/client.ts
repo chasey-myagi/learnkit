@@ -36,12 +36,16 @@ export interface ScopeData {
 }
 
 export interface ProgressData {
-  lessons: Record<string, number>;
-  total: number;
-  completed: number;
-  in_progress: number;
-  prepared: number;
-  pending: number;
+  lessons: {
+    pending?: number;
+    prepared?: number;
+    in_progress?: number;
+    completed?: number;
+  };
+  sections: {
+    read: number;
+    total: number;
+  };
 }
 
 class ApiError extends Error {

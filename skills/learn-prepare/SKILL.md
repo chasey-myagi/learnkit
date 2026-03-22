@@ -79,38 +79,38 @@ learnkit lesson-list {program}
 #### 内容要求
 
 - 深入浅出，理论 + 实例 + 案例分析
-- 适当穿插交互组件（测验题、对比卡片、可展开思考题）
-- 使用 `<p>`、`<ul>`、`<ol>`、`<blockquote>`、`<table>`、`<code>` 等标准 HTML
-- 代码块用 `<pre><code class="language-xxx">` 包裹
+- 丰富使用交互组件，提升学习体验
 - 重点概念用 `<strong>` 高亮
 
-#### 交互组件
+#### 组件使用
 
-在合适的位置嵌入以下组件（至少包含 1-2 个）：
+**必须阅读 `docs/COMPONENTS.md` 获取所有可用组件的完整 HTML 结构。**
 
-**测验题（Quiz）**：
-```html
-<div class="quiz" data-type="choice">
-  <p class="quiz-question">MDA 框架中的 A 代表什么？</p>
-  <div class="quiz-options">
-    <button class="quiz-option" data-correct="false">Algorithm</button>
-    <button class="quiz-option" data-correct="true">Aesthetics</button>
-    <button class="quiz-option" data-correct="false">Architecture</button>
-    <button class="quiz-option" data-correct="false">Analytics</button>
-  </div>
-  <p class="quiz-explanation" hidden>Aesthetics（美学）描述玩家的情感体验，是 MDA 框架的第三层。</p>
-</div>
-```
+可用组件清单：
 
-**可展开思考题**：
-```html
-<details class="thinking">
-  <summary>思考：如何用 MDA 框架分析你最喜欢的游戏？</summary>
-  <div class="thinking-content">
-    <p>尝试从三个层面分析...</p>
-  </div>
-</details>
-```
+| 类别 | 组件 |
+|------|------|
+| 基础 | h2/h3/h4、p、ul/ol、table、blockquote、hr |
+| 代码 | 代码块 `.code-block`、多语言切换 `.code-tabs`、文件树 `.file-tree`、代码 diff `.code-diff` |
+| 提示 | 提示框 `.callout`（tip/warning/note/important 四种） |
+| 定义 | 术语定义 `.definition` |
+| 测验 | 单选题、多选题、判断题、填空题、排序题、连线匹配题（均用 `.quiz-block`） |
+| 思考 | 可展开思考题 `.expandable` |
+| 展示 | 对比卡片 `.vs-card`、多 Tab 切换 `.content-tabs`、步骤条 `.steps` |
+| 标记 | 快捷键 `<kbd>`、公式 `.formula` / `.formula-inline` |
+| 图表 | 流程图 `.diagram` / `.flowchart`、时间线 `.timeline`、图片说明 `<figure>` |
+
+**使用原则：**
+
+- 每篇教案至少包含 **2-3 个交互组件**（测验题、思考题、Tab 切换等）
+- 根据内容类型选择合适组件：
+  - 编程类 → 代码块 + 多语言切换 + 文件树
+  - 设计理论 → 对比卡片 + 公式 + 流程图
+  - 引擎教程 → 步骤条 + 快捷键 + 代码块
+  - 所有类型 → 提示框 + 测验题 + 思考题
+- 代码块必须使用 `.code-block` 容器并标注 `data-lang`
+- 不要在单个 section 内堆砌过多组件，保持阅读节奏
+- 组件可嵌套：步骤条内可包含代码块，思考题内可包含列表
 
 #### 内容长度
 
