@@ -11,7 +11,7 @@ struct Cli {
 enum Commands {
     /// Start the backend server
     Serve {
-        #[arg(short, long, default_value = "3377")]
+        #[arg(short, long, default_value = "13135")]
         port: u16,
         /// Path to frontend dist directory (auto-detected if not specified)
         #[arg(long)]
@@ -159,6 +159,7 @@ async fn main() -> anyhow::Result<()> {
             commands::lesson::list(&program, status.as_deref())?;
         }
         Commands::LessonOpen { program, subject, lesson } => {
+            ensure_server_running();
             commands::lesson::open(&program, &subject, &lesson)?;
         }
         Commands::Next { program } => {
@@ -194,7 +195,41 @@ mod config;
 mod db;
 mod commands;
 mod scope;
-mod server;
+pub mod server;
+
+const SERVER_PORT: u16 = 13135;
+
+/// Check if the backend server is running on the default port.
+fn is_server_running() -> bool {
+    std::net::TcpStream::connect_timeout(
+        &format!("127.0.0.1:{}", SERVER_PORT).parse().unwrap(),
+        std::time::Duration::from_secs(1),
+    )
+    .is_ok()
+}
+
+/// Ensure the backend server is running, starting it if needed.
+fn ensure_server_running() {
+    if is_server_running() {
+        return;
+    }
+    eprintln!("[learnkit] Backend not running, starting on port {}...", SERVER_PORT);
+    let _ = std::process::Command::new("learnkit")
+        .args(["serve", "--port", &SERVER_PORT.to_string()])
+        .stdout(std::process::Stdio::null())
+        .stderr(std::process::Stdio::null())
+        .stdin(std::process::Stdio::null())
+        .spawn();
+
+    for _ in 0..10 {
+        std::thread::sleep(std::time::Duration::from_millis(500));
+        if is_server_running() {
+            eprintln!("[learnkit] Backend started on port {}", SERVER_PORT);
+            return;
+        }
+    }
+    eprintln!("[learnkit] Warning: Could not start backend");
+}
 
 /// Resolve the frontend dist directory.
 ///

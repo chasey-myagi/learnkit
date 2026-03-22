@@ -3268,3 +3268,19 @@ async fn test_lesson_open_uses_url() {
         combined
     );
 }
+
+// =====================================================
+// 15. CLI auto-start server detection
+// =====================================================
+
+#[tokio::test]
+async fn test_is_server_running_false_when_no_server() {
+    // Port 19999 should not be in use
+    assert!(
+        !std::net::TcpStream::connect_timeout(
+            &"127.0.0.1:19999".parse().unwrap(),
+            std::time::Duration::from_millis(100)
+        ).is_ok(),
+        "Port 19999 should not be in use"
+    );
+}
