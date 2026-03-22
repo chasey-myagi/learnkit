@@ -10,6 +10,20 @@ description: >
 
 创建一个新的学习教程（Program），与用户讨论后生成结构化大纲。
 
+## 前置检测
+
+执行前先检测环境：
+
+```bash
+which learnkit > /dev/null 2>&1 && curl -s http://localhost:13135/api/health > /dev/null 2>&1
+```
+
+如果检测失败，告诉用户：
+
+> LearnKit 环境未就绪。请先运行 `/learn-setup` 配置环境。
+
+详细引导参见 `.claude/guide.md`。
+
 ## 流程
 
 1. **接收主题**：用户指定想学的主题（如"游戏开发"、"强化学习"）

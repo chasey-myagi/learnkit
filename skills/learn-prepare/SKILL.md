@@ -11,6 +11,14 @@ description: >
 
 为指定 lesson 生成一份教案 HTML。
 
+## 前置检测
+
+```bash
+which learnkit > /dev/null 2>&1 && curl -s http://localhost:13135/api/health > /dev/null 2>&1
+```
+
+如果失败 → 提示 `/learn-setup`。详见 `.claude/guide.md`。
+
 ## 核心原则
 
 - **每次只生成一份教案** — 聚焦单一内容，保证质量

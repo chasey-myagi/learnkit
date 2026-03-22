@@ -10,6 +10,14 @@ description: >
 
 为指定的 Program 收集教学资源（文档、PDF、GitHub 仓库等）。
 
+## 前置检测
+
+```bash
+which learnkit > /dev/null 2>&1 && curl -s http://localhost:13135/api/health > /dev/null 2>&1
+```
+
+如果失败 → 提示 `/learn-setup`。详见 `.claude/guide.md`。
+
 ## 前提
 
 必须已经运行过 `/learn-create` 创建了 program 和 scope.md。
