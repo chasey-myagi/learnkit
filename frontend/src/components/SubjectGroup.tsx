@@ -31,7 +31,7 @@ function ChevronIcon({ open }: { open: boolean }) {
       style={{
         color: 'var(--lk-text-secondary)',
         transform: open ? 'rotate(180deg)' : 'rotate(0deg)',
-        transition: 'transform 0.25s cubic-bezier(.4,0,.2,1), color 0.2s ease',
+        transition: 'transform 250ms cubic-bezier(0.22,1,0.36,1), color 0.2s ease',
       }}
     >
       <polyline points="6 9 12 15 18 9" />
@@ -114,7 +114,7 @@ export function SubjectGroup({ programSlug, title, lessons, totalLessons, defaul
                 background: 'var(--lk-accent)',
                 borderRadius: 2,
                 width: `${percent}%`,
-                transition: 'width 0.3s cubic-bezier(.4,0,.2,1)',
+                transition: 'width 0.3s cubic-bezier(0.22,1,0.36,1)',
               }}
             />
           </div>
@@ -136,7 +136,7 @@ export function SubjectGroup({ programSlug, title, lessons, totalLessons, defaul
           style={{
             background: 'var(--lk-bg)',
             borderTop: '1px solid var(--lk-border)',
-            transition: 'background 0.3s ease, border-color 0.2s ease',
+            transition: 'background 0.2s ease, border-color 0.2s ease',
           }}
         >
           <div className="relative" style={{ paddingLeft: 28 }}>
@@ -164,7 +164,7 @@ export function SubjectGroup({ programSlug, title, lessons, totalLessons, defaul
                   height: completedLineHeight,
                   background: 'var(--lk-completed)',
                   borderRadius: 1,
-                  transition: 'height 0.3s cubic-bezier(.4,0,.2,1)',
+                  transition: 'height 0.3s cubic-bezier(0.22,1,0.36,1)',
                 }}
               />
             )}
@@ -225,6 +225,7 @@ function LessonItem({
       }}
       role="button"
       tabIndex={0}
+      aria-label={`${lesson.title} — ${lesson.status === 'completed' ? '已完成' : lesson.status === 'in_progress' ? '学习中' : lesson.status === 'prepared' ? '已备课' : '待备课'}`}
       onClick={handleClick}
       onKeyDown={(e) => {
         if (e.key === 'Enter' || e.key === ' ') {
@@ -234,9 +235,13 @@ function LessonItem({
       }}
       onMouseEnter={(e) => {
         e.currentTarget.style.background = 'var(--lk-accent-glow)';
+        const arrow = e.currentTarget.querySelector('.lesson-arrow') as HTMLElement | null;
+        if (arrow) { arrow.style.opacity = '1'; }
       }}
       onMouseLeave={(e) => {
         e.currentTarget.style.background = 'transparent';
+        const arrow = e.currentTarget.querySelector('.lesson-arrow') as HTMLElement | null;
+        if (arrow) { arrow.style.opacity = '0'; }
       }}
     >
       {/* Timeline node dot */}
@@ -260,24 +265,22 @@ function LessonItem({
 
       {/* Hover arrow */}
       <div
-        className="pointer-events-none absolute text-sm opacity-0 transition-all"
+        className="lesson-arrow pointer-events-none absolute text-sm"
         style={{
           right: 12,
           top: '50%',
-          transform: 'translateX(4px) translateY(-50%)',
+          transform: 'translateY(-50%)',
           color: 'var(--lk-accent)',
+          opacity: 0,
+          transition: 'opacity 0.2s ease, transform 0.25s cubic-bezier(0.22,1,0.36,1)',
         }}
       >
-        <span className="block transition-all duration-200 group-hover:translate-x-0 group-hover:opacity-100"
-          style={{ opacity: 0, transform: 'translateX(4px)' }}
-        >
-          →
-        </span>
+        →
       </div>
 
       {/* Content */}
       <div className="flex items-center justify-between gap-3">
-        <span className="text-sm font-semibold" style={{ lineHeight: '1.5' }}>
+        <span className="text-sm font-semibold" style={{ lineHeight: '1.6' }}>
           {lesson.title}
         </span>
         <StatusBadge status={lesson.status} />
@@ -286,7 +289,7 @@ function LessonItem({
       {lesson.status !== 'pending' && (
         <div
           className="mt-1 flex flex-wrap items-center gap-2 text-xs"
-          style={{ color: 'var(--lk-text-secondary)' }}
+          style={{ color: 'var(--lk-text-secondary)', lineHeight: '1.6' }}
         >
           {lesson.status === 'in_progress' && (
             <span>学习中</span>

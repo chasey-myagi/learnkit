@@ -1,10 +1,12 @@
+//! Handlers for program listing, scope retrieval, and Q&A history.
+
 use axum::extract::{Path, Query, State};
-use axum::http::StatusCode;
 use axum::response::IntoResponse;
 use axum::Json;
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;
 
+use super::error::AppError;
 use super::state::{validate_slug, AppState};
 use crate::scope;
 
@@ -12,12 +14,11 @@ use crate::scope;
 struct ProgramEntry {
     slug: String,
     title: String,
-    path: String,
 }
 
 pub async fn list(
     State(state): State<Arc<AppState>>,
-) -> Result<impl IntoResponse, StatusCode> {
+) -> Result<impl IntoResponse, AppError> {
     let result = tokio::task::spawn_blocking(move || {
         let root = &state.learnkit_root;
         if !root.exists() {
@@ -26,7 +27,7 @@ pub async fn list(
 
         let mut programs = Vec::new();
 
-        let entries = std::fs::read_dir(root).map_err(|e| anyhow::anyhow!(e))?;
+        let entries = std::fs::read_dir(root)?;
         for entry in entries.flatten() {
             let path = entry.path();
             if !path.is_dir() {
@@ -44,19 +45,15 @@ pub async fn list(
                 },
                 Err(_) => String::new(),
             };
-            programs.push(ProgramEntry {
-                slug,
-                title,
-                path: path.to_string_lossy().to_string(),
-            });
+            programs.push(ProgramEntry { slug, title });
         }
 
         programs.sort_by(|a, b| a.slug.cmp(&b.slug));
         serde_json::to_value(&programs).map_err(|e| anyhow::anyhow!(e))
     })
     .await
-    .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?
-    .map_err(|_: anyhow::Error| StatusCode::INTERNAL_SERVER_ERROR)?;
+    .map_err(|e| AppError::Internal(format!("task join error: {e}")))?
+    .map_err(|e: anyhow::Error| AppError::Internal(format!("{e}")))?;
 
     Ok(Json(result))
 }
@@ -64,28 +61,30 @@ pub async fn list(
 pub async fn scope_handler(
     State(state): State<Arc<AppState>>,
     Path(slug): Path<String>,
-) -> Result<impl IntoResponse, StatusCode> {
+) -> Result<impl IntoResponse, AppError> {
     validate_slug(&slug)?;
 
     let result = tokio::task::spawn_blocking(move || {
         let scope_path = state.learnkit_root.join(&slug).join("scope.md");
+
+        // Check existence explicitly instead of relying on error message string matching
         if !scope_path.exists() {
-            return Err(anyhow::anyhow!("not_found"));
+            return Err(AppError::NotFound(format!(
+                "program '{slug}' not found"
+            )));
         }
 
-        let content =
-            std::fs::read_to_string(&scope_path).map_err(|e| anyhow::anyhow!(e))?;
-        let parsed = scope::parse_scope(&content).map_err(|e| anyhow::anyhow!(e))?;
-        serde_json::to_value(&parsed).map_err(|e| anyhow::anyhow!(e))
+        let content = std::fs::read_to_string(&scope_path)
+            .map_err(|e| AppError::Internal(format!("failed to read scope: {e}")))?;
+        let parsed = scope::parse_scope(&content)
+            .map_err(|e| AppError::Internal(format!("failed to parse scope: {e}")))?;
+        serde_json::to_value(&parsed)
+            .map_err(|e| AppError::Internal(format!("serialization error: {e}")))
     })
     .await
-    .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
+    .map_err(|e| AppError::Internal(format!("task join error: {e}")))?;
 
-    match result {
-        Ok(json) => Ok(Json(json)),
-        Err(e) if e.to_string() == "not_found" => Err(StatusCode::NOT_FOUND),
-        Err(_) => Err(StatusCode::INTERNAL_SERVER_ERROR),
-    }
+    Ok(Json(result?))
 }
 
 #[derive(Deserialize)]
@@ -97,22 +96,21 @@ pub async fn qa_history(
     State(state): State<Arc<AppState>>,
     Path(slug): Path<String>,
     Query(query): Query<QaHistoryQuery>,
-) -> Result<impl IntoResponse, StatusCode> {
+) -> Result<impl IntoResponse, AppError> {
     validate_slug(&slug)?;
 
     let result = tokio::task::spawn_blocking(move || {
         match state.open_db(&slug) {
             Some(conn) => {
-                let rows = crate::db::qa::list_qa(&conn, query.lesson.as_deref())
-                    .map_err(|e| anyhow::anyhow!(e))?;
+                let rows = crate::db::qa::list_qa(&conn, query.lesson.as_deref())?;
                 serde_json::to_value(&rows).map_err(|e| anyhow::anyhow!(e))
             }
             None => Ok(serde_json::json!([])),
         }
     })
     .await
-    .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?
-    .map_err(|_: anyhow::Error| StatusCode::INTERNAL_SERVER_ERROR)?;
+    .map_err(|e| AppError::Internal(format!("task join error: {e}")))?
+    .map_err(|e: anyhow::Error| AppError::Internal(format!("{e}")))?;
 
     Ok(Json(result))
 }

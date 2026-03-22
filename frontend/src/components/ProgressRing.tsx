@@ -46,7 +46,7 @@ export function ProgressRing({ percent, size = 56 }: ProgressRingProps) {
           strokeLinecap="round"
           strokeDasharray={CIRCUMFERENCE}
           strokeDashoffset={offset}
-          style={{ transition: 'stroke-dashoffset 1s cubic-bezier(.4,0,.2,1)' }}
+          style={{ transition: 'stroke-dashoffset 0.6s cubic-bezier(0.22,1,0.36,1)' }}
         />
       </svg>
 

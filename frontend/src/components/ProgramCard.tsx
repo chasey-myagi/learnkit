@@ -105,7 +105,7 @@ export function ProgramCard({ slug, scope, progress }: ProgramCardProps) {
       style={{
         background: 'var(--lk-card)',
         borderColor: isComplete ? 'rgba(16,172,132,0.3)' : 'var(--lk-border)',
-        transition: 'border-color 0.2s ease, transform 0.25s cubic-bezier(.4,0,.2,1), box-shadow 0.25s cubic-bezier(.4,0,.2,1), background 0.2s ease',
+        transition: 'border-color 0.2s ease, transform 0.25s cubic-bezier(0.22,1,0.36,1), box-shadow 0.25s cubic-bezier(0.22,1,0.36,1), background 0.2s ease',
       }}
       role="button"
       tabIndex={0}
@@ -121,9 +121,7 @@ export function ProgramCard({ slug, scope, progress }: ProgramCardProps) {
         const el = e.currentTarget;
         el.style.borderColor = isComplete ? 'var(--lk-completed)' : 'var(--lk-accent)';
         el.style.transform = 'translateY(-2px)';
-        el.style.boxShadow = isComplete
-          ? '0 4px 20px rgba(0,0,0,0.15), 0 0 0 1px rgba(16,172,132,0.15)'
-          : '0 4px 20px rgba(0,0,0,0.15), 0 0 0 1px rgba(108,92,231,0.15)';
+        el.style.boxShadow = '0 4px 20px rgba(0,0,0,0.25)';
       }}
       onMouseLeave={(e) => {
         const el = e.currentTarget;
@@ -155,12 +153,12 @@ export function ProgramCard({ slug, scope, progress }: ProgramCardProps) {
         </div>
         <div className="min-w-0 flex-1">
           <div
-            className="text-[17px] font-bold leading-tight"
-            style={{ letterSpacing: '-0.3px', color: 'var(--lk-text)' }}
+            className="text-[17px] font-bold"
+            style={{ letterSpacing: '-0.3px', lineHeight: '1.3', color: 'var(--lk-text)' }}
           >
             {scope.title}
           </div>
-          <div className="text-[13px] leading-snug" style={{ color: 'var(--lk-text-secondary)' }}>
+          <div className="text-[13px]" style={{ color: 'var(--lk-text-secondary)', lineHeight: '1.6' }}>
             {getDescription(slug)}
           </div>
         </div>
@@ -175,7 +173,7 @@ export function ProgramCard({ slug, scope, progress }: ProgramCardProps) {
       {/* Meta */}
       <div
         className="flex gap-4 text-xs"
-        style={{ color: 'var(--lk-text-secondary)', fontVariantNumeric: 'tabular-nums', lineHeight: '1.4' }}
+        style={{ color: 'var(--lk-text-secondary)', fontVariantNumeric: 'tabular-nums', lineHeight: '1.6' }}
       >
         <span>
           <strong className="font-semibold" style={{ color: 'var(--lk-text)', transition: 'color 0.2s ease' }}>

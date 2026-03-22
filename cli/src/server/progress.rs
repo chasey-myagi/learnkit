@@ -1,26 +1,26 @@
+//! Handlers for lesson progress tracking — reading sections and updating status.
+
 use axum::extract::{Path, State};
-use axum::http::StatusCode;
 use axum::response::IntoResponse;
 use axum::Json;
 use serde::Deserialize;
 use std::sync::Arc;
 
-use super::state::{validate_slug, AppState};
+use super::error::{AppError, DbError};
+use super::state::{validate_lesson_path, validate_slug, AppState};
 
 pub async fn get_progress(
     State(state): State<Arc<AppState>>,
     Path(slug): Path<String>,
-) -> Result<impl IntoResponse, StatusCode> {
+) -> Result<impl IntoResponse, AppError> {
     validate_slug(&slug)?;
 
     let result = tokio::task::spawn_blocking(move || {
         match state.open_db(&slug) {
             Some(conn) => {
-                let status_counts = crate::db::lessons::count_by_status(&conn)
-                    .map_err(|e| anyhow::anyhow!(e))?;
+                let status_counts = crate::db::lessons::count_by_status(&conn)?;
                 let (sections_read, sections_total) =
-                    crate::db::sections::get_section_progress(&conn)
-                        .map_err(|e| anyhow::anyhow!(e))?;
+                    crate::db::sections::get_section_progress(&conn)?;
 
                 Ok(serde_json::json!({
                     "lessons": status_counts,
@@ -40,8 +40,8 @@ pub async fn get_progress(
         }
     })
     .await
-    .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?
-    .map_err(|_: anyhow::Error| StatusCode::INTERNAL_SERVER_ERROR)?;
+    .map_err(|e| AppError::Internal(format!("task join error: {e}")))?
+    .map_err(|e: anyhow::Error| AppError::Internal(format!("{e}")))?;
 
     Ok(Json(result))
 }
@@ -58,69 +58,104 @@ pub async fn update_progress(
     State(state): State<Arc<AppState>>,
     Path(slug): Path<String>,
     Json(body): Json<UpdateProgressBody>,
-) -> Result<impl IntoResponse, StatusCode> {
+) -> Result<impl IntoResponse, AppError> {
     validate_slug(&slug)?;
+    validate_lesson_path(&body.lesson_path)?;
 
-    // Validate status enum
+    // Validate status enum once, before spawning the blocking task
     match body.status.as_str() {
         "in_progress" | "completed" => {}
-        _ => return Err(StatusCode::BAD_REQUEST),
+        other => {
+            return Err(AppError::BadRequest(format!(
+                "invalid status: '{other}', expected 'in_progress' or 'completed'"
+            )))
+        }
     }
 
     let result = tokio::task::spawn_blocking(move || {
         // Check if program directory exists
         let program_dir = state.learnkit_root.join(&slug);
         if !program_dir.exists() {
-            return Err(StatusCode::NOT_FOUND);
+            return Err(AppError::NotFound(format!("program '{slug}' not found")));
         }
 
         let conn = match state.open_db(&slug) {
             Some(c) => c,
-            None => {
-                // DB doesn't exist yet — create it
-                let db_path = program_dir.join("learnkit.db");
-                let c = rusqlite::Connection::open(&db_path)
-                    .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
-                c.execute_batch("PRAGMA journal_mode=WAL;")
-                    .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
-                crate::db::schema::ensure_tables(&c)
-                    .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
-                c
-            }
+            None => state.open_or_create_db(&slug)?,
         };
 
-        // Mark section as read
-        crate::db::sections::mark_section_read(&conn, &body.lesson_path, &body.section)
-            .map_err(|_| StatusCode::NOT_FOUND)?;
+        // Mark section as read — distinguish not-found from internal errors
+        mark_section_read_checked(&conn, &body.lesson_path, &body.section)?;
 
-        // Update lesson status
-        match body.status.as_str() {
-            "in_progress" | "completed" => {
-                crate::db::lessons::update_lesson_status(&conn, &body.lesson_path, &body.status)
-                    .map_err(|_| StatusCode::NOT_FOUND)?;
-            }
-            _ => {} // Already validated above, but keep for safety
-        }
+        // Update lesson status (already validated above, no redundant check needed)
+        update_lesson_status_checked(&conn, &body.lesson_path, &body.status)?;
 
-        Ok::<_, StatusCode>(serde_json::json!({ "ok": true }))
+        Ok::<_, AppError>(serde_json::json!({ "ok": true }))
     })
     .await
-    .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)??;
+    .map_err(|e| AppError::Internal(format!("task join error: {e}")))?;
 
-    Ok(Json(result))
+    Ok(Json(result?))
+}
+
+/// Wrapper around `db::sections::mark_section_read` that maps errors to AppError
+/// with proper not-found vs internal distinction.
+fn mark_section_read_checked(
+    conn: &rusqlite::Connection,
+    lesson_id: &str,
+    title: &str,
+) -> Result<(), DbError> {
+    let affected = conn.execute(
+        "UPDATE sections SET read = 1, read_at = datetime('now') WHERE lesson_id = ?1 AND title = ?2",
+        [lesson_id, title],
+    )?;
+
+    if affected == 0 {
+        return Err(DbError::NotFound(format!(
+            "section '{title}' not found in lesson '{lesson_id}'"
+        )));
+    }
+    Ok(())
+}
+
+/// Wrapper around `db::lessons::update_lesson_status` that maps errors to AppError
+/// with proper not-found vs internal distinction.
+fn update_lesson_status_checked(
+    conn: &rusqlite::Connection,
+    id: &str,
+    status: &str,
+) -> Result<(), DbError> {
+    let affected = match status {
+        "in_progress" => conn.execute(
+            "UPDATE lessons SET status = ?1, started_at = datetime('now') WHERE id = ?2",
+            [status, id],
+        )?,
+        "completed" => conn.execute(
+            "UPDATE lessons SET status = ?1, completed_at = datetime('now') WHERE id = ?2",
+            [status, id],
+        )?,
+        _ => conn.execute(
+            "UPDATE lessons SET status = ?1 WHERE id = ?2",
+            [status, id],
+        )?,
+    };
+
+    if affected == 0 {
+        return Err(DbError::NotFound(format!("lesson '{id}' not found")));
+    }
+    Ok(())
 }
 
 pub async fn prepare_status(
     State(state): State<Arc<AppState>>,
     Path(slug): Path<String>,
-) -> Result<impl IntoResponse, StatusCode> {
+) -> Result<impl IntoResponse, AppError> {
     validate_slug(&slug)?;
 
     let result = tokio::task::spawn_blocking(move || {
         match state.open_db(&slug) {
             Some(conn) => {
-                let ready_count = crate::db::lessons::count_prepared_unfinished(&conn)
-                    .map_err(|e| anyhow::anyhow!(e))?;
+                let ready_count = crate::db::lessons::count_prepared_unfinished(&conn)?;
 
                 let need_prepare = ready_count <= 1;
 
@@ -141,8 +176,8 @@ pub async fn prepare_status(
         }
     })
     .await
-    .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?
-    .map_err(|_: anyhow::Error| StatusCode::INTERNAL_SERVER_ERROR)?;
+    .map_err(|e| AppError::Internal(format!("task join error: {e}")))?
+    .map_err(|e: anyhow::Error| AppError::Internal(format!("{e}")))?;
 
     Ok(Json(result))
 }

@@ -16,6 +16,7 @@ pub fn program_root(slug: &str) -> PathBuf {
     learnkit_root().join(slug)
 }
 
+#[allow(dead_code)]
 pub fn ensure_root() -> Result<PathBuf> {
     let root = learnkit_root();
     if !root.exists() {

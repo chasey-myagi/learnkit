@@ -9,7 +9,7 @@ export function AppHeader() {
       style={{
         background: 'var(--lk-bg)',
         borderBottom: '1px solid var(--lk-border)',
-        transition: 'background 0.3s ease, border-color 0.2s ease',
+        transition: 'background 0.2s ease, border-color 0.2s ease',
       }}
     >
       {/* Gradient bottom line */}
@@ -48,8 +48,7 @@ export function AppHeader() {
           className="flex size-7 items-center justify-center rounded-full text-sm leading-none"
           style={{
             background: theme === 'light' ? 'var(--lk-accent)' : 'transparent',
-            boxShadow: theme === 'light' ? '0 0 8px rgba(108,92,231,0.4)' : 'none',
-            transition: 'background 0.2s ease, box-shadow 0.2s ease',
+            transition: 'background 0.2s ease',
           }}
         >
           ☀️
@@ -58,8 +57,7 @@ export function AppHeader() {
           className="flex size-7 items-center justify-center rounded-full text-sm leading-none"
           style={{
             background: theme === 'dark' ? 'var(--lk-accent)' : 'transparent',
-            boxShadow: theme === 'dark' ? '0 0 8px rgba(108,92,231,0.4)' : 'none',
-            transition: 'background 0.2s ease, box-shadow 0.2s ease',
+            transition: 'background 0.2s ease',
           }}
         >
           🌙

@@ -2,6 +2,7 @@ use rusqlite::Connection;
 use anyhow::Result;
 use serde::Serialize;
 
+#[allow(dead_code)]
 #[derive(Debug, Serialize)]
 pub struct SectionRow {
     pub id: i64,
@@ -27,6 +28,7 @@ pub fn insert_sections(conn: &Connection, lesson_id: &str, titles: &[String]) ->
 }
 
 /// Mark a section as read
+#[allow(dead_code)]
 pub fn mark_section_read(conn: &Connection, lesson_id: &str, title: &str) -> Result<()> {
     let affected = conn.execute(
         "UPDATE sections SET read = 1, read_at = datetime('now') WHERE lesson_id = ?1 AND title = ?2",
@@ -40,6 +42,7 @@ pub fn mark_section_read(conn: &Connection, lesson_id: &str, title: &str) -> Res
 }
 
 /// Get all sections for a lesson
+#[allow(dead_code)]
 pub fn get_sections_for_lesson(conn: &Connection, lesson_id: &str) -> Result<Vec<SectionRow>> {
     let mut stmt = conn.prepare(
         "SELECT id, lesson_id, title, read, read_at FROM sections WHERE lesson_id = ?1 ORDER BY id"

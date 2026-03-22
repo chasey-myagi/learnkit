@@ -56,7 +56,7 @@
   --color-lk-pending: var(--lk-pending);
   --color-lk-failed: var(--lk-failed);
 
-  --radius-sm: calc(var(--radius) * 0.6);
+  --radius-sm: 6px;
   --radius-md: calc(var(--radius) * 0.8);
   --radius-lg: var(--radius);
   --radius-xl: calc(var(--radius) * 1.4);
@@ -143,7 +143,7 @@
     color: var(--lk-text);
     font-family: system-ui, -apple-system, sans-serif;
     line-height: 1.6;
-    transition: background 0.3s ease, color 0.3s ease;
+    transition: background 0.2s ease, color 0.2s ease;
     margin: 0;
     min-height: 100vh;
   }
@@ -191,4 +191,17 @@
 @keyframes badge-breathe {
   0%, 100% { opacity: 1; }
   50% { opacity: 0.7; }
+}
+
+/* ══════════════════════════════════════════════
+   Focus-visible styles
+   ══════════════════════════════════════════════ */
+:focus-visible {
+  outline: 2px solid var(--lk-accent);
+  outline-offset: 2px;
+}
+
+/* Remove default focus outline for mouse users */
+:focus:not(:focus-visible) {
+  outline: none;
 }

@@ -36,6 +36,68 @@ const programIcons: Record<string, React.ReactNode> = {
   ),
 };
 
+function BackLink() {
+  return (
+    <Link
+      to="/"
+      className="mb-4 inline-flex items-center gap-2 text-[13px] no-underline"
+      style={{ color: 'var(--lk-text-secondary)', transition: 'color 0.2s ease' }}
+      aria-label="返回教程列表"
+      onMouseEnter={(e) => {
+        (e.currentTarget as HTMLElement).style.color = 'var(--lk-accent)';
+      }}
+      onMouseLeave={(e) => {
+        (e.currentTarget as HTMLElement).style.color = 'var(--lk-text-secondary)';
+      }}
+    >
+      <svg className="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+        <path d="M15 18l-6-6 6-6" />
+      </svg>
+      返回列表
+    </Link>
+  );
+}
+
+function DetailSkeleton() {
+  return (
+    <div className="mx-auto max-w-[1200px] px-6 py-8 sm:px-10">
+      <div className="mb-4">
+        <BackLink />
+      </div>
+      {/* Title skeleton */}
+      <div className="mb-3 flex items-center gap-3">
+        <div
+          className="size-9 shrink-0 animate-pulse rounded-lg"
+          style={{ background: 'var(--lk-border)' }}
+        />
+        <div
+          className="h-7 w-48 animate-pulse rounded-lg"
+          style={{ background: 'var(--lk-border)' }}
+        />
+      </div>
+      {/* Progress bar skeleton */}
+      <div
+        className="mb-7 h-2 w-full animate-pulse rounded-full"
+        style={{ background: 'var(--lk-border)' }}
+      />
+      {/* Subject group skeletons */}
+      <div className="flex flex-col gap-3">
+        {[1, 2, 3].map((i) => (
+          <div
+            key={i}
+            className="animate-pulse rounded-xl"
+            style={{
+              background: 'var(--lk-card)',
+              border: '1px solid var(--lk-border)',
+              height: 64,
+            }}
+          />
+        ))}
+      </div>
+    </div>
+  );
+}
+
 export function ProgramDetail() {
   const { slug = '' } = useParams<{ slug: string }>();
   const { scope, loading: scopeLoading } = useScope(slug);
@@ -45,53 +107,33 @@ export function ProgramDetail() {
   const loading = scopeLoading || lessonsLoading || progressLoading;
 
   if (loading) {
-    return (
-      <div className="mx-auto max-w-[1200px] px-10 py-8">
-        <div className="mb-4">
-          <Link
-            to="/"
-            className="inline-flex items-center gap-2 text-[13px] no-underline"
-            style={{ color: 'var(--lk-text-secondary)', transition: 'color 0.2s ease' }}
-          >
-            <svg className="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-              <path d="M15 18l-6-6 6-6" />
-            </svg>
-            返回列表
-          </Link>
-        </div>
-        <div
-          className="h-16 animate-pulse rounded-xl"
-          style={{ background: 'var(--lk-card)', border: '1px solid var(--lk-border)' }}
-        />
-        <div className="mt-4 flex flex-col gap-3">
-          {[1, 2, 3].map((i) => (
-            <div
-              key={i}
-              className="h-16 animate-pulse rounded-xl"
-              style={{ background: 'var(--lk-card)', border: '1px solid var(--lk-border)' }}
-            />
-          ))}
-        </div>
-      </div>
-    );
+    return <DetailSkeleton />;
   }
 
   if (!scope || !progress) {
     return (
-      <div className="mx-auto max-w-[1200px] px-10 py-8">
-        <Link
-          to="/"
-          className="inline-flex items-center gap-2 text-[13px] no-underline"
-          style={{ color: 'var(--lk-text-secondary)' }}
+      <div className="mx-auto max-w-[1200px] px-6 py-8 sm:px-10">
+        <BackLink />
+        <div
+          className="mt-8 flex flex-col items-center justify-center rounded-2xl px-8 py-16"
+          style={{
+            background: 'var(--lk-card)',
+            border: '1px solid var(--lk-border)',
+          }}
         >
-          <svg className="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-            <path d="M15 18l-6-6 6-6" />
-          </svg>
-          返回列表
-        </Link>
-        <p className="mt-8 text-center" style={{ color: 'var(--lk-text-secondary)' }}>
-          未找到该教程
-        </p>
+          <p
+            className="mb-1 text-base font-semibold"
+            style={{ color: 'var(--lk-text)', letterSpacing: '-0.3px' }}
+          >
+            未找到该教程
+          </p>
+          <p
+            className="text-sm"
+            style={{ color: 'var(--lk-text-secondary)', lineHeight: '1.6' }}
+          >
+            请检查链接是否正确，或返回列表页
+          </p>
+        </div>
       </div>
     );
   }
@@ -107,27 +149,12 @@ export function ProgramDetail() {
 
   return (
     <main
-      className="mx-auto max-w-[1200px] px-10 py-8"
-      style={{ animation: 'fadeIn 0.25s cubic-bezier(.4,0,.2,1)' }}
+      className="mx-auto max-w-[1200px] px-6 py-8 sm:px-10"
+      style={{ animation: 'fadeIn 0.25s cubic-bezier(0.22,1,0.36,1)' }}
     >
       {/* Header */}
       <div className="mb-7">
-        <Link
-          to="/"
-          className="mb-4 inline-flex items-center gap-2 text-[13px] no-underline"
-          style={{ color: 'var(--lk-text-secondary)', transition: 'color 0.2s ease' }}
-          onMouseEnter={(e) => {
-            (e.currentTarget as HTMLElement).style.color = 'var(--lk-accent)';
-          }}
-          onMouseLeave={(e) => {
-            (e.currentTarget as HTMLElement).style.color = 'var(--lk-text-secondary)';
-          }}
-        >
-          <svg className="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-            <path d="M15 18l-6-6 6-6" />
-          </svg>
-          返回列表
-        </Link>
+        <BackLink />
 
         <div className="mb-3 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div
@@ -141,7 +168,11 @@ export function ProgramDetail() {
           </div>
           <div
             className="shrink-0 whitespace-nowrap text-sm font-semibold"
-            style={{ color: 'var(--lk-text-secondary)', fontVariantNumeric: 'tabular-nums' }}
+            style={{
+              color: 'var(--lk-text-secondary)',
+              fontVariantNumeric: 'tabular-nums',
+              lineHeight: '1.6',
+            }}
           >
             进度{' '}
             <strong

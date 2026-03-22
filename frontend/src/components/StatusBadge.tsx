@@ -27,7 +27,7 @@ export function StatusBadge({ status }: { status: Status }) {
   const c = config[status];
   return (
     <span
-      className="inline-flex items-center gap-1 whitespace-nowrap rounded-md px-3 py-1 text-[11px] font-semibold"
+      className="inline-flex items-center gap-1 whitespace-nowrap rounded-md px-3 py-1 text-[12px] font-semibold"
       style={{
         background: c.bg,
         color: c.color,

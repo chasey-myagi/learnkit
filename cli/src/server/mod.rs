@@ -1,7 +1,12 @@
+//! HTTP API server module for LearnKit.
+//!
+//! Provides a REST API for the web UI to interact with programs, lessons, and progress.
+
 use axum::{routing::{get, post}, Router};
 use std::sync::Arc;
 use tower_http::cors::CorsLayer;
 
+pub mod error;
 pub mod state;
 pub mod health;
 pub mod programs;
@@ -9,6 +14,8 @@ pub mod lessons;
 pub mod progress;
 
 pub fn create_router(state: Arc<state::AppState>) -> Router {
+    // NOTE: Axum 0.7 uses `:param` syntax for path parameters.
+    // Migrate to `{param}` syntax when upgrading to Axum 0.8+.
     Router::new()
         .route("/api/health", get(health::health))
         .route("/api/programs", get(programs::list))
@@ -18,6 +25,10 @@ pub fn create_router(state: Arc<state::AppState>) -> Router {
         .route("/api/programs/:slug/progress", post(progress::update_progress))
         .route("/api/programs/:slug/qa-history", get(programs::qa_history))
         .route("/api/programs/:slug/prepare-status", get(progress::prepare_status))
+        // Planned endpoints:
+        // POST /api/programs/:slug/qa       — submit a new Q&A pair
+        // POST /api/programs/:slug/prepare  — trigger lesson preparation
+        // GET  /api/programs/:slug/resources — list learning resources
         .layer(CorsLayer::permissive())
         .with_state(state)
 }

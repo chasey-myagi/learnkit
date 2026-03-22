@@ -25,7 +25,7 @@ export function ProgressBar({ percent, height = 8 }: ProgressBarProps) {
           background: isComplete
             ? 'linear-gradient(90deg, #10ac84, #2ecc71)'
             : 'linear-gradient(90deg, #6c5ce7, #a29bfe)',
-          transition: 'width 0.6s cubic-bezier(.4,0,.2,1)',
+          transition: 'width 0.3s cubic-bezier(0.22,1,0.36,1)',
           ...(isZero ? { opacity: 0 } : {}),
         }}
       />

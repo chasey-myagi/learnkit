@@ -75,6 +75,7 @@ pub fn count_by_status(conn: &Connection) -> Result<HashMap<String, i64>> {
 }
 
 /// Get a single lesson by id (format: "subject/lesson")
+#[allow(dead_code)]
 pub fn get_lesson(conn: &Connection, id: &str) -> Result<Option<LessonRow>> {
     let mut stmt = conn.prepare(
         "SELECT id, subject, lesson, title, status FROM lessons WHERE id = ?1"

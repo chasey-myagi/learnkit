@@ -1,3 +1,5 @@
+//! Simple health check endpoint — returns `{"status": "ok"}`.
+
 use axum::response::IntoResponse;
 use axum::Json;
 
