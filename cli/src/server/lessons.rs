@@ -129,7 +129,7 @@ pub async fn serve_lesson(
             .replace("{{program}}", &safe_program)
             .replace("{{subject}}", &safe_subject)
             .replace("{{lesson}}", &safe_lesson)
-            .replace("{{api_base}}", &format!("/api/programs/{}", program))
+            .replace("{{api_base}}", &format!("/api/programs/{}", safe_program))
             .replace("{{breadcrumb}}", &breadcrumb)
             .replace("{{prev_link}}", "")
             .replace("{{next_link}}", "")
