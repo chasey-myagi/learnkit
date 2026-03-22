@@ -1,0 +1,1896 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LearnKit — 教案模板 Case B: 杂志排版风</title>
+<style>
+  /* ══════════════════════════════════════════════
+     Reset & Accessibility
+     ══════════════════════════════════════════════ */
+  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      animation-duration: 0.01ms !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+  }
+  :focus:not(:focus-visible) { outline: none; }
+
+  /* ══════════════════════════════════════════════
+     Design Tokens
+     ══════════════════════════════════════════════ */
+  :root {
+    --bg: #0a0a12;
+    --card: #141425;
+    --border: #1e1e3a;
+    --text: #e0e0e8;
+    --text-secondary: #8a8ab4;
+    --accent: #6c5ce7;
+    --accent-light: #a29bfe;
+    --accent-glow: rgba(108, 92, 231, 0.3);
+    --surface: #12121f;
+
+    --font-body: Georgia, 'Noto Serif SC', 'Source Han Serif SC', serif;
+    --font-heading: system-ui, -apple-system, 'PingFang SC', sans-serif;
+    --font-ui: system-ui, -apple-system, sans-serif;
+    --font-mono: 'SF Mono', 'Fira Code', 'JetBrains Mono', monospace;
+    --radius: 12px;
+    --radius-sm: 6px;
+
+    --content-width: 660px;
+    --section-gap: 80px;
+  }
+
+  [data-theme="light"] {
+    --bg: #faf9f7;
+    --card: #ffffff;
+    --border: #e8e5df;
+    --text: #1a1a2e;
+    --text-secondary: #6e6a8a;
+    --accent-glow: rgba(108, 92, 231, 0.12);
+    --surface: #ffffff;
+  }
+
+  /* ══════════════════════════════════════════════
+     Base
+     ══════════════════════════════════════════════ */
+  html { scroll-behavior: smooth; }
+
+  body {
+    font-family: var(--font-body);
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.85;
+    font-size: 17px;
+    transition: background 0.3s ease, color 0.3s ease;
+    min-height: 100vh;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  ::selection {
+    background: rgba(108, 92, 231, 0.3);
+    color: inherit;
+  }
+
+  /* ══════════════════════════════════════════════
+     Case Banner
+     ══════════════════════════════════════════════ */
+  .case-banner {
+    background: var(--accent);
+    color: #fff;
+    text-align: center;
+    padding: 8px;
+    font-size: 13px;
+    font-weight: 600;
+    font-family: var(--font-ui);
+  }
+
+  /* ══════════════════════════════════════════════
+     Top Nav (极简 sticky)
+     ══════════════════════════════════════════════ */
+  .top-nav {
+    position: sticky;
+    top: 0;
+    z-index: 200;
+    height: 52px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 24px;
+    background: var(--bg);
+    border-bottom: 1px solid transparent;
+    font-family: var(--font-ui);
+    transition: background 0.3s, border-color 0.3s, box-shadow 0.3s;
+  }
+
+  .top-nav.scrolled {
+    border-bottom-color: var(--border);
+    box-shadow: 0 1px 12px rgba(0,0,0,0.08);
+  }
+
+  .top-nav .nav-left {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .top-nav .back-btn {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    background: none;
+    border: none;
+    color: var(--text-secondary);
+    font-size: 14px;
+    font-family: var(--font-ui);
+    cursor: pointer;
+    padding: 6px 10px;
+    border-radius: var(--radius-sm);
+    transition: color 0.2s, background 0.2s;
+  }
+  .top-nav .back-btn:hover {
+    color: var(--text);
+    background: rgba(108, 92, 231, 0.08);
+  }
+  .top-nav .back-btn svg {
+    width: 16px;
+    height: 16px;
+  }
+
+  .top-nav .nav-title {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text);
+    opacity: 0;
+    transform: translateY(4px);
+    transition: opacity 0.3s, transform 0.3s;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 400px;
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%) translateY(4px);
+  }
+  .top-nav.scrolled .nav-title {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+
+  .top-nav .nav-right {
+    display: flex;
+    align-items: center;
+  }
+
+  /* Theme toggle — capsule */
+  .theme-toggle {
+    display: flex;
+    align-items: center;
+    border-radius: 999px;
+    padding: 3px;
+    cursor: pointer;
+    border: 1px solid var(--border);
+    background: transparent;
+    transition: border-color 0.2s;
+  }
+  .theme-toggle .t-opt {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 13px;
+    transition: background 0.2s;
+    border: none;
+    background: none;
+    cursor: pointer;
+    line-height: 1;
+  }
+  .theme-toggle .t-opt.active {
+    background: var(--accent);
+  }
+
+  /* ══════════════════════════════════════════════
+     Hero / 教案标题区
+     ══════════════════════════════════════════════ */
+  .lesson-hero {
+    max-width: var(--content-width);
+    margin: 0 auto;
+    padding: 72px 24px 48px;
+  }
+
+  .lesson-hero .lesson-breadcrumb {
+    font-family: var(--font-ui);
+    font-size: 13px;
+    color: var(--text-secondary);
+    margin-bottom: 24px;
+    letter-spacing: 0.02em;
+  }
+  .lesson-hero .lesson-breadcrumb span {
+    margin: 0 6px;
+    opacity: 0.5;
+  }
+
+  .lesson-hero h1 {
+    font-family: var(--font-heading);
+    font-size: 42px;
+    font-weight: 800;
+    line-height: 1.2;
+    letter-spacing: -1px;
+    color: var(--text);
+    margin-bottom: 20px;
+  }
+
+  .lesson-hero .lesson-subtitle {
+    font-size: 19px;
+    color: var(--text-secondary);
+    line-height: 1.7;
+    font-style: italic;
+    max-width: 560px;
+  }
+
+  .lesson-meta-bar {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    margin-top: 32px;
+    padding-top: 24px;
+    border-top: 1px solid var(--border);
+    font-family: var(--font-ui);
+    font-size: 13px;
+    color: var(--text-secondary);
+  }
+
+  .lesson-meta-bar .meta-item {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+  }
+
+  .lesson-meta-bar .meta-dot {
+    width: 4px;
+    height: 4px;
+    border-radius: 50%;
+    background: var(--text-secondary);
+    opacity: 0.4;
+  }
+
+  /* ══════════════════════════════════════════════
+     Section Progress Indicator (右侧浮动)
+     ══════════════════════════════════════════════ */
+  .section-progress-rail {
+    position: fixed;
+    right: 32px;
+    top: 50%;
+    transform: translateY(-50%);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0;
+    z-index: 100;
+  }
+
+  .progress-segment {
+    width: 3px;
+    height: 40px;
+    background: var(--border);
+    position: relative;
+  }
+
+  .progress-dot {
+    width: 9px;
+    height: 9px;
+    border-radius: 50%;
+    background: var(--border);
+    flex-shrink: 0;
+    transition: background 0.2s, box-shadow 0.2s;
+    cursor: pointer;
+    position: relative;
+  }
+  .progress-dot.active {
+    background: var(--accent-light);
+    box-shadow: 0 0 0 3px rgba(162, 155, 254, 0.15);
+  }
+  .progress-dot:hover {
+    background: var(--accent-light);
+  }
+
+  /* Tooltip on hover */
+  .progress-dot::after {
+    content: attr(data-label);
+    position: absolute;
+    right: 20px;
+    top: 50%;
+    transform: translateY(-50%);
+    white-space: nowrap;
+    font-family: var(--font-ui);
+    font-size: 12px;
+    color: var(--text);
+    background: var(--card);
+    border: 1px solid var(--border);
+    padding: 4px 10px;
+    border-radius: var(--radius-sm);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.2s;
+  }
+  .progress-dot:hover::after {
+    opacity: 1;
+  }
+
+  /* ══════════════════════════════════════════════
+     Mini TOC (右下浮动)
+     ══════════════════════════════════════════════ */
+  .mini-toc-trigger {
+    position: fixed;
+    bottom: 90px;
+    right: 28px;
+    z-index: 300;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: var(--card);
+    border: 1px solid var(--border);
+    color: var(--text-secondary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    font-size: 16px;
+    transition: color 0.2s, border-color 0.2s, box-shadow 0.2s;
+    font-family: var(--font-ui);
+  }
+  .mini-toc-trigger:hover {
+    color: var(--accent);
+    border-color: var(--accent);
+  }
+
+  .mini-toc-panel {
+    position: fixed;
+    bottom: 140px;
+    right: 28px;
+    z-index: 300;
+    width: 220px;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 12px 0;
+    display: none;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.2);
+  }
+  .mini-toc-panel.open {
+    display: block;
+  }
+
+  .mini-toc-panel .toc-heading {
+    font-family: var(--font-ui);
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--text-secondary);
+    padding: 0 16px 8px;
+  }
+
+  .mini-toc-panel .toc-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 7px 16px;
+    font-family: var(--font-ui);
+    font-size: 13px;
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: color 0.15s, background 0.15s;
+    text-decoration: none;
+  }
+  .mini-toc-panel .toc-item:hover {
+    color: var(--text);
+    background: rgba(108, 92, 231, 0.06);
+  }
+  .mini-toc-panel .toc-item.active {
+    color: var(--accent);
+  }
+  .mini-toc-panel .toc-item .toc-dot {
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    background: var(--border);
+    flex-shrink: 0;
+    transition: background 0.2s;
+  }
+  .mini-toc-panel .toc-item.active .toc-dot {
+    background: var(--accent);
+  }
+
+  /* ══════════════════════════════════════════════
+     Content Area (杂志排版)
+     ══════════════════════════════════════════════ */
+  .lesson-content {
+    max-width: var(--content-width);
+    margin: 0 auto;
+    padding: 0 24px 120px;
+  }
+
+  /* Section */
+  .content-section {
+    margin-bottom: var(--section-gap);
+    scroll-margin-top: 72px;
+  }
+
+  .content-section h2 {
+    font-family: var(--font-heading);
+    font-size: 36px;
+    font-weight: 700;
+    line-height: 1.25;
+    letter-spacing: -0.5px;
+    margin-bottom: 16px;
+    color: var(--text);
+  }
+
+  .section-lead {
+    font-size: 18px;
+    color: var(--text-secondary);
+    line-height: 1.75;
+    margin-bottom: 32px;
+    font-style: italic;
+  }
+
+  /* Paragraph */
+  .content-section p {
+    font-size: 17px;
+    line-height: 1.85;
+    margin-bottom: 28px;
+    color: var(--text);
+  }
+
+  /* Inline emphasis */
+  .content-section strong {
+    font-weight: 700;
+    color: var(--text);
+  }
+
+  .content-section em {
+    font-style: italic;
+  }
+
+  .content-section code {
+    font-family: var(--font-mono);
+    font-size: 0.88em;
+    background: rgba(108, 92, 231, 0.08);
+    padding: 2px 6px;
+    border-radius: 4px;
+    color: var(--accent-light);
+  }
+
+  /* 大号引用块 */
+  .quote-block {
+    margin: 48px 0;
+    padding: 0 0 0 28px;
+    border-left: 3px solid var(--accent);
+  }
+
+  .quote-block p {
+    font-size: 22px;
+    font-style: italic;
+    line-height: 1.65;
+    color: var(--text);
+    margin-bottom: 10px;
+  }
+
+  .quote-block .quote-source {
+    font-family: var(--font-ui);
+    font-size: 13px;
+    color: var(--text-secondary);
+    font-style: normal;
+  }
+
+  /* 概念卡片 */
+  .concept-card {
+    margin: 40px 0;
+    padding: 28px 28px;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    transition: background 0.3s, border-color 0.3s;
+  }
+
+  .concept-card .card-label {
+    font-family: var(--font-ui);
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--accent);
+    margin-bottom: 12px;
+  }
+
+  .concept-card h3 {
+    font-family: var(--font-heading);
+    font-size: 20px;
+    font-weight: 700;
+    margin-bottom: 12px;
+    color: var(--text);
+  }
+
+  .concept-card p {
+    font-size: 15px;
+    line-height: 1.75;
+    color: var(--text-secondary);
+    margin-bottom: 0;
+  }
+
+  /* 列表 — 宽松间距 */
+  .content-section ul,
+  .content-section ol {
+    margin: 0 0 32px 0;
+    padding-left: 24px;
+  }
+
+  .content-section li {
+    font-size: 17px;
+    line-height: 1.85;
+    margin-bottom: 14px;
+    color: var(--text);
+  }
+
+  .content-section li:last-child {
+    margin-bottom: 0;
+  }
+
+  /* 表格 — 卡片化 */
+  .table-card {
+    margin: 40px 0;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+    transition: background 0.3s, border-color 0.3s;
+  }
+
+  .table-card .table-title {
+    font-family: var(--font-ui);
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--text-secondary);
+    padding: 16px 24px 0;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+  }
+
+  .table-card table {
+    width: 100%;
+    border-collapse: collapse;
+    font-family: var(--font-ui);
+    font-size: 14px;
+  }
+
+  .table-card th {
+    text-align: left;
+    font-weight: 600;
+    color: var(--text-secondary);
+    padding: 14px 24px 10px;
+    border-bottom: 1px solid var(--border);
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+  }
+
+  .table-card td {
+    padding: 14px 24px;
+    border-bottom: 1px solid var(--border);
+    color: var(--text);
+    line-height: 1.5;
+  }
+
+  .table-card tr:last-child td {
+    border-bottom: none;
+  }
+
+  .table-card tr:hover td {
+    background: rgba(108, 92, 231, 0.03);
+  }
+
+  /* ══════════════════════════════════════════════
+     思考题卡片
+     ══════════════════════════════════════════════ */
+  .think-card {
+    margin: 40px 0;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+    transition: background 0.3s, border-color 0.3s;
+  }
+
+  .think-card-header {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 24px 28px;
+    cursor: default;
+  }
+
+  .think-card-icon {
+    font-size: 22px;
+    line-height: 1;
+    flex-shrink: 0;
+    margin-top: 2px;
+  }
+
+  .think-card-body h3 {
+    font-family: var(--font-heading);
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--text);
+    margin-bottom: 12px;
+  }
+
+  .think-card-body p {
+    font-family: var(--font-body);
+    font-size: 16px;
+    line-height: 1.75;
+    color: var(--text-secondary);
+    margin-bottom: 6px;
+  }
+
+  .think-card-toggle {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    margin-top: 16px;
+    padding: 8px 16px;
+    background: transparent;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    color: var(--accent-light);
+    font-family: var(--font-ui);
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s, border-color 0.2s;
+  }
+
+  .think-card-toggle:hover {
+    border-color: var(--accent);
+    background: rgba(108, 92, 231, 0.06);
+  }
+
+  .think-card-toggle .toggle-arrow {
+    transition: transform 0.3s ease;
+    font-size: 11px;
+  }
+
+  .think-card-toggle.expanded .toggle-arrow {
+    transform: rotate(180deg);
+  }
+
+  .think-card-answer {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.4s ease, padding 0.3s ease;
+    padding: 0 28px;
+    border-top: 0 solid var(--border);
+  }
+
+  .think-card-answer.open {
+    max-height: 500px;
+    padding: 20px 28px 24px;
+    border-top: 1px solid var(--border);
+  }
+
+  .think-card-answer .answer-label {
+    font-family: var(--font-ui);
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--accent);
+    margin-bottom: 10px;
+  }
+
+  .think-card-answer p {
+    font-size: 15px;
+    line-height: 1.75;
+    color: var(--text-secondary);
+    margin-bottom: 10px;
+    font-family: var(--font-body);
+  }
+
+  .think-card-answer p:last-child {
+    margin-bottom: 0;
+  }
+
+  /* ══════════════════════════════════════════════
+     概念 Tab 切换卡片
+     ══════════════════════════════════════════════ */
+  .concept-tabs {
+    margin: 40px 0;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+    transition: background 0.3s, border-color 0.3s;
+  }
+
+  .concept-tabs-nav {
+    display: flex;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .concept-tab-btn {
+    flex: 1;
+    padding: 16px 20px;
+    background: transparent;
+    border: none;
+    border-bottom: 2px solid transparent;
+    font-family: var(--font-heading);
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: color 0.2s, border-color 0.2s, background 0.2s;
+    text-align: center;
+    margin-bottom: -1px;
+  }
+
+  .concept-tab-btn:hover {
+    color: var(--text);
+    background: rgba(108, 92, 231, 0.04);
+  }
+
+  .concept-tab-btn.active {
+    color: var(--accent-light);
+    border-bottom-color: var(--accent);
+  }
+
+  .concept-tab-panels {
+    position: relative;
+    min-height: 200px;
+  }
+
+  .concept-tab-panel {
+    padding: 28px;
+    display: none;
+    animation: tabFadeIn 0.3s ease;
+  }
+
+  .concept-tab-panel.active {
+    display: block;
+  }
+
+  @keyframes tabFadeIn {
+    from { opacity: 0; transform: translateY(6px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .concept-tab-panel h3 {
+    font-family: var(--font-heading);
+    font-size: 28px;
+    font-weight: 800;
+    color: var(--text);
+    margin-bottom: 16px;
+    letter-spacing: -0.3px;
+  }
+
+  .concept-tab-panel p {
+    font-size: 16px;
+    line-height: 1.8;
+    color: var(--text-secondary);
+    margin-bottom: 14px;
+    font-family: var(--font-body);
+  }
+
+  .concept-tab-panel p:last-child {
+    margin-bottom: 0;
+  }
+
+  .concept-tab-panel .tab-example {
+    margin-top: 16px;
+    padding: 16px 20px;
+    background: rgba(108, 92, 231, 0.05);
+    border-radius: var(--radius-sm);
+    font-family: var(--font-ui);
+    font-size: 14px;
+    line-height: 1.7;
+    color: var(--text);
+  }
+
+  .concept-tab-panel .tab-example strong {
+    color: var(--accent-light);
+  }
+
+  /* 阅读进度条 */
+  .reading-progress-wrap {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .reading-progress-label {
+    white-space: nowrap;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .reading-progress-bar {
+    width: 80px;
+    height: 3px;
+    background: var(--border);
+    border-radius: 2px;
+    overflow: hidden;
+  }
+
+  .reading-progress-fill {
+    display: block;
+    height: 100%;
+    width: 0%;
+    background: var(--accent);
+    border-radius: 2px;
+    transition: width 0.3s ease;
+  }
+
+  /* 分割线 */
+  .section-divider {
+    max-width: 80px;
+    height: 1px;
+    background: var(--border);
+    margin: var(--section-gap) auto;
+    border: none;
+  }
+
+  /* ══════════════════════════════════════════════
+     划词提问 — 内联输入框
+     ══════════════════════════════════════════════ */
+  .ask-inline {
+    position: absolute;
+    z-index: 500;
+    width: 320px;
+    animation: ask-in 0.2s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+  .ask-inline input {
+    width: 100%;
+    height: 36px;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 0 12px;
+    font-size: 13px;
+    font-family: var(--font-ui);
+    background: var(--card);
+    color: var(--text);
+    outline: none;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    transition: border-color 0.2s;
+  }
+  .ask-inline input:focus {
+    border-color: var(--accent);
+  }
+  .ask-inline input::placeholder {
+    color: var(--text-secondary);
+  }
+  @keyframes ask-in {
+    from { opacity: 0; transform: translateY(-4px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .ask-inline.closing {
+    animation: ask-out 0.15s forwards;
+  }
+  @keyframes ask-out {
+    to { opacity: 0; transform: translateY(-4px); }
+  }
+
+  /* ══════════════════════════════════════════════
+     悬浮回答卡片
+     ══════════════════════════════════════════════ */
+  .answer-card {
+    position: absolute;
+    z-index: 600;
+    width: 400px;
+    max-height: 320px;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+    display: none;
+    flex-direction: column;
+    overflow: hidden;
+    font-family: var(--font-ui);
+  }
+  .answer-card.visible {
+    display: flex;
+    animation: card-appear 0.25s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+  .answer-card.closing {
+    animation: card-exit 0.2s cubic-bezier(0.4, 0, 1, 1) forwards;
+  }
+  @keyframes card-appear {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes card-exit {
+    to { opacity: 0; transform: scale(0.95); }
+  }
+
+  .answer-card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 16px;
+    border-bottom: 1px solid var(--border);
+    flex-shrink: 0;
+  }
+  .answer-card-label {
+    font-size: 12px;
+    color: var(--text-secondary);
+    font-weight: 500;
+  }
+  .answer-card-close {
+    background: none;
+    border: none;
+    color: var(--text-secondary);
+    cursor: pointer;
+    font-size: 18px;
+    line-height: 1;
+    padding: 0 2px;
+    border-radius: var(--radius-sm);
+    transition: color 0.15s;
+  }
+  .answer-card-close:hover {
+    color: var(--text);
+  }
+  .answer-card-body {
+    padding: 14px 16px;
+    overflow-y: auto;
+    flex: 1;
+  }
+  .answer-card-body p {
+    margin-bottom: 8px;
+    font-family: var(--font-ui);
+    font-size: 14px;
+    line-height: 1.6;
+  }
+  .answer-card-body p:last-child { margin-bottom: 0; }
+  .answer-card-body p:empty { display: none; }
+
+  /* ══════════════════════════════════════════════
+     问答历史面板
+     ══════════════════════════════════════════════ */
+  .qa-history-trigger {
+    position: fixed;
+    bottom: 28px;
+    right: 28px;
+    z-index: 300;
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    background: var(--accent);
+    color: #fff;
+    border: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    font-size: 18px;
+    transition: transform 0.15s;
+    box-shadow: 0 4px 16px rgba(108, 92, 231, 0.3);
+  }
+  .qa-history-trigger:hover {
+    transform: scale(1.08);
+  }
+  .qa-history-trigger .badge {
+    position: absolute;
+    top: -2px;
+    right: -2px;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: #ff6b6b;
+    color: #fff;
+    font-size: 10px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: var(--font-ui);
+  }
+
+  .qa-panel-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 700;
+    background: rgba(0,0,0,0.4);
+    display: none;
+    animation: fadeIn 0.2s;
+  }
+  .qa-panel-overlay.open {
+    display: block;
+  }
+
+  @keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+
+  .qa-panel {
+    position: fixed;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 800;
+    width: 400px;
+    max-width: 100vw;
+    background: var(--bg);
+    border-left: 1px solid var(--border);
+    display: none;
+    flex-direction: column;
+    animation: slideInRight 0.25s ease;
+  }
+  .qa-panel.open {
+    display: flex;
+  }
+
+  @keyframes slideInRight {
+    from { transform: translateX(100%); }
+    to { transform: translateX(0); }
+  }
+
+  .qa-panel-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 18px 20px;
+    border-bottom: 1px solid var(--border);
+    font-family: var(--font-ui);
+  }
+  .qa-panel-header h3 {
+    font-size: 16px;
+    font-weight: 700;
+  }
+  .qa-panel-header .close-btn {
+    background: none;
+    border: none;
+    color: var(--text-secondary);
+    cursor: pointer;
+    font-size: 20px;
+    padding: 4px;
+    transition: color 0.15s;
+  }
+  .qa-panel-header .close-btn:hover {
+    color: var(--text);
+  }
+
+  .qa-panel-body {
+    flex: 1;
+    overflow-y: auto;
+    padding: 16px 20px;
+  }
+
+  .qa-entry {
+    margin-bottom: 20px;
+    padding-bottom: 20px;
+    border-bottom: 1px solid var(--border);
+  }
+  .qa-entry:last-child {
+    border-bottom: none;
+  }
+
+  .qa-entry .qa-q {
+    font-family: var(--font-ui);
+    font-size: 13px;
+    color: var(--text-secondary);
+    margin-bottom: 8px;
+    display: flex;
+    gap: 6px;
+  }
+  .qa-entry .qa-q .q-label {
+    color: var(--accent);
+    font-weight: 700;
+    flex-shrink: 0;
+  }
+  .qa-entry .qa-q .q-content {
+    font-style: italic;
+  }
+
+  .qa-entry .qa-a {
+    font-family: var(--font-ui);
+    font-size: 14px;
+    line-height: 1.7;
+    color: var(--text);
+  }
+
+  .qa-entry .qa-time {
+    font-family: var(--font-ui);
+    font-size: 11px;
+    color: var(--text-secondary);
+    margin-top: 8px;
+    opacity: 0.7;
+  }
+
+  /* ══════════════════════════════════════════════
+     Responsive
+     ══════════════════════════════════════════════ */
+  @media (max-width: 900px) {
+    .section-progress-rail {
+      display: none;
+    }
+  }
+
+  @media (max-width: 720px) {
+    .lesson-hero h1 {
+      font-size: 32px;
+    }
+    .lesson-hero {
+      padding: 48px 20px 36px;
+    }
+    .lesson-content {
+      padding: 0 20px 80px;
+    }
+    .content-section h2 {
+      font-size: 28px;
+    }
+    .concept-tab-panel h3 {
+      font-size: 22px;
+    }
+    .concept-tab-btn {
+      font-size: 13px;
+      padding: 12px 10px;
+    }
+    .think-card-header {
+      padding: 20px;
+    }
+    .think-card-answer.open {
+      padding: 16px 20px 20px;
+    }
+    .answer-card {
+      width: calc(100vw - 32px);
+      left: 16px !important;
+      right: 16px !important;
+    }
+    .qa-panel {
+      width: 100vw;
+    }
+  }
+</style>
+</head>
+<body>
+
+<!-- Case Banner -->
+<div class="case-banner">
+  Case B: 杂志排版风 — Medium / 高品质博客感
+</div>
+
+<!-- ════════════════════════════════════════════
+     Top Navigation
+     ════════════════════════════════════════════ -->
+<nav class="top-nav" id="topNav">
+  <div class="nav-left">
+    <button class="back-btn" onclick="history.back()">
+      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M10 3L5 8l5 5"/>
+      </svg>
+      返回
+    </button>
+  </div>
+  <span class="nav-title">MDA 框架：从机制到乐趣的逆向工程</span>
+  <div class="nav-right">
+    <div class="theme-toggle" id="themeToggle">
+      <button class="t-opt active" data-theme-val="dark" aria-label="Dark mode">
+        <span>&#127769;</span>
+      </button>
+      <button class="t-opt" data-theme-val="light" aria-label="Light mode">
+        <span>&#9728;&#65039;</span>
+      </button>
+    </div>
+  </div>
+</nav>
+
+<!-- ════════════════════════════════════════════
+     Section Progress Rail (右侧)
+     ════════════════════════════════════════════ -->
+<div class="section-progress-rail" id="progressRail">
+  <div class="progress-dot" data-label="MDA 概述" data-target="section-1"></div>
+  <div class="progress-segment"></div>
+  <div class="progress-dot" data-label="Aesthetics" data-target="section-2"></div>
+  <div class="progress-segment"></div>
+  <div class="progress-dot" data-label="Dynamics" data-target="section-3"></div>
+  <div class="progress-segment"></div>
+  <div class="progress-dot" data-label="Mechanics" data-target="section-4"></div>
+  <div class="progress-segment"></div>
+  <div class="progress-dot" data-label="实践练习" data-target="section-5"></div>
+</div>
+
+<!-- ════════════════════════════════════════════
+     Mini TOC (右下浮动)
+     ════════════════════════════════════════════ -->
+<button class="mini-toc-trigger" id="tocTrigger" aria-label="Table of Contents">
+  <svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round">
+    <path d="M3 4.5h12M3 9h8M3 13.5h10"/>
+  </svg>
+</button>
+<div class="mini-toc-panel" id="tocPanel">
+  <div class="toc-heading">目录</div>
+  <a class="toc-item" href="#section-1" data-section="section-1">
+    <span class="toc-dot"></span>MDA 概述
+  </a>
+  <a class="toc-item" href="#section-2" data-section="section-2">
+    <span class="toc-dot"></span>Aesthetics: 玩家体验
+  </a>
+  <a class="toc-item" href="#section-3" data-section="section-3">
+    <span class="toc-dot"></span>Dynamics: 运行时行为
+  </a>
+  <a class="toc-item" href="#section-4" data-section="section-4">
+    <span class="toc-dot"></span>Mechanics: 游戏规则
+  </a>
+  <a class="toc-item" href="#section-5" data-section="section-5">
+    <span class="toc-dot"></span>实践练习
+  </a>
+</div>
+
+<!-- ════════════════════════════════════════════
+     Lesson Hero
+     ════════════════════════════════════════════ -->
+<header class="lesson-hero">
+  <div class="lesson-breadcrumb">
+    游戏开发 <span>/</span> 游戏设计
+  </div>
+  <h1>MDA 框架：从机制到乐趣的逆向工程</h1>
+  <p class="lesson-subtitle">
+    理解游戏设计最经典的分析框架——将"好玩"拆解为可设计、可调控的系统层次。
+  </p>
+  <div class="lesson-meta-bar">
+    <span class="meta-item">预计 20 分钟</span>
+    <span class="meta-dot"></span>
+    <span class="meta-item reading-progress-wrap">
+      <span class="reading-progress-label" id="readingProgressLabel">已读 0%</span>
+      <span class="reading-progress-bar">
+        <span class="reading-progress-fill" id="readingProgressFill"></span>
+      </span>
+    </span>
+  </div>
+</header>
+
+<!-- ════════════════════════════════════════════
+     Content
+     ════════════════════════════════════════════ -->
+<main class="lesson-content" id="lessonContent">
+
+  <!-- Section 1 -->
+  <section class="content-section" id="section-1">
+    <h2>MDA 框架概述</h2>
+    <p class="section-lead">为什么我们需要一套系统化的语言来谈论"游戏的乐趣"？</p>
+
+    <p>
+      MDA 全称 <strong>Mechanics, Dynamics, Aesthetics</strong>，由 Robin Hunicke、Marc LeBlanc 和 Robert Zubek 于 2004 年在 GDC 上正式提出。这个框架提供了一种<em>形式化的方式</em>来理解游戏——不再用"好玩"、"有意思"这样模糊的词汇，而是将游戏体验拆解为三个可以分别讨论和设计的层次。
+    </p>
+
+    <div class="quote-block">
+      <p>"Games are designed artifacts. As such, they can and should be studied and understood through the lens of design."</p>
+      <div class="quote-source">— Hunicke, LeBlanc & Zubek, 2004</div>
+    </div>
+
+    <p>
+      这个框架最核心的洞见在于<strong>视角差异</strong>：设计师从 Mechanics 开始思考，自下而上地构建体验；而玩家从 Aesthetics 开始感知，自上而下地接触游戏。理解这种视角差异，是成为优秀游戏设计师的第一步。
+    </p>
+
+    <div class="concept-card">
+      <div class="card-label">核心概念</div>
+      <h3>双向视角模型</h3>
+      <p>
+        设计师视角：Mechanics → Dynamics → Aesthetics（我设计了什么规则，产生了什么行为，带来了什么感受）。玩家视角：Aesthetics → Dynamics → Mechanics（我感受到什么，这来自什么行为，背后是什么规则）。
+      </p>
+    </div>
+
+    <!-- 思考题卡片 -->
+    <div class="think-card">
+      <div class="think-card-header">
+        <span class="think-card-icon" aria-hidden="true">&#129300;</span>
+        <div class="think-card-body">
+          <h3>想一想</h3>
+          <p>你最近玩的一款游戏，从 Aesthetics 层面让你感受到了什么？</p>
+          <p>它背后的 Dynamics 和 Mechanics 分别是什么？</p>
+          <button class="think-card-toggle" id="thinkToggle" aria-expanded="false" aria-controls="thinkAnswer">
+            展开参考思路 <span class="toggle-arrow" aria-hidden="true">&#9660;</span>
+          </button>
+        </div>
+      </div>
+      <div class="think-card-answer" id="thinkAnswer" role="region" aria-labelledby="thinkToggle">
+        <div class="answer-label">参考思路</div>
+        <p>以 <em>Hades</em> 为例：Aesthetics 层面，核心体验是 <strong>Challenge</strong>（高难度战斗的成就感）和 <strong>Narrative</strong>（每次死亡都推进剧情的巧妙叙事）。</p>
+        <p>Dynamics 层面：反复死亡-重生的循环产生了"这次一定能打过去"的驱动力，NPC 对话随每次尝试动态变化产生了叙事期待。</p>
+        <p>Mechanics 层面：永久死亡 + Roguelike 随机房间 + 暗之钥石的永久升级 + 剧情标记系统保证对话不重复。改变其中任何一个——比如去掉永久死亡——整个体验链条都会断裂。</p>
+      </div>
+    </div>
+
+    <!-- 三层模型 Tab 切换卡片 -->
+    <div class="concept-tabs" role="tablist" aria-label="MDA 三层模型详解">
+      <div class="concept-tabs-nav">
+        <button class="concept-tab-btn active" role="tab" aria-selected="true" aria-controls="tab-mechanics" id="tab-btn-mechanics">Mechanics</button>
+        <button class="concept-tab-btn" role="tab" aria-selected="false" aria-controls="tab-dynamics" id="tab-btn-dynamics">Dynamics</button>
+        <button class="concept-tab-btn" role="tab" aria-selected="false" aria-controls="tab-aesthetics" id="tab-btn-aesthetics">Aesthetics</button>
+      </div>
+      <div class="concept-tab-panels">
+        <div class="concept-tab-panel active" role="tabpanel" id="tab-mechanics" aria-labelledby="tab-btn-mechanics">
+          <h3>Mechanics</h3>
+          <p>游戏的基础规则和系统——设计师唯一能直接触碰的层次。包括数值参数、操作规则、资源系统、回合流程等所有可以写进设计文档的具体定义。</p>
+          <p>Mechanics 是"因"，是设计师通过调参和改规则来间接影响玩家体验的操控杆。</p>
+          <div class="tab-example">
+            <strong>例子：</strong>在 <em>Tetris</em> 中，7 种固定方块形状、不可逆下落、消行判定、速度递增公式——这些都是 Mechanics。
+          </div>
+        </div>
+        <div class="concept-tab-panel" role="tabpanel" id="tab-dynamics" aria-labelledby="tab-btn-dynamics">
+          <h3>Dynamics</h3>
+          <p>规则在运行时产生的涌现行为——玩家与系统交互后自发生长出的玩法模式。设计师无法直接设计 Dynamics，只能通过调整 Mechanics 来引导它。</p>
+          <p>这是 MDA 中最微妙的层次：好的 Mechanics 会涌现出丰富的 Dynamics，而差的设计则可能产生设计师未预料到的负面行为。</p>
+          <div class="tab-example">
+            <strong>例子：</strong>在国际象棋中，"控制中心"、"弃子战术"、"王翼攻击"等战略行为都不在规则里，而是从棋子移动规则的交互中涌现的。
+          </div>
+        </div>
+        <div class="concept-tab-panel" role="tabpanel" id="tab-aesthetics" aria-labelledby="tab-btn-aesthetics">
+          <h3>Aesthetics</h3>
+          <p>玩家在游戏中产生的情感体验——不是视觉美学，而是"乐趣的类型"。MDA 定义了八种基本审美体验：Sensation、Fantasy、Narrative、Challenge、Fellowship、Discovery、Expression、Submission。</p>
+          <p>这是玩家直接感知的层次，也是设计的最终目标。设计师需要先明确想给玩家什么 Aesthetics，再反推需要什么 Dynamics 和 Mechanics。</p>
+          <div class="tab-example">
+            <strong>例子：</strong><em>Journey</em> 的核心 Aesthetics 是 Sensation（壮美的视听）和 Discovery（对未知世界的探索），整个游戏的规则设计都在服务这两种体验。
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <hr class="section-divider">
+
+  <!-- Section 2 -->
+  <section class="content-section" id="section-2">
+    <h2>Aesthetics：玩家体验的八种维度</h2>
+    <p class="section-lead">在谈论"这个游戏好不好玩"之前，先精确定义"好玩"。</p>
+
+    <p>
+      Aesthetics 不是指视觉美学，而是指玩家在游戏过程中产生的<strong>情感体验</strong>。MDA 框架定义了八种基本的审美体验，每一种都对应着一类独特的"乐趣"。理解这些分类，可以帮助设计师明确自己的设计目标——你到底想让玩家<em>感受到什么</em>？
+    </p>
+
+    <div class="table-card">
+      <div class="table-title">八种审美体验</div>
+      <table>
+        <thead>
+          <tr>
+            <th>体验</th>
+            <th>含义</th>
+            <th>典型游戏</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>Sensation</strong></td>
+            <td>感官刺激与愉悦</td>
+            <td>Flower, Journey</td>
+          </tr>
+          <tr>
+            <td><strong>Fantasy</strong></td>
+            <td>沉浸在虚构世界</td>
+            <td>Skyrim, D&D</td>
+          </tr>
+          <tr>
+            <td><strong>Narrative</strong></td>
+            <td>体验故事与戏剧</td>
+            <td>Last of Us, Disco Elysium</td>
+          </tr>
+          <tr>
+            <td><strong>Challenge</strong></td>
+            <td>克服障碍的成就感</td>
+            <td>Dark Souls, Celeste</td>
+          </tr>
+          <tr>
+            <td><strong>Fellowship</strong></td>
+            <td>社交协作的乐趣</td>
+            <td>Among Us, Monster Hunter</td>
+          </tr>
+          <tr>
+            <td><strong>Discovery</strong></td>
+            <td>探索与发现的惊喜</td>
+            <td>Outer Wilds, BotW</td>
+          </tr>
+          <tr>
+            <td><strong>Expression</strong></td>
+            <td>自我表达与创造</td>
+            <td>Minecraft, Mario Maker</td>
+          </tr>
+          <tr>
+            <td><strong>Submission</strong></td>
+            <td>放松地消磨时间</td>
+            <td>Animal Crossing, 2048</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <p>
+      重要的是，一个优秀的游戏往往不只提供一种审美体验。<em>Breath of the Wild</em> 同时提供了 Discovery、Challenge、Expression 和 Sensation；而 <em>Among Us</em> 则巧妙地将 Fellowship 和 Narrative 编织在一起。设计师的工作是确定<strong>主次优先级</strong>，而不是试图覆盖所有维度。
+    </p>
+  </section>
+
+  <hr class="section-divider">
+
+  <!-- Section 3 (当前阅读位置) -->
+  <section class="content-section" id="section-3">
+    <h2>Dynamics：运行时的涌现行为</h2>
+    <p class="section-lead">规则是死的，但规则组合产生的行为是活的。</p>
+
+    <p>
+      Dynamics 是 MDA 框架中最难把握、也最有趣的一层。它描述的是游戏规则在运行时产生的<strong>涌现行为</strong>（emergent behavior）——那些并非被直接设计、而是从规则交互中自然生长出来的玩法模式。
+    </p>
+
+    <p>
+      以国际象棋为例：规则（Mechanics）只定义了每种棋子如何移动。但当两个玩家对弈时，会产生"控制中心"、"弃子战术"、"王翼攻击"等丰富的战略行为——这些都是 Dynamics。设计师无法直接设计 Dynamics，只能通过精心调整 Mechanics 来<em>引导</em>它的涌现方向。
+    </p>
+
+    <div class="quote-block">
+      <p>"The designer only builds half the game. The player builds the other half through interaction."</p>
+      <div class="quote-source">— Will Wright</div>
+    </div>
+
+    <p>
+      理解 Dynamics 为什么重要？因为玩家体验到的"乐趣"并不直接来自规则本身，而是来自规则运行时产生的行为模式。如果你想让玩家体验到"紧张感"（一种 Aesthetics），你需要设计出能够产生"资源压力"和"时间限制"等 Dynamics 的 Mechanics。这是一个间接设计的过程。
+    </p>
+
+    <div class="concept-card">
+      <div class="card-label">设计思维</div>
+      <h3>涌现 vs. 脚本</h3>
+      <p>
+        涌现式设计（如 Minecraft）让规则自由组合产生无限可能；脚本式设计（如 Uncharted）通过预设内容精确控制体验。大多数游戏在两者之间寻找平衡点。理解这个光谱，是 Dynamics 层面的核心设计决策。
+      </p>
+    </div>
+  </section>
+
+  <hr class="section-divider">
+
+  <!-- Section 4 -->
+  <section class="content-section" id="section-4">
+    <h2>Mechanics：可操作的游戏规则</h2>
+    <p class="section-lead">设计师唯一能直接触碰的层次。</p>
+
+    <p>
+      Mechanics 是游戏的基础——它定义了游戏的<strong>规则、组件和系统</strong>。跳跃的高度、武器的伤害值、资源的刷新速率、回合的流程……所有这些具体的、可量化的参数和规则，都属于 Mechanics 的范畴。
+    </p>
+
+    <p>
+      与 Aesthetics 和 Dynamics 不同，Mechanics 是设计师<em>唯一能直接控制的部分</em>。你无法命令玩家感到"兴奋"，也无法强制游戏产生"紧张的对抗"，但你可以调整数值、修改规则、增减组件。这就是为什么理解 Mechanics 到 Aesthetics 的传导链条如此重要。
+    </p>
+
+    <ul>
+      <li><strong>数据型 Mechanics</strong>：属性值、资源数量、概率表——游戏的数字骨架</li>
+      <li><strong>算法型 Mechanics</strong>：回合流程、AI 行为树、匹配算法——游戏的运行逻辑</li>
+      <li><strong>交互型 Mechanics</strong>：输入映射、操作反馈、UI 交互——玩家触碰游戏的界面</li>
+    </ul>
+
+    <div class="table-card">
+      <div class="table-title">Mechanics → Dynamics → Aesthetics 传导链示例</div>
+      <table>
+        <thead>
+          <tr>
+            <th>Mechanics</th>
+            <th>Dynamics</th>
+            <th>Aesthetics</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>弹药有限 + 敌人血厚</td>
+            <td>玩家被迫精确射击、谨慎行动</td>
+            <td>Challenge + Sensation</td>
+          </tr>
+          <tr>
+            <td>投票 + 隐藏身份</td>
+            <td>猜忌、结盟、欺骗行为涌现</td>
+            <td>Fellowship + Narrative</td>
+          </tr>
+          <tr>
+            <td>方块自由放置 + 物理引擎</td>
+            <td>玩家建造复杂结构</td>
+            <td>Expression + Discovery</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <hr class="section-divider">
+
+  <!-- Section 5 -->
+  <section class="content-section" id="section-5">
+    <h2>实践练习：逆向分析你最喜欢的游戏</h2>
+    <p class="section-lead">学会用 MDA 的视角观察和拆解游戏设计。</p>
+
+    <p>
+      选择一个你熟悉且喜爱的游戏，按以下步骤进行 MDA 逆向分析。从玩家视角出发，逐层向下拆解：
+    </p>
+
+    <ol>
+      <li><strong>识别 Aesthetics</strong>：这个游戏给你带来的核心乐趣是什么？对照八种审美体验，选出 2-3 个最主要的，并排出优先级。</li>
+      <li><strong>追溯 Dynamics</strong>：这些乐趣来自什么样的游戏行为？是紧张的资源竞争？是自由的探索发现？还是社交中的信任博弈？</li>
+      <li><strong>拆解 Mechanics</strong>：哪些具体的规则和系统产生了这些行为？尝试列出 3-5 个关键的 Mechanics。</li>
+      <li><strong>验证链条</strong>：反过来检验——如果修改某个 Mechanic，Dynamics 会如何变化？最终会影响哪种 Aesthetics？</li>
+    </ol>
+
+    <div class="concept-card">
+      <div class="card-label">练习提示</div>
+      <h3>示例：Tetris 的 MDA 分析</h3>
+      <p>
+        Aesthetics：Challenge（核心）+ Submission（次要）。Dynamics：速度递增带来的压力曲线、消行的节奏感、"差一行"的紧张感。Mechanics：7 种固定方块形状、不可逆的下落、消行规则、速度递增公式。注意：改变任何一个 Mechanics（比如允许旋转已放置的方块），整个体验链条都会改变。
+      </p>
+    </div>
+  </section>
+
+</main>
+
+<!-- ════════════════════════════════════════════
+     悬浮回答卡片
+     ════════════════════════════════════════════ -->
+<div class="answer-card" id="answerCard">
+  <div class="answer-card-header">
+    <span class="answer-card-label">回答</span>
+    <button class="answer-card-close" onclick="closeAnswerCard()">&times;</button>
+  </div>
+  <div class="answer-card-body" id="answerBody"></div>
+</div>
+
+<!-- ════════════════════════════════════════════
+     问答历史
+     ════════════════════════════════════════════ -->
+<button class="qa-history-trigger" id="qaHistoryTrigger" aria-label="问答历史">
+  <span style="font-size: 18px; line-height: 1;">&#128172;</span>
+  <span class="badge" id="qaBadge" style="display:none;">0</span>
+</button>
+
+<div class="qa-panel-overlay" id="qaPanelOverlay"></div>
+<div class="qa-panel" id="qaPanel">
+  <div class="qa-panel-header">
+    <h3>问答记录</h3>
+    <button class="close-btn" id="qaPanelCloseBtn">&times;</button>
+  </div>
+  <div class="qa-panel-body" id="qaPanelBody">
+    <!-- Pre-populated QA entries -->
+    <div class="qa-entry">
+      <div class="qa-q">
+        <span class="q-label">Q:</span>
+        <span class="q-content">"涌现行为"</span>
+      </div>
+      <div class="qa-a">
+        涌现行为（Emergent Behavior）是指从简单规则的交互中自发产生的复杂行为模式。在游戏设计中，设计师定义基础规则（Mechanics），但玩家在实际游戏过程中会发展出设计师未预见的策略和玩法——这就是涌现。经典例子是《Minecraft》中玩家用红石电路搭建计算机，这完全超出了设计师的预期。
+      </div>
+      <div class="qa-time">3 分钟前 · Dynamics</div>
+    </div>
+    <div class="qa-entry">
+      <div class="qa-q">
+        <span class="q-label">Q:</span>
+        <span class="q-content">"八种审美体验"</span>
+      </div>
+      <div class="qa-a">
+        MDA 框架中的八种 Aesthetics 是：Sensation（感官）、Fantasy（幻想）、Narrative（叙事）、Challenge（挑战）、Fellowship（社交）、Discovery（探索）、Expression（表达）和 Submission（消遣）。这八种分类帮助设计师精确描述"乐趣"的类型，而不是笼统地说"好玩"或"不好玩"。
+      </div>
+      <div class="qa-time">8 分钟前 · Aesthetics</div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════
+     JavaScript
+     ════════════════════════════════════════════ -->
+<script>
+(function() {
+  'use strict';
+
+  // ─── Theme Toggle ───
+  const html = document.documentElement;
+  const themeToggle = document.getElementById('themeToggle');
+  const opts = themeToggle.querySelectorAll('.t-opt');
+
+  themeToggle.addEventListener('click', function() {
+    const current = html.getAttribute('data-theme');
+    const next = current === 'dark' ? 'light' : 'dark';
+    html.setAttribute('data-theme', next);
+    opts.forEach(o => {
+      o.classList.toggle('active', o.getAttribute('data-theme-val') === next);
+    });
+  });
+
+  // ─── Top Nav scroll state ───
+  const topNav = document.getElementById('topNav');
+  let ticking = false;
+
+  function onScroll() {
+    if (!ticking) {
+      requestAnimationFrame(() => {
+        topNav.classList.toggle('scrolled', window.scrollY > 100);
+        updateActiveSections();
+        ticking = false;
+      });
+      ticking = true;
+    }
+  }
+  window.addEventListener('scroll', onScroll, { passive: true });
+
+  // ─── Section tracking ───
+  const sections = document.querySelectorAll('.content-section');
+  const progressDots = document.querySelectorAll('.progress-dot');
+  const tocItems = document.querySelectorAll('.toc-item');
+  const readingProgressFill = document.getElementById('readingProgressFill');
+  const readingProgressLabel = document.getElementById('readingProgressLabel');
+
+  function updateActiveSections() {
+    let currentIndex = 0;
+    const scrollPos = window.scrollY + window.innerHeight * 0.35;
+
+    sections.forEach((sec, i) => {
+      if (scrollPos >= sec.offsetTop) {
+        currentIndex = i;
+      }
+    });
+
+    // Update progress rail — only highlight active, no completed state
+    progressDots.forEach((dot, i) => {
+      dot.classList.toggle('active', i === currentIndex);
+    });
+
+    // Update TOC — only highlight active
+    tocItems.forEach((item, i) => {
+      item.classList.toggle('active', i === currentIndex);
+    });
+
+    // Update reading progress percentage
+    const docHeight = document.documentElement.scrollHeight - window.innerHeight;
+    const pct = docHeight > 0 ? Math.min(100, Math.round((window.scrollY / docHeight) * 100)) : 0;
+    readingProgressFill.style.width = pct + '%';
+    readingProgressLabel.textContent = '\u5DF2\u8BFB ' + pct + '%';
+  }
+
+  // Progress dot click
+  progressDots.forEach(dot => {
+    dot.addEventListener('click', () => {
+      const target = document.getElementById(dot.getAttribute('data-target'));
+      if (target) target.scrollIntoView({ behavior: 'smooth' });
+    });
+  });
+
+  // ─── Mini TOC ───
+  const tocTrigger = document.getElementById('tocTrigger');
+  const tocPanel = document.getElementById('tocPanel');
+
+  tocTrigger.addEventListener('click', (e) => {
+    e.stopPropagation();
+    tocPanel.classList.toggle('open');
+  });
+
+  document.addEventListener('click', (e) => {
+    if (!tocPanel.contains(e.target) && e.target !== tocTrigger) {
+      tocPanel.classList.remove('open');
+    }
+  });
+
+  tocItems.forEach(item => {
+    item.addEventListener('click', (e) => {
+      e.preventDefault();
+      const targetId = item.getAttribute('href').slice(1);
+      const target = document.getElementById(targetId);
+      if (target) {
+        target.scrollIntoView({ behavior: 'smooth' });
+        tocPanel.classList.remove('open');
+      }
+    });
+  });
+
+  // ─── 划词提问 (内联输入框) ───
+  let askInline = null;
+  let selectedRange = null;
+
+  document.addEventListener('mouseup', (e) => {
+    const sel = window.getSelection();
+    const text = sel.toString().trim();
+    if (text.length < 2) return;
+    if (e.target.closest('.ask-inline') || e.target.closest('.answer-card') ||
+        e.target.closest('.qa-panel') || e.target.closest('.qa-history-trigger') ||
+        e.target.closest('.top-nav')) return;
+
+    // 移除旧的输入框
+    if (askInline) askInline.remove();
+
+    // 保存选区
+    selectedRange = sel.getRangeAt(0);
+    const rect = selectedRange.getBoundingClientRect();
+
+    // 创建内联输入框
+    askInline = document.createElement('div');
+    askInline.className = 'ask-inline';
+    askInline.style.left = rect.left + 'px';
+    askInline.style.top = (rect.bottom + window.scrollY + 8) + 'px';
+    askInline.innerHTML = '<input type="text" placeholder="输入你的问题..." autofocus>';
+    document.body.appendChild(askInline);
+
+    const input = askInline.querySelector('input');
+    input.focus();
+
+    // 回车发送
+    input.addEventListener('keydown', (ev) => {
+      if (ev.key === 'Enter' && input.value.trim()) {
+        const question = input.value.trim();
+        askInline.classList.add('closing');
+        setTimeout(() => {
+          if (askInline) { askInline.remove(); askInline = null; }
+        }, 150);
+        window.getSelection().removeAllRanges();
+        setTimeout(() => showAnswer(question, rect), 600);
+      }
+      if (ev.key === 'Escape') {
+        askInline.remove();
+        askInline = null;
+      }
+    });
+
+    // 点击外部关闭
+    input.addEventListener('blur', () => {
+      setTimeout(() => {
+        if (askInline && !askInline.contains(document.activeElement)) {
+          askInline.remove();
+          askInline = null;
+        }
+      }, 100);
+    });
+  });
+
+  function showAnswer(question, rect) {
+    const answerCard = document.getElementById('answerCard');
+    answerCard.style.left = Math.min(rect.left, window.innerWidth - 420) + 'px';
+    answerCard.style.top = (rect.bottom + window.scrollY + 12) + 'px';
+    answerCard.classList.remove('closing');
+    answerCard.classList.add('visible');
+
+    const body = document.getElementById('answerBody');
+    const mockAnswer = '在 MDA 框架中，这个概念指的是游戏设计的三个核心层次之间的关系。设计者从 Mechanics 出发，通过规则和系统的设定，产生 Dynamics（玩家与系统的互动行为），最终创造出 Aesthetics（玩家的情感体验）。\n\n理解这个分层很重要，因为它帮助我们意识到：同样的机制在不同玩家手中会产生不同的动态行为，进而带来不同的情感体验。';
+    streamAnswer(mockAnswer, body);
+
+    // Add to QA history
+    const truncated = question.length > 60 ? question.slice(0, 60) + '...' : question;
+    addToQAHistory(truncated, mockAnswer);
+  }
+
+  function streamAnswer(text, container) {
+    container.innerHTML = '';
+    let p = document.createElement('p');
+    container.appendChild(p);
+    let i = 0;
+    const interval = setInterval(() => {
+      if (i >= text.length) { clearInterval(interval); return; }
+      if (text[i] === '\n' && text[i+1] === '\n') {
+        p = document.createElement('p');
+        container.appendChild(p);
+        i += 2;
+      } else {
+        p.textContent += text[i];
+        i++;
+      }
+      container.scrollTop = container.scrollHeight;
+    }, 30);
+  }
+
+  // closeAnswerCard — 暴露到 window 供 onclick 调用
+  window.closeAnswerCard = function() {
+    const card = document.getElementById('answerCard');
+    if (!card.classList.contains('visible')) return;
+    card.classList.add('closing');
+    card.addEventListener('animationend', function handler() {
+      card.removeEventListener('animationend', handler);
+      card.classList.remove('visible', 'closing');
+    });
+  };
+  // 局部引用
+  function closeAnswerCard() { window.closeAnswerCard(); }
+
+  // ─── QA History Panel ───
+  const qaHistoryTrigger = document.getElementById('qaHistoryTrigger');
+  const qaPanelOverlay = document.getElementById('qaPanelOverlay');
+  const qaPanel = document.getElementById('qaPanel');
+  const qaPanelCloseBtn = document.getElementById('qaPanelCloseBtn');
+  const qaPanelBody = document.getElementById('qaPanelBody');
+  const qaBadge = document.getElementById('qaBadge');
+  let qaCount = 2; // Pre-populated entries
+
+  function updateBadge() {
+    if (qaCount > 0) {
+      qaBadge.style.display = 'flex';
+      qaBadge.textContent = qaCount;
+    } else {
+      qaBadge.style.display = 'none';
+    }
+  }
+  updateBadge();
+
+  function addToQAHistory(question, answer) {
+    qaCount++;
+    updateBadge();
+
+    const entry = document.createElement('div');
+    entry.className = 'qa-entry';
+    entry.innerHTML =
+      '<div class="qa-q"><span class="q-label">Q:</span><span class="q-content">"' + question + '"</span></div>' +
+      '<div class="qa-a">' + answer + '</div>' +
+      '<div class="qa-time">刚刚 · ' + getCurrentSectionLabel() + '</div>';
+
+    qaPanelBody.insertBefore(entry, qaPanelBody.firstChild);
+  }
+
+  function getCurrentSectionLabel() {
+    const scrollPos = window.scrollY + window.innerHeight * 0.35;
+    let idx = 0;
+    sections.forEach((sec, i) => {
+      if (scrollPos >= sec.offsetTop) idx = i;
+    });
+    const labels = ['MDA 概述', 'Aesthetics', 'Dynamics', 'Mechanics', '实践练习'];
+    return labels[idx] || '';
+  }
+
+  function openQAPanel() {
+    qaPanelOverlay.classList.add('open');
+    qaPanel.classList.add('open');
+  }
+
+  function closeQAPanel() {
+    qaPanelOverlay.classList.remove('open');
+    qaPanel.classList.remove('open');
+  }
+
+  qaHistoryTrigger.addEventListener('click', openQAPanel);
+  qaPanelOverlay.addEventListener('click', closeQAPanel);
+  qaPanelCloseBtn.addEventListener('click', closeQAPanel);
+
+  // Close on Escape
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+      closeQAPanel();
+      closeAnswerCard();
+      tocPanel.classList.remove('open');
+    }
+  });
+
+  // ─── 思考题卡片展开/折叠 ───
+  const thinkToggle = document.getElementById('thinkToggle');
+  const thinkAnswer = document.getElementById('thinkAnswer');
+
+  thinkToggle.addEventListener('click', () => {
+    const isOpen = thinkAnswer.classList.toggle('open');
+    thinkToggle.classList.toggle('expanded', isOpen);
+    thinkToggle.setAttribute('aria-expanded', isOpen);
+    thinkToggle.innerHTML = (isOpen ? '收起参考思路' : '展开参考思路') +
+      ' <span class="toggle-arrow" aria-hidden="true">&#9660;</span>';
+  });
+
+  // ─── 概念 Tab 切换 ───
+  const tabBtns = document.querySelectorAll('.concept-tab-btn');
+  const tabPanels = document.querySelectorAll('.concept-tab-panel');
+
+  tabBtns.forEach(btn => {
+    btn.addEventListener('click', () => {
+      tabBtns.forEach(b => {
+        b.classList.remove('active');
+        b.setAttribute('aria-selected', 'false');
+      });
+      tabPanels.forEach(p => p.classList.remove('active'));
+
+      btn.classList.add('active');
+      btn.setAttribute('aria-selected', 'true');
+      const targetPanel = document.getElementById(btn.getAttribute('aria-controls'));
+      if (targetPanel) targetPanel.classList.add('active');
+    });
+  });
+
+  // Initial state
+  updateActiveSections();
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,988 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LearnKit - ProgressBar + StatusBadge + EmptyState Design Cases</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #0a0a12;
+    --card: #141425;
+    --border: #1e1e3a;
+    --text: #e0e0f0;
+    --text-secondary: #8888a8;
+    --accent: #6c5ce7;
+    --accent-glow: rgba(108, 92, 231, 0.35);
+    --completed: #10ac84;
+    --in-progress: #feca57;
+    --prepared: #48dbfb;
+    --pending: #7878a0;
+    --failed: #ff6b6b;
+    --font: system-ui, -apple-system, sans-serif;
+  }
+
+  .light-mode {
+    --bg: #f5f6fa;
+    --card: #ffffff;
+    --border: #d5d5e2;
+    --text: #1a1a2e;
+    --text-secondary: #6868a0;
+    --accent-glow: rgba(108, 92, 231, 0.15);
+  }
+
+  body {
+    font-family: var(--font);
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.5;
+    min-height: 100vh;
+  }
+
+  /* ===== Layout ===== */
+  .page-header {
+    text-align: center;
+    padding: 56px 24px 24px;
+  }
+  .page-header h1 {
+    font-size: 28px;
+    font-weight: 700;
+    letter-spacing: -0.5px;
+  }
+  .page-header p {
+    color: var(--text-secondary);
+    margin-top: 8px;
+    font-size: 15px;
+  }
+
+  .theme-switcher {
+    display: flex;
+    justify-content: center;
+    gap: 8px;
+    margin-bottom: 40px;
+  }
+  .theme-btn {
+    padding: 8px 20px;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    background: var(--card);
+    color: var(--text);
+    cursor: pointer;
+    font-size: 14px;
+    font-family: var(--font);
+    transition: all .2s;
+  }
+  .theme-btn.active {
+    background: var(--accent);
+    color: #fff;
+    border-color: var(--accent);
+  }
+
+  .scheme-section {
+    max-width: 1200px;
+    margin: 0 auto 64px;
+    padding: 0 24px;
+  }
+  .scheme-title {
+    font-size: 22px;
+    font-weight: 700;
+    margin-bottom: 4px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .scheme-title .tag {
+    font-size: 12px;
+    font-weight: 600;
+    background: var(--accent);
+    color: #fff;
+    padding: 2px 10px;
+    border-radius: 4px;
+    letter-spacing: 0.5px;
+  }
+  .scheme-subtitle {
+    color: var(--text-secondary);
+    font-size: 14px;
+    margin-bottom: 24px;
+  }
+
+  .component-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 20px;
+  }
+  @media (max-width: 900px) {
+    .component-grid { grid-template-columns: 1fr; }
+  }
+  .component-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 24px;
+  }
+  .component-card h3 {
+    font-size: 13px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--text-secondary);
+    margin-bottom: 20px;
+  }
+
+  .progress-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 14px;
+  }
+  .progress-label {
+    font-size: 13px;
+    color: var(--text-secondary);
+    min-width: 36px;
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .badge-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+
+  /* ===== Scheme A: Minimal ===== */
+  .a-bar-track {
+    flex: 1;
+    height: 3px;
+    background: var(--border);
+    border-radius: 1.5px;
+    overflow: hidden;
+  }
+  .a-bar-fill {
+    height: 100%;
+    background: var(--accent);
+    border-radius: 1.5px;
+    transition: width .6s cubic-bezier(.4,0,.2,1);
+  }
+
+  .a-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text-secondary);
+  }
+  .a-badge .dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+  }
+
+  .a-empty {
+    text-align: center;
+    padding: 32px 16px;
+  }
+  .a-empty .icon {
+    font-size: 32px;
+    margin-bottom: 12px;
+    opacity: 0.4;
+  }
+  .a-empty .title {
+    font-size: 16px;
+    font-weight: 600;
+    margin-bottom: 6px;
+  }
+  .a-empty .desc {
+    font-size: 13px;
+    color: var(--text-secondary);
+    max-width: 260px;
+    margin: 0 auto 16px;
+  }
+  .a-empty .cta {
+    font-size: 13px;
+    color: var(--accent);
+    text-decoration: none;
+    font-weight: 500;
+  }
+
+  /* ===== Scheme B: Capsule / Pill ===== */
+  .b-bar-track {
+    flex: 1;
+    height: 20px;
+    background: var(--border);
+    border-radius: 10px;
+    overflow: hidden;
+    position: relative;
+  }
+  .b-bar-fill {
+    height: 100%;
+    background: var(--accent);
+    border-radius: 10px;
+    transition: width .6s cubic-bezier(.4,0,.2,1);
+    position: relative;
+  }
+  .b-bar-fill::after {
+    content: '';
+    position: absolute;
+    top: 3px; left: 3px; right: 3px;
+    height: 6px;
+    background: rgba(255,255,255,0.2);
+    border-radius: 4px;
+  }
+
+  .b-badge {
+    display: inline-block;
+    padding: 5px 14px;
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.3px;
+  }
+
+  .b-empty {
+    text-align: center;
+    padding: 36px 20px;
+  }
+  .b-empty .illustration {
+    width: 120px;
+    height: 90px;
+    margin: 0 auto 20px;
+    background: var(--border);
+    border-radius: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    overflow: hidden;
+  }
+  .b-empty .illustration::before {
+    content: '';
+    width: 40px; height: 40px;
+    border-radius: 50%;
+    background: var(--accent);
+    opacity: 0.3;
+    position: absolute;
+    top: 12px; left: 20px;
+  }
+  .b-empty .illustration::after {
+    content: '';
+    width: 24px; height: 50px;
+    border-radius: 8px;
+    background: var(--accent);
+    opacity: 0.15;
+    position: absolute;
+    bottom: 10px; right: 24px;
+    transform: rotate(-12deg);
+  }
+  .b-empty .illustration svg {
+    position: relative;
+    z-index: 1;
+  }
+  .b-empty .title {
+    font-size: 17px;
+    font-weight: 600;
+    margin-bottom: 6px;
+  }
+  .b-empty .desc {
+    font-size: 13px;
+    color: var(--text-secondary);
+    max-width: 280px;
+    margin: 0 auto 18px;
+    line-height: 1.6;
+  }
+  .b-empty .cta {
+    display: inline-block;
+    padding: 8px 20px;
+    background: var(--accent);
+    color: #fff;
+    border-radius: 999px;
+    font-size: 13px;
+    font-weight: 600;
+    text-decoration: none;
+  }
+
+  /* ===== Scheme C: Gradient Vibrant ===== */
+  .c-bar-track {
+    flex: 1;
+    height: 12px;
+    background: var(--border);
+    border-radius: 6px;
+    overflow: hidden;
+    position: relative;
+  }
+  .c-bar-fill {
+    height: 100%;
+    border-radius: 6px;
+    background: linear-gradient(90deg, #6c5ce7, #a29bfe, #6c5ce7);
+    background-size: 200% 100%;
+    animation: c-shimmer 2s ease-in-out infinite;
+    transition: width .6s cubic-bezier(.4,0,.2,1);
+    box-shadow: 0 0 12px var(--accent-glow);
+  }
+  @keyframes c-shimmer {
+    0%, 100% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+  }
+
+  .c-badge {
+    display: inline-block;
+    padding: 5px 14px;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.3px;
+    position: relative;
+  }
+  .c-badge.glow-completed {
+    background: rgba(16,172,132,0.15);
+    color: var(--completed);
+    box-shadow: 0 0 10px rgba(16,172,132,0.2);
+  }
+  .c-badge.glow-in-progress {
+    background: rgba(254,202,87,0.15);
+    color: var(--in-progress);
+    box-shadow: 0 0 10px rgba(254,202,87,0.2);
+  }
+  .c-badge.glow-prepared {
+    background: rgba(72,219,251,0.15);
+    color: var(--prepared);
+    box-shadow: 0 0 10px rgba(72,219,251,0.2);
+  }
+  .c-badge.glow-pending {
+    background: rgba(120,120,160,0.15);
+    color: var(--pending);
+    box-shadow: 0 0 10px rgba(120,120,160,0.15);
+  }
+  .c-badge.glow-failed {
+    background: rgba(255,107,107,0.15);
+    color: var(--failed);
+    box-shadow: 0 0 10px rgba(255,107,107,0.2);
+  }
+
+  .c-empty {
+    text-align: center;
+    padding: 48px 24px;
+    background: linear-gradient(135deg, rgba(108,92,231,0.08), rgba(162,155,254,0.04));
+    border-radius: 12px;
+  }
+  .c-empty .icon-wrap {
+    width: 72px; height: 72px;
+    margin: 0 auto 20px;
+    background: linear-gradient(135deg, var(--accent), #a29bfe);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 0 30px var(--accent-glow);
+  }
+  .c-empty .title {
+    font-size: 20px;
+    font-weight: 700;
+    margin-bottom: 8px;
+  }
+  .c-empty .desc {
+    font-size: 14px;
+    color: var(--text-secondary);
+    max-width: 300px;
+    margin: 0 auto 20px;
+    line-height: 1.6;
+  }
+  .c-empty .cta {
+    display: inline-block;
+    padding: 10px 24px;
+    background: linear-gradient(135deg, var(--accent), #a29bfe);
+    color: #fff;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    text-decoration: none;
+    box-shadow: 0 4px 16px var(--accent-glow);
+    transition: transform .15s;
+  }
+  .c-empty .cta:hover { transform: translateY(-1px); }
+
+  /* ===== Scheme D: Data Precise ===== */
+  .d-bar-track {
+    flex: 1;
+    height: 8px;
+    background: var(--border);
+    border-radius: 0;
+    overflow: hidden;
+    display: flex;
+    gap: 2px;
+  }
+  .d-bar-segment {
+    flex: 1;
+    height: 100%;
+    background: var(--border);
+    transition: background .3s;
+  }
+  .d-bar-segment.filled {
+    background: var(--accent);
+  }
+
+  .d-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 10px;
+    border-radius: 2px;
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    border: 1px solid;
+  }
+  .d-badge.st-completed { border-color: var(--completed); color: var(--completed); background: rgba(16,172,132,0.08); }
+  .d-badge.st-in-progress { border-color: var(--in-progress); color: var(--in-progress); background: rgba(254,202,87,0.08); }
+  .d-badge.st-prepared { border-color: var(--prepared); color: var(--prepared); background: rgba(72,219,251,0.08); }
+  .d-badge.st-pending { border-color: var(--pending); color: var(--pending); background: rgba(120,120,160,0.08); }
+  .d-badge.st-failed { border-color: var(--failed); color: var(--failed); background: rgba(255,107,107,0.08); }
+
+  .d-empty {
+    padding: 32px 24px;
+    border: 1px dashed var(--border);
+    border-radius: 0;
+  }
+  .d-empty .header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 16px;
+  }
+  .d-empty .header .code {
+    font-family: 'SF Mono', 'Fira Code', monospace;
+    font-size: 12px;
+    color: var(--accent);
+    background: rgba(108,92,231,0.1);
+    padding: 3px 8px;
+    border-radius: 2px;
+  }
+  .d-empty .title {
+    font-size: 15px;
+    font-weight: 600;
+    margin-bottom: 6px;
+  }
+  .d-empty .desc {
+    font-size: 13px;
+    color: var(--text-secondary);
+    margin-bottom: 16px;
+    line-height: 1.6;
+  }
+  .d-empty .cmd-block {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 10px 14px;
+    font-family: 'SF Mono', 'Fira Code', monospace;
+    font-size: 12px;
+    color: var(--accent);
+  }
+  .d-empty .cmd-block .prompt { color: var(--text-secondary); }
+
+  /* ===== Scheme E: Organic Ring ===== */
+  .e-ring-wrap {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin-bottom: 14px;
+  }
+  .e-ring {
+    width: 44px;
+    height: 44px;
+    position: relative;
+  }
+  .e-ring svg {
+    width: 44px;
+    height: 44px;
+    transform: rotate(-90deg);
+  }
+  .e-ring .bg-circle {
+    fill: none;
+    stroke: var(--border);
+    stroke-width: 4;
+  }
+  .e-ring .fg-circle {
+    fill: none;
+    stroke: var(--accent);
+    stroke-width: 4;
+    stroke-linecap: round;
+    transition: stroke-dashoffset .8s cubic-bezier(.4,0,.2,1);
+  }
+  .e-ring .pct-text {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--text);
+  }
+  .e-ring-label {
+    font-size: 13px;
+    color: var(--text-secondary);
+  }
+
+  .e-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    padding: 6px 14px;
+    border-radius: 10px;
+    font-size: 13px;
+    font-weight: 500;
+  }
+  .e-badge.st-completed { background: rgba(16,172,132,0.12); color: var(--completed); }
+  .e-badge.st-in-progress { background: rgba(254,202,87,0.12); color: var(--in-progress); }
+  .e-badge.st-prepared { background: rgba(72,219,251,0.12); color: var(--prepared); }
+  .e-badge.st-pending { background: rgba(120,120,160,0.10); color: var(--pending); }
+  .e-badge.st-failed { background: rgba(255,107,107,0.12); color: var(--failed); }
+  .e-badge .pulse {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    animation: e-pulse 2s ease-in-out infinite;
+  }
+  @keyframes e-pulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.5; transform: scale(0.85); }
+  }
+
+  .e-empty {
+    text-align: center;
+    padding: 40px 24px;
+    background: radial-gradient(ellipse at 50% 0%, rgba(108,92,231,0.06), transparent 70%);
+    border-radius: 16px;
+  }
+  .e-empty .leaf {
+    width: 56px; height: 56px;
+    margin: 0 auto 18px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .e-empty .title {
+    font-size: 18px;
+    font-weight: 600;
+    margin-bottom: 8px;
+  }
+  .e-empty .desc {
+    font-size: 14px;
+    color: var(--text-secondary);
+    max-width: 300px;
+    margin: 0 auto 20px;
+    line-height: 1.7;
+  }
+  .e-empty .cta {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 10px 22px;
+    background: rgba(108,92,231,0.12);
+    color: var(--accent);
+    border-radius: 12px;
+    font-size: 14px;
+    font-weight: 600;
+    text-decoration: none;
+    transition: background .2s;
+  }
+  .e-empty .cta:hover { background: rgba(108,92,231,0.2); }
+
+  /* ===== Divider ===== */
+  .divider {
+    max-width: 1200px;
+    margin: 0 auto 64px;
+    padding: 0 24px;
+  }
+  .divider hr {
+    border: none;
+    border-top: 1px solid var(--border);
+  }
+</style>
+</head>
+<body>
+
+<div class="page-header">
+  <h1>LearnKit Component Design</h1>
+  <p>ProgressBar + StatusBadge + EmptyState &mdash; 5 Design Schemes</p>
+</div>
+
+<div class="theme-switcher">
+  <button class="theme-btn active" onclick="setTheme('dark')">Dark Mode</button>
+  <button class="theme-btn" onclick="setTheme('light')">Light Mode</button>
+</div>
+
+<!-- ==================== Scheme A: Minimal ==================== -->
+<section class="scheme-section">
+  <div class="scheme-title"><span class="tag">A</span> Minimal</div>
+  <div class="scheme-subtitle">细线进度条 + 小圆点标签 + 简洁空状态</div>
+  <div class="component-grid">
+    <!-- ProgressBar -->
+    <div class="component-card">
+      <h3>ProgressBar</h3>
+      <div class="progress-row">
+        <span class="progress-label">0%</span>
+        <div class="a-bar-track"><div class="a-bar-fill" style="width:0%"></div></div>
+      </div>
+      <div class="progress-row">
+        <span class="progress-label">25%</span>
+        <div class="a-bar-track"><div class="a-bar-fill" style="width:25%"></div></div>
+      </div>
+      <div class="progress-row">
+        <span class="progress-label">50%</span>
+        <div class="a-bar-track"><div class="a-bar-fill" style="width:50%"></div></div>
+      </div>
+      <div class="progress-row">
+        <span class="progress-label">75%</span>
+        <div class="a-bar-track"><div class="a-bar-fill" style="width:75%"></div></div>
+      </div>
+      <div class="progress-row">
+        <span class="progress-label">100%</span>
+        <div class="a-bar-track"><div class="a-bar-fill" style="width:100%"></div></div>
+      </div>
+    </div>
+    <!-- StatusBadge -->
+    <div class="component-card">
+      <h3>StatusBadge</h3>
+      <div class="badge-grid">
+        <span class="a-badge"><span class="dot" style="background:var(--pending)"></span>待备课</span>
+        <span class="a-badge"><span class="dot" style="background:var(--prepared)"></span>已备课</span>
+        <span class="a-badge"><span class="dot" style="background:var(--in-progress)"></span>学习中</span>
+        <span class="a-badge"><span class="dot" style="background:var(--completed)"></span>已完成</span>
+        <span class="a-badge"><span class="dot" style="background:var(--failed)"></span>备课失败</span>
+      </div>
+    </div>
+    <!-- EmptyState -->
+    <div class="component-card">
+      <h3>EmptyState</h3>
+      <div class="a-empty">
+        <div class="icon">
+          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20"/><path d="M8 7h6"/><path d="M8 11h4"/></svg>
+        </div>
+        <div class="title">尚无学习计划</div>
+        <div class="desc">在 Claude Code 中创建你的第一个学习教程，开始探索之旅</div>
+        <a href="#" class="cta">了解如何开始 &rarr;</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="divider"><hr></div>
+
+<!-- ==================== Scheme B: Capsule / Pill ==================== -->
+<section class="scheme-section">
+  <div class="scheme-title"><span class="tag">B</span> Capsule Pill</div>
+  <div class="scheme-subtitle">胶囊形进度条 + pill 标签 + 插画风空状态</div>
+  <div class="component-grid">
+    <!-- ProgressBar -->
+    <div class="component-card">
+      <h3>ProgressBar</h3>
+      <div class="progress-row">
+        <span class="progress-label">0%</span>
+        <div class="b-bar-track"><div class="b-bar-fill" style="width:0%"></div></div>
+      </div>
+      <div class="progress-row">
+        <span class="progress-label">25%</span>
+        <div class="b-bar-track"><div class="b-bar-fill" style="width:25%"></div></div>
+      </div>
+      <div class="progress-row">
+        <span class="progress-label">50%</span>
+        <div class="b-bar-track"><div class="b-bar-fill" style="width:50%"></div></div>
+      </div>
+      <div class="progress-row">
+        <span class="progress-label">75%</span>
+        <div class="b-bar-track"><div class="b-bar-fill" style="width:75%"></div></div>
+      </div>
+      <div class="progress-row">
+        <span class="progress-label">100%</span>
+        <div class="b-bar-track"><div class="b-bar-fill" style="width:100%"></div></div>
+      </div>
+    </div>
+    <!-- StatusBadge -->
+    <div class="component-card">
+      <h3>StatusBadge</h3>
+      <div class="badge-grid">
+        <span class="b-badge" style="background:rgba(120,120,160,0.15);color:var(--pending)">待备课</span>
+        <span class="b-badge" style="background:rgba(72,219,251,0.15);color:var(--prepared)">已备课</span>
+        <span class="b-badge" style="background:rgba(254,202,87,0.15);color:var(--in-progress)">学习中</span>
+        <span class="b-badge" style="background:rgba(16,172,132,0.15);color:var(--completed)">已完成</span>
+        <span class="b-badge" style="background:rgba(255,107,107,0.15);color:var(--failed)">备课失败</span>
+      </div>
+    </div>
+    <!-- EmptyState -->
+    <div class="component-card">
+      <h3>EmptyState</h3>
+      <div class="b-empty">
+        <div class="illustration">
+          <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
+        </div>
+        <div class="title">准备好开始学习了吗？</div>
+        <div class="desc">用 Claude Code 生成结构化的学习教程，AI 为你量身定制学习路径</div>
+        <a href="#" class="cta">创建第一个教程</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="divider"><hr></div>
+
+<!-- ==================== Scheme C: Gradient Vibrant ==================== -->
+<section class="scheme-section">
+  <div class="scheme-title"><span class="tag">C</span> Gradient Vibrant</div>
+  <div class="scheme-subtitle">渐变色进度条 + 发光标签 + 大号空状态</div>
+  <div class="component-grid">
+    <!-- ProgressBar -->
+    <div class="component-card">
+      <h3>ProgressBar</h3>
+      <div class="progress-row">
+        <span class="progress-label">0%</span>
+        <div class="c-bar-track"><div class="c-bar-fill" style="width:0%"></div></div>
+      </div>
+      <div class="progress-row">
+        <span class="progress-label">25%</span>
+        <div class="c-bar-track"><div class="c-bar-fill" style="width:25%"></div></div>
+      </div>
+      <div class="progress-row">
+        <span class="progress-label">50%</span>
+        <div class="c-bar-track"><div class="c-bar-fill" style="width:50%"></div></div>
+      </div>
+      <div class="progress-row">
+        <span class="progress-label">75%</span>
+        <div class="c-bar-track"><div class="c-bar-fill" style="width:75%"></div></div>
+      </div>
+      <div class="progress-row">
+        <span class="progress-label">100%</span>
+        <div class="c-bar-track"><div class="c-bar-fill" style="width:100%"></div></div>
+      </div>
+    </div>
+    <!-- StatusBadge -->
+    <div class="component-card">
+      <h3>StatusBadge</h3>
+      <div class="badge-grid">
+        <span class="c-badge glow-pending">待备课</span>
+        <span class="c-badge glow-prepared">已备课</span>
+        <span class="c-badge glow-in-progress">学习中</span>
+        <span class="c-badge glow-completed">已完成</span>
+        <span class="c-badge glow-failed">备课失败</span>
+      </div>
+    </div>
+    <!-- EmptyState -->
+    <div class="component-card">
+      <h3>EmptyState</h3>
+      <div class="c-empty">
+        <div class="icon-wrap">
+          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+        </div>
+        <div class="title">开启你的学习旅程</div>
+        <div class="desc">每一段精彩的学习都从第一步开始。用 Claude Code 创建你的专属学习计划吧！</div>
+        <a href="#" class="cta">立即开始</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="divider"><hr></div>
+
+<!-- ==================== Scheme D: Data Precise ==================== -->
+<section class="scheme-section">
+  <div class="scheme-title"><span class="tag">D</span> Data Precise</div>
+  <div class="scheme-subtitle">分段进度条 + 方角标签 + 数据风空状态</div>
+  <div class="component-grid">
+    <!-- ProgressBar -->
+    <div class="component-card">
+      <h3>ProgressBar</h3>
+      <!-- 0% — 0/12 filled -->
+      <div class="progress-row">
+        <span class="progress-label">0/12</span>
+        <div class="d-bar-track">
+          <div class="d-bar-segment"></div><div class="d-bar-segment"></div><div class="d-bar-segment"></div>
+          <div class="d-bar-segment"></div><div class="d-bar-segment"></div><div class="d-bar-segment"></div>
+          <div class="d-bar-segment"></div><div class="d-bar-segment"></div><div class="d-bar-segment"></div>
+          <div class="d-bar-segment"></div><div class="d-bar-segment"></div><div class="d-bar-segment"></div>
+        </div>
+      </div>
+      <!-- 25% — 3/12 -->
+      <div class="progress-row">
+        <span class="progress-label">3/12</span>
+        <div class="d-bar-track">
+          <div class="d-bar-segment filled"></div><div class="d-bar-segment filled"></div><div class="d-bar-segment filled"></div>
+          <div class="d-bar-segment"></div><div class="d-bar-segment"></div><div class="d-bar-segment"></div>
+          <div class="d-bar-segment"></div><div class="d-bar-segment"></div><div class="d-bar-segment"></div>
+          <div class="d-bar-segment"></div><div class="d-bar-segment"></div><div class="d-bar-segment"></div>
+        </div>
+      </div>
+      <!-- 50% — 6/12 -->
+      <div class="progress-row">
+        <span class="progress-label">6/12</span>
+        <div class="d-bar-track">
+          <div class="d-bar-segment filled"></div><div class="d-bar-segment filled"></div><div class="d-bar-segment filled"></div>
+          <div class="d-bar-segment filled"></div><div class="d-bar-segment filled"></div><div class="d-bar-segment filled"></div>
+          <div class="d-bar-segment"></div><div class="d-bar-segment"></div><div class="d-bar-segment"></div>
+          <div class="d-bar-segment"></div><div class="d-bar-segment"></div><div class="d-bar-segment"></div>
+        </div>
+      </div>
+      <!-- 75% — 9/12 -->
+      <div class="progress-row">
+        <span class="progress-label">9/12</span>
+        <div class="d-bar-track">
+          <div class="d-bar-segment filled"></div><div class="d-bar-segment filled"></div><div class="d-bar-segment filled"></div>
+          <div class="d-bar-segment filled"></div><div class="d-bar-segment filled"></div><div class="d-bar-segment filled"></div>
+          <div class="d-bar-segment filled"></div><div class="d-bar-segment filled"></div><div class="d-bar-segment filled"></div>
+          <div class="d-bar-segment"></div><div class="d-bar-segment"></div><div class="d-bar-segment"></div>
+        </div>
+      </div>
+      <!-- 100% — 12/12 -->
+      <div class="progress-row">
+        <span class="progress-label" style="color:var(--completed)">12/12</span>
+        <div class="d-bar-track">
+          <div class="d-bar-segment filled" style="background:var(--completed)"></div><div class="d-bar-segment filled" style="background:var(--completed)"></div><div class="d-bar-segment filled" style="background:var(--completed)"></div>
+          <div class="d-bar-segment filled" style="background:var(--completed)"></div><div class="d-bar-segment filled" style="background:var(--completed)"></div><div class="d-bar-segment filled" style="background:var(--completed)"></div>
+          <div class="d-bar-segment filled" style="background:var(--completed)"></div><div class="d-bar-segment filled" style="background:var(--completed)"></div><div class="d-bar-segment filled" style="background:var(--completed)"></div>
+          <div class="d-bar-segment filled" style="background:var(--completed)"></div><div class="d-bar-segment filled" style="background:var(--completed)"></div><div class="d-bar-segment filled" style="background:var(--completed)"></div>
+        </div>
+      </div>
+    </div>
+    <!-- StatusBadge -->
+    <div class="component-card">
+      <h3>StatusBadge</h3>
+      <div class="badge-grid">
+        <span class="d-badge st-pending">
+          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><circle cx="12" cy="12" r="10"/></svg>
+          PENDING
+        </span>
+        <span class="d-badge st-prepared">
+          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M12 2v10l4 4"/><circle cx="12" cy="12" r="10"/></svg>
+          PREPARED
+        </span>
+        <span class="d-badge st-in-progress">
+          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M5 12h14"/><path d="M12 5l7 7-7 7"/></svg>
+          IN PROGRESS
+        </span>
+        <span class="d-badge st-completed">
+          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
+          COMPLETED
+        </span>
+        <span class="d-badge st-failed">
+          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+          FAILED
+        </span>
+      </div>
+    </div>
+    <!-- EmptyState -->
+    <div class="component-card">
+      <h3>EmptyState</h3>
+      <div class="d-empty">
+        <div class="header">
+          <span class="code">0 programs</span>
+          <span style="color:var(--text-secondary);font-size:12px">No data available</span>
+        </div>
+        <div class="title">数据为空</div>
+        <div class="desc">当前没有学习计划。在终端中使用 Claude Code 快速创建：</div>
+        <div class="cmd-block">
+          <span class="prompt">$</span> claude "帮我创建一个 Python 学习计划"
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="divider"><hr></div>
+
+<!-- ==================== Scheme E: Organic Ring ==================== -->
+<section class="scheme-section">
+  <div class="scheme-title"><span class="tag">E</span> Organic Ring</div>
+  <div class="scheme-subtitle">圆环进度 + 柔和标签 + 温暖空状态</div>
+  <div class="component-grid">
+    <!-- ProgressBar (Ring) -->
+    <div class="component-card">
+      <h3>ProgressBar</h3>
+      <!-- circumference = 2 * PI * 17 ≈ 106.8 -->
+      <div class="e-ring-wrap">
+        <div class="e-ring">
+          <svg viewBox="0 0 44 44"><circle class="bg-circle" cx="22" cy="22" r="17"/><circle class="fg-circle" cx="22" cy="22" r="17" stroke-dasharray="106.8" stroke-dashoffset="106.8"/></svg>
+          <span class="pct-text">0%</span>
+        </div>
+        <span class="e-ring-label">尚未开始</span>
+      </div>
+      <div class="e-ring-wrap">
+        <div class="e-ring">
+          <svg viewBox="0 0 44 44"><circle class="bg-circle" cx="22" cy="22" r="17"/><circle class="fg-circle" cx="22" cy="22" r="17" stroke-dasharray="106.8" stroke-dashoffset="80.1"/></svg>
+          <span class="pct-text">25%</span>
+        </div>
+        <span class="e-ring-label">3 / 12 课时</span>
+      </div>
+      <div class="e-ring-wrap">
+        <div class="e-ring">
+          <svg viewBox="0 0 44 44"><circle class="bg-circle" cx="22" cy="22" r="17"/><circle class="fg-circle" cx="22" cy="22" r="17" stroke-dasharray="106.8" stroke-dashoffset="53.4"/></svg>
+          <span class="pct-text">50%</span>
+        </div>
+        <span class="e-ring-label">6 / 12 课时</span>
+      </div>
+      <div class="e-ring-wrap">
+        <div class="e-ring">
+          <svg viewBox="0 0 44 44"><circle class="bg-circle" cx="22" cy="22" r="17"/><circle class="fg-circle" cx="22" cy="22" r="17" stroke-dasharray="106.8" stroke-dashoffset="26.7"/></svg>
+          <span class="pct-text">75%</span>
+        </div>
+        <span class="e-ring-label">9 / 12 课时</span>
+      </div>
+      <div class="e-ring-wrap">
+        <div class="e-ring">
+          <svg viewBox="0 0 44 44"><circle class="bg-circle" cx="22" cy="22" r="17"/><circle class="fg-circle" cx="22" cy="22" r="17" stroke-dasharray="106.8" stroke-dashoffset="0" style="stroke:var(--completed)"/></svg>
+          <span class="pct-text" style="color:var(--completed)">100%</span>
+        </div>
+        <span class="e-ring-label" style="color:var(--completed);font-weight:500">全部完成！</span>
+      </div>
+    </div>
+    <!-- StatusBadge -->
+    <div class="component-card">
+      <h3>StatusBadge</h3>
+      <div class="badge-grid">
+        <span class="e-badge st-pending">
+          <span class="pulse" style="background:var(--pending)"></span>待备课
+        </span>
+        <span class="e-badge st-prepared">
+          <span class="pulse" style="background:var(--prepared)"></span>已备课
+        </span>
+        <span class="e-badge st-in-progress">
+          <span class="pulse" style="background:var(--in-progress)"></span>学习中
+        </span>
+        <span class="e-badge st-completed">
+          <span class="pulse" style="background:var(--completed)"></span>已完成
+        </span>
+        <span class="e-badge st-failed">
+          <span class="pulse" style="background:var(--failed)"></span>备课失败
+        </span>
+      </div>
+    </div>
+    <!-- EmptyState -->
+    <div class="component-card">
+      <h3>EmptyState</h3>
+      <div class="e-empty">
+        <div class="leaf">
+          <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M11 20A7 7 0 0 1 9.8 6.9C15.5 4.9 17 3.5 17 3.5s-.3 3.5 1 5.5c1.3 2 2 3.5 2 5a7 7 0 0 1-7 7"/><path d="M11.7 12.3c-.3 1.5-.7 2.7-1.2 3.7"/><path d="M14 8c-.5.8-1 1.8-1.3 2.8"/></svg>
+        </div>
+        <div class="title">种下你的第一颗学习种子</div>
+        <div class="desc">学习就像培育一棵树 -- 每天一点进步，终会枝繁叶茂。让 Claude Code 帮你规划专属的成长路径。</div>
+        <a href="#" class="cta">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          开始创建
+        </a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div style="height:80px"></div>
+
+<script>
+function setTheme(theme) {
+  document.body.classList.toggle('light-mode', theme === 'light');
+  document.querySelectorAll('.theme-btn').forEach(btn => {
+    btn.classList.toggle('active', btn.textContent.toLowerCase().includes(theme));
+  });
+}
+</script>
+
+</body>
+</html>

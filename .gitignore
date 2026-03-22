@@ -1,0 +1,24 @@
+# Rust
+cli/target/
+**/*.rs.bk
+
+# Node
+node_modules/
+frontend/dist/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# LearnKit runtime data
+.learnkit/
+
+# Temp
+*.tmp

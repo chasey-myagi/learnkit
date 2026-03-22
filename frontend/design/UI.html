@@ -1,0 +1,1290 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LearnKit — UI Full Preview</title>
+<style>
+  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+  /* ══════════════════════════════════════════════
+     Accessibility
+     ══════════════════════════════════════════════ */
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+  }
+
+  :focus:not(:focus-visible) {
+    outline: none;
+  }
+
+  /* ══════════════════════════════════════════════
+     Design Tokens
+     ══════════════════════════════════════════════ */
+  :root {
+    --bg: #0a0a12;
+    --card: #141425;
+    --border: #1e1e3a;
+    --text: #e0e0e8;
+    --text-secondary: #8a8ab4;
+    --accent: #6c5ce7;
+    --accent-light: #a29bfe;
+    --accent-glow: rgba(108, 92, 231, 0.3);
+    --surface: #12121f;
+
+    --completed: #10ac84;
+    --in-progress: #feca57;
+    --prepared: #48dbfb;
+    --pending: #8a8ab4;
+    --failed: #ff6b6b;
+
+    --font: system-ui, -apple-system, sans-serif;
+    --radius: 12px;
+    --radius-sm: 6px;
+  }
+
+  [data-theme="light"] {
+    --bg: #f4f3fa;
+    --card: #fdfcff;
+    --border: #d8d5e8;
+    --text: #1a1a2e;
+    --text-secondary: #6e6a8a;
+    --accent-glow: rgba(108, 92, 231, 0.12);
+    --surface: #fdfcff;
+  }
+
+  body {
+    font-family: var(--font);
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.6;
+    transition: background 0.3s ease, color 0.3s ease;
+    min-height: 100vh;
+  }
+
+  /* Theme transition for all color-dependent properties */
+  .card-meta, .card-desc, .card-title, .page-title, .page-subtitle,
+  .detail-title, .detail-progress-label, .lesson-title, .lesson-meta,
+  .section-progress-text, .ring-label, .status-badge,
+  .subject-progress-text, .card-status-tag {
+    transition: color 0.2s ease;
+  }
+  .card-icon svg, .subject-icon, .card-bg-icon svg, .back-link svg {
+    transition: color 0.2s ease, stroke 0.2s ease;
+  }
+
+  /* ══════════════════════════════════════════════
+     AppHeader — Option D: Gradient Bottom Line
+     ══════════════════════════════════════════════ */
+  .app-header {
+    height: 56px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 24px;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    background: var(--bg);
+    border-bottom: 1px solid var(--border);
+    transition: background 0.3s ease, border-color 0.2s ease;
+  }
+  .app-header::after {
+    content: '';
+    position: absolute;
+    bottom: -1px;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, var(--accent) 0%, var(--accent-light) 30%, transparent 50%);
+  }
+  .app-header .logo-area {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .app-header .logo-icon {
+    font-size: 20px;
+  }
+  .app-header .app-name {
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--text);
+    letter-spacing: -0.3px;
+    transition: color 0.2s ease;
+  }
+  .app-header .app-name em {
+    font-style: normal;
+    color: var(--accent);
+    -webkit-text-fill-color: var(--accent);
+  }
+  .app-header .right-area {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  /* Capsule theme toggle */
+  .capsule-toggle {
+    display: flex;
+    align-items: center;
+    border-radius: 999px;
+    padding: 4px;
+    cursor: pointer;
+    border: none;
+    transition: background 0.2s ease;
+    background: rgba(255,255,255,0.06);
+  }
+  [data-theme="light"] .capsule-toggle {
+    background: rgba(0,0,0,0.06);
+  }
+  .capsule-toggle .opt {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    transition: background 0.2s ease, box-shadow 0.2s ease;
+    line-height: 1;
+  }
+  .capsule-toggle .opt.active {
+    background: var(--accent);
+    box-shadow: 0 0 8px rgba(108,92,231,0.4);
+  }
+
+  /* ══════════════════════════════════════════════
+     Page Tab Switcher
+     ══════════════════════════════════════════════ */
+  .page-tabs {
+    display: flex;
+    justify-content: center;
+    gap: 4px;
+    padding: 16px 24px 0;
+    background: var(--bg);
+    transition: background 0.3s ease;
+  }
+  .page-tab {
+    padding: 8px 24px;
+    border: 1px solid var(--border);
+    border-bottom: none;
+    border-radius: 12px 12px 0 0;
+    background: transparent;
+    color: var(--text-secondary);
+    font-size: 14px;
+    font-weight: 600;
+    font-family: var(--font);
+    cursor: pointer;
+    transition: color 0.2s ease, background 0.2s ease, border-color 0.2s ease;
+    position: relative;
+  }
+  .page-tab:hover {
+    color: var(--text);
+    background: var(--card);
+  }
+  .page-tab.active {
+    background: var(--card);
+    color: var(--text);
+    border-color: var(--border);
+  }
+  .page-tab.active::after {
+    content: '';
+    position: absolute;
+    bottom: -1px;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: var(--accent);
+    border-radius: 1px;
+  }
+
+  /* Page view containers */
+  .page-view {
+    display: none;
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 32px 40px 80px;
+    animation: fadeIn 0.25s cubic-bezier(.4,0,.2,1);
+  }
+  .page-view.active {
+    display: block;
+  }
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(6px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  /* ══════════════════════════════════════════════
+     Page 1: Program List
+     ══════════════════════════════════════════════ */
+  .page-title-row {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    margin-bottom: 24px;
+  }
+  .page-title {
+    font-size: 22px;
+    font-weight: 700;
+    letter-spacing: -0.5px;
+    line-height: 1.2;
+  }
+  .page-subtitle {
+    font-size: 14px;
+    color: var(--text-secondary);
+    line-height: 1.5;
+  }
+
+  /* ── ProgramCard (B progress ring + E SVG icons) ── */
+  .program-cards {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 20px;
+  }
+  .program-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 24px;
+    cursor: pointer;
+    transition: border-color 0.2s ease, transform 0.25s cubic-bezier(.4,0,.2,1), box-shadow 0.25s cubic-bezier(.4,0,.2,1), background 0.2s ease;
+    position: relative;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+  .program-card:hover {
+    border-color: var(--accent);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 20px rgba(0,0,0,0.15), 0 0 0 1px rgba(108,92,231,0.15);
+  }
+  [data-theme="light"] .program-card:hover {
+    box-shadow: 0 4px 16px rgba(0,0,0,0.08), 0 0 0 1px rgba(108,92,231,0.12);
+  }
+  .program-card.completed-card {
+    border-color: rgba(16,172,132,0.3);
+  }
+  .program-card.completed-card:hover {
+    border-color: var(--completed);
+    box-shadow: 0 4px 20px rgba(0,0,0,0.15), 0 0 0 1px rgba(16,172,132,0.15);
+  }
+
+  /* Background decorative SVG */
+  .card-bg-icon {
+    position: absolute;
+    right: -12px;
+    bottom: -12px;
+    width: 120px;
+    height: 120px;
+    opacity: 0.05;
+    pointer-events: none;
+    user-select: none;
+    color: var(--text);
+    transition: color 0.2s ease;
+  }
+  .card-bg-icon svg {
+    width: 100%;
+    height: 100%;
+  }
+
+  /* Card top row: icon + title + ring */
+  .card-top {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .card-icon {
+    width: 44px;
+    height: 44px;
+    flex-shrink: 0;
+  }
+  .card-icon svg {
+    width: 100%;
+    height: 100%;
+  }
+  .card-title-area {
+    flex: 1;
+    min-width: 0;
+  }
+  .card-title {
+    font-size: 17px;
+    font-weight: 700;
+    margin-bottom: 2px;
+    letter-spacing: -0.3px;
+    line-height: 1.3;
+  }
+  .card-desc {
+    font-size: 13px;
+    color: var(--text-secondary);
+    line-height: 1.4;
+  }
+
+  .card-meta {
+    display: flex;
+    gap: 16px;
+    font-size: 12px;
+    color: var(--text-secondary);
+    line-height: 1.4;
+    font-variant-numeric: tabular-nums;
+  }
+  .card-meta strong {
+    color: var(--text);
+    font-weight: 600;
+    transition: color 0.2s ease;
+  }
+
+  /* Progress row: bar + ring side by side */
+  .card-progress-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-top: auto;
+  }
+  .card-progress-row .gradient-bar-wrap {
+    flex: 1;
+  }
+
+  /* Gradient progress bar (Scheme C) */
+  .gradient-bar-track {
+    height: 8px;
+    background: var(--border);
+    border-radius: 4px;
+    overflow: hidden;
+    position: relative;
+    transition: background 0.2s ease;
+  }
+  .gradient-bar-fill {
+    height: 100%;
+    border-radius: 4px;
+    background: linear-gradient(90deg, #6c5ce7, #a29bfe);
+    background-size: 100% 100%;
+    transition: width 0.6s cubic-bezier(.4,0,.2,1);
+  }
+  .gradient-bar-fill.complete {
+    background: linear-gradient(90deg, #10ac84, #2ecc71);
+    background-size: 100% 100%;
+  }
+  .gradient-bar-fill.zero {
+    animation: none;
+    box-shadow: none;
+  }
+
+  /* Progress ring */
+  .ring-wrap {
+    position: relative;
+    width: 56px;
+    height: 56px;
+    flex-shrink: 0;
+  }
+  .ring-wrap svg {
+    width: 56px;
+    height: 56px;
+    transform: rotate(-90deg);
+  }
+  .ring-bg {
+    fill: none;
+    stroke: var(--border);
+    stroke-width: 5;
+    transition: stroke 0.2s ease;
+  }
+  .ring-fg {
+    fill: none;
+    stroke: url(#ringGradient);
+    stroke-width: 5;
+    stroke-linecap: round;
+    transition: stroke-dashoffset 1s cubic-bezier(.4,0,.2,1);
+  }
+  .ring-fg.complete {
+    stroke: var(--completed);
+  }
+  .ring-label {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+  }
+  .ring-label small {
+    font-size: 10px;
+    font-weight: 400;
+    color: var(--text-secondary);
+    transition: color 0.2s ease;
+  }
+
+  /* Status tag on card */
+  .card-status-tag {
+    display: inline-block;
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 600;
+  }
+  .tag-progress {
+    background: rgba(108,92,231,0.12);
+    color: var(--accent);
+  }
+  .tag-new {
+    background: rgba(120,120,160,0.12);
+    color: var(--pending);
+  }
+  .tag-done {
+    background: rgba(16,172,132,0.12);
+    color: var(--completed);
+  }
+
+  /* ══════════════════════════════════════════════
+     Page 2: Program Detail
+     ══════════════════════════════════════════════ */
+  .detail-header {
+    margin-bottom: 28px;
+  }
+  .back-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+    color: var(--text-secondary);
+    text-decoration: none;
+    margin-bottom: 16px;
+    cursor: pointer;
+    transition: color 0.2s ease;
+  }
+  .back-link:hover {
+    color: var(--accent);
+  }
+  .back-link svg {
+    width: 16px;
+    height: 16px;
+  }
+  .detail-title-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    margin-bottom: 12px;
+  }
+  .detail-title {
+    font-size: 24px;
+    font-weight: 700;
+    letter-spacing: -0.5px;
+    line-height: 1.2;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .detail-title .icon {
+    width: 36px;
+    height: 36px;
+  }
+  .detail-title .icon svg {
+    width: 100%;
+    height: 100%;
+  }
+  .detail-progress-label {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-secondary);
+    white-space: nowrap;
+    font-variant-numeric: tabular-nums;
+  }
+  .detail-progress-label strong {
+    color: var(--accent);
+    font-size: 16px;
+    transition: color 0.2s ease;
+    font-variant-numeric: tabular-nums;
+  }
+  .detail-bar {
+    margin-top: 4px;
+  }
+
+  /* ── SubjectGroup Accordion (Variant F) ── */
+  .subject-groups {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+  .subject-group {
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+    background: var(--card);
+    transition: border-color 0.2s ease, background 0.2s ease;
+  }
+  .subject-group:hover {
+    border-color: rgba(108,92,231,0.3);
+  }
+  .subject-group:has(.subject-chevron.open) {
+    border-left: 3px solid var(--accent);
+  }
+  .subject-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 16px 20px;
+    cursor: pointer;
+    user-select: none;
+    transition: background 0.2s ease;
+  }
+  .subject-header:hover {
+    background: var(--accent-glow);
+  }
+  .subject-header h3 {
+    font-size: 16px;
+    font-weight: 700;
+    letter-spacing: -0.3px;
+    line-height: 1.3;
+    flex: 1;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .subject-icon {
+    width: 22px;
+    height: 22px;
+    flex-shrink: 0;
+  }
+  .subject-progress-wrap {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    max-width: 160px;
+    flex-shrink: 0;
+  }
+  .subject-progress-bar {
+    flex: 1;
+    height: 4px;
+    background: var(--border);
+    border-radius: 2px;
+    overflow: hidden;
+    min-width: 80px;
+    transition: background 0.2s ease;
+  }
+  .subject-progress-fill {
+    height: 100%;
+    background: var(--accent);
+    border-radius: 2px;
+    transition: width 0.3s cubic-bezier(.4,0,.2,1);
+  }
+  .subject-progress-text {
+    font-size: 12px;
+    color: var(--text-secondary);
+    white-space: nowrap;
+    font-weight: 500;
+    font-variant-numeric: tabular-nums;
+  }
+  .subject-chevron {
+    width: 20px;
+    height: 20px;
+    color: var(--text-secondary);
+    transition: transform 0.25s cubic-bezier(.4,0,.2,1), color 0.2s ease;
+    flex-shrink: 0;
+  }
+  .subject-chevron.open {
+    transform: rotate(180deg);
+  }
+
+  /* Accordion body */
+  .subject-body {
+    background: var(--bg);
+    overflow: hidden;
+    padding: 16px 24px 24px;
+    border-top: 1px solid var(--border);
+    transition: background 0.3s ease, border-color 0.2s ease;
+  }
+  .subject-body.collapsed {
+    display: none;
+  }
+
+  /* Timeline inside accordion */
+  .lesson-timeline {
+    position: relative;
+    padding-left: 28px;
+  }
+  .lesson-timeline::before {
+    content: '';
+    position: absolute;
+    left: 7px;
+    top: 8px;
+    bottom: 8px;
+    width: 2px;
+    background: var(--border);
+    transition: background 0.2s ease;
+  }
+
+  /* Completed segment overlay */
+  .tl-completed-line {
+    position: absolute;
+    left: 7px;
+    top: 8px;
+    width: 2px;
+    background: var(--completed);
+    border-radius: 1px;
+    transition: height 0.3s cubic-bezier(.4,0,.2,1);
+  }
+
+  .lesson-item {
+    position: relative;
+    padding: 8px 12px;
+    margin-bottom: 8px;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    transition: background 0.2s ease;
+  }
+  .lesson-item:last-child {
+    margin-bottom: 0;
+  }
+  .lesson-item:hover {
+    background: var(--accent-glow);
+  }
+  /* Hover arrow indicator */
+  .lesson-item::after {
+    content: '\2192';
+    position: absolute;
+    right: 12px;
+    top: 50%;
+    transform: translateX(4px) translateY(-50%);
+    opacity: 0;
+    font-size: 14px;
+    color: var(--accent);
+    transition: opacity 0.2s ease, transform 0.25s cubic-bezier(.4,0,.2,1);
+    pointer-events: none;
+  }
+  .lesson-item:hover::after {
+    opacity: 1;
+    transform: translateX(0) translateY(-50%);
+  }
+
+  /* Timeline node dots */
+  .lesson-item::before {
+    content: '';
+    position: absolute;
+    left: -23px;
+    top: 12px;
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    border: 2.5px solid var(--card);
+    z-index: 2;
+    transition: background 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+  }
+  .lesson-item.completed::before {
+    background: var(--completed);
+    box-shadow: 0 0 0 3px rgba(16,172,132,0.2);
+  }
+  .lesson-item.in-progress::before {
+    background: var(--in-progress);
+    box-shadow: 0 0 0 3px rgba(254,202,87,0.2);
+    animation: node-pulse 2s infinite;
+  }
+  .lesson-item.prepared::before {
+    background: var(--prepared);
+    box-shadow: 0 0 0 3px rgba(72,219,251,0.2);
+  }
+  .lesson-item.pending::before {
+    background: var(--pending);
+    opacity: 0.6;
+  }
+
+  @keyframes node-pulse {
+    0%, 100% { box-shadow: 0 0 0 3px rgba(254,202,87,0.2); }
+    50% { box-shadow: 0 0 0 8px rgba(254,202,87,0.08); }
+  }
+
+  .lesson-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+  }
+  .lesson-title {
+    font-size: 14px;
+    font-weight: 600;
+    line-height: 1.5;
+  }
+  .lesson-meta {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 4px;
+    font-size: 12px;
+    color: var(--text-secondary);
+    flex-wrap: wrap;
+  }
+  .lesson-meta .sep {
+    opacity: 0.4;
+  }
+
+  /* Section progress bar inside lesson */
+  .lesson-section-progress {
+    margin-top: 8px;
+    max-width: 200px;
+  }
+  .section-progress-wrap {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .section-progress-bar {
+    flex: 1;
+    height: 3px;
+    background: var(--border);
+    border-radius: 1.5px;
+    overflow: hidden;
+    transition: background 0.2s ease;
+  }
+  .section-progress-fill {
+    height: 100%;
+    border-radius: 1.5px;
+    transition: width 0.3s cubic-bezier(.4,0,.2,1);
+  }
+  .section-progress-text {
+    font-size: 11px;
+    color: var(--text-secondary);
+    font-weight: 500;
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* ── Status Badges (Scheme C: Ghost Glow) ── */
+  .status-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 4px 12px;
+    border-radius: 6px;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.2px;
+    white-space: nowrap;
+    transition: color 0.2s ease, background 0.2s ease, box-shadow 0.2s ease;
+  }
+  .badge-completed {
+    background: rgba(16,172,132,0.15);
+    color: var(--completed);
+  }
+  .badge-in-progress {
+    background: rgba(254,202,87,0.15);
+    color: var(--in-progress);
+    animation: badge-breathe 2.5s ease-in-out infinite;
+  }
+  .badge-prepared {
+    background: rgba(72,219,251,0.15);
+    color: var(--prepared);
+  }
+  .badge-pending {
+    background: rgba(120,120,160,0.12);
+    color: var(--pending);
+  }
+  @keyframes badge-breathe {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.7; }
+  }
+
+  /* ══════════════════════════════════════════════
+     Custom Scrollbar
+     ══════════════════════════════════════════════ */
+  ::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: var(--border);
+    border-radius: 4px;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: var(--text-secondary);
+  }
+  /* Firefox */
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: var(--border) transparent;
+  }
+
+  /* ══════════════════════════════════════════════
+     Responsive
+     ══════════════════════════════════════════════ */
+  @media (max-width: 768px) {
+    .program-cards {
+      grid-template-columns: 1fr;
+    }
+    .page-view {
+      padding: 24px 16px 60px;
+    }
+    .detail-title-row {
+      flex-direction: column;
+      align-items: flex-start;
+    }
+    .page-title-row {
+      flex-direction: column;
+      gap: 4px;
+    }
+  }
+</style>
+</head>
+<body>
+
+<!-- SVG Gradient Definition (shared) -->
+<svg width="0" height="0" style="position:absolute">
+  <defs>
+    <linearGradient id="ringGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#6c5ce7"/>
+      <stop offset="100%" stop-color="#a29bfe"/>
+    </linearGradient>
+  </defs>
+</svg>
+
+<!-- ════════════════════════════════════════════════════════
+     AppHeader — Option D: Gradient Bottom Line
+     ════════════════════════════════════════════════════════ -->
+<header class="app-header">
+  <div class="logo-area">
+    <span class="logo-icon">📚</span>
+    <span class="app-name"><em>Learn</em>Kit</span>
+  </div>
+  <div class="right-area">
+    <div class="capsule-toggle" id="themeToggle" role="button" aria-label="切换日夜模式">
+      <span class="opt" data-theme="light">☀️</span>
+      <span class="opt active" data-theme="dark">🌙</span>
+    </div>
+  </div>
+</header>
+
+<!-- ════════════════════════════════════════════════════════
+     Page Tab Switcher
+     ════════════════════════════════════════════════════════ -->
+<nav class="page-tabs">
+  <button class="page-tab active" data-page="list" aria-label="查看 Program 列表">Program 列表</button>
+  <button class="page-tab" data-page="detail" aria-label="查看 Program 详情">Program 详情</button>
+</nav>
+
+<!-- ════════════════════════════════════════════════════════
+     PAGE 1: Program List (/)
+     ════════════════════════════════════════════════════════ -->
+<main class="page-view active" id="page-list">
+
+  <div class="page-title-row">
+    <h1 class="page-title">我的学习</h1>
+    <span class="page-subtitle">3 个教程</span>
+  </div>
+
+  <div class="program-cards">
+
+    <!-- Card 1: 游戏开发 — 25% in progress -->
+    <article class="program-card" role="button" aria-label="查看游戏开发课程详情" tabindex="0">
+      <div class="card-bg-icon">
+        <svg viewBox="0 0 80 80" fill="none"><rect x="10" y="25" width="60" height="35" rx="17" stroke="currentColor" stroke-width="2.5"/><circle cx="28" cy="42" r="4" stroke="currentColor" stroke-width="2"/><circle cx="52" cy="38" r="2.5" fill="currentColor"/><circle cx="58" cy="44" r="2.5" fill="currentColor"/><rect x="35" y="30" width="10" height="6" rx="3" fill="currentColor" opacity=".3"/></svg>
+      </div>
+      <div class="card-top">
+        <div class="card-icon">
+          <svg viewBox="0 0 48 48" fill="none"><rect x="6" y="15" width="36" height="21" rx="10" stroke="var(--accent)" stroke-width="2.5"/><circle cx="17" cy="25" r="3" stroke="var(--accent)" stroke-width="2"/><circle cx="31" cy="23" r="1.8" fill="var(--accent)"/><circle cx="35" cy="27" r="1.8" fill="var(--accent)"/><rect x="21" y="18" width="6" height="4" rx="2" fill="var(--accent)" opacity=".3"/></svg>
+        </div>
+        <div class="card-title-area">
+          <div class="card-title">游戏开发</div>
+          <div class="card-desc">从零构建游戏引擎与玩法逻辑</div>
+        </div>
+        <span class="card-status-tag tag-progress">进行中</span>
+      </div>
+      <div class="card-meta">
+        <span><strong>3</strong> subjects</span>
+        <span><strong>12</strong> lessons</span>
+        <span>2026-03-22</span>
+      </div>
+      <div class="card-progress-row">
+        <div class="gradient-bar-wrap">
+          <div class="gradient-bar-track">
+            <div class="gradient-bar-fill" style="width:25%"></div>
+          </div>
+        </div>
+        <div class="ring-wrap">
+          <svg viewBox="0 0 100 100">
+            <circle class="ring-bg" cx="50" cy="50" r="42"></circle>
+            <circle class="ring-fg" cx="50" cy="50" r="42"
+              stroke-dasharray="263.9"
+              stroke-dashoffset="197.9"></circle>
+          </svg>
+          <div class="ring-label">25<small>%</small></div>
+        </div>
+      </div>
+    </article>
+
+    <!-- Card 2: 强化学习 — 0% not started -->
+    <article class="program-card" role="button" aria-label="查看强化学习课程详情" tabindex="0">
+      <div class="card-bg-icon">
+        <svg viewBox="0 0 80 80" fill="none"><circle cx="20" cy="25" r="5" stroke="currentColor" stroke-width="2"/><circle cx="20" cy="55" r="5" stroke="currentColor" stroke-width="2"/><circle cx="40" cy="20" r="5" stroke="currentColor" stroke-width="2"/><circle cx="40" cy="40" r="5" stroke="currentColor" stroke-width="2"/><circle cx="40" cy="60" r="5" stroke="currentColor" stroke-width="2"/><circle cx="60" cy="35" r="5" stroke="currentColor" stroke-width="2"/><circle cx="60" cy="55" r="5" stroke="currentColor" stroke-width="2"/><path d="M25 25l10-3M25 25l10 13M25 55l10-13M25 55l10 3M45 20l10 13M45 40l10-3M45 40l10 13M45 60l10-3M45 60l10-7" stroke="currentColor" stroke-width="1.2" opacity=".5"/></svg>
+      </div>
+      <div class="card-top">
+        <div class="card-icon">
+          <svg viewBox="0 0 48 48" fill="none"><circle cx="12" cy="16" r="3.5" stroke="var(--accent)" stroke-width="2"/><circle cx="12" cy="32" r="3.5" stroke="var(--accent)" stroke-width="2"/><circle cx="24" cy="12" r="3.5" stroke="var(--accent)" stroke-width="2"/><circle cx="24" cy="24" r="3.5" stroke="var(--accent)" stroke-width="2"/><circle cx="24" cy="36" r="3.5" stroke="var(--accent)" stroke-width="2"/><circle cx="36" cy="20" r="3.5" stroke="var(--accent)" stroke-width="2"/><circle cx="36" cy="32" r="3.5" stroke="var(--accent)" stroke-width="2"/><path d="M15.5 16l5-2.5M15.5 16l5 6.5M15.5 32l5-6.5M15.5 32l5 2.5M27.5 12l5 6M27.5 24l5-2.5M27.5 24l5 6.5M27.5 36l5-2.5" stroke="var(--accent)" stroke-width="1" opacity=".4"/></svg>
+        </div>
+        <div class="card-title-area">
+          <div class="card-title">强化学习</div>
+          <div class="card-desc">策略梯度、Q-learning 与环境建模</div>
+        </div>
+        <span class="card-status-tag tag-new">未开始</span>
+      </div>
+      <div class="card-meta">
+        <span><strong>2</strong> subjects</span>
+        <span><strong>8</strong> lessons</span>
+        <span>2026-03-20</span>
+      </div>
+      <div class="card-progress-row">
+        <div class="gradient-bar-wrap">
+          <div class="gradient-bar-track">
+            <div class="gradient-bar-fill zero" style="width:0%"></div>
+          </div>
+        </div>
+        <div class="ring-wrap">
+          <svg viewBox="0 0 100 100">
+            <circle class="ring-bg" cx="50" cy="50" r="42"></circle>
+            <circle class="ring-fg" cx="50" cy="50" r="42"
+              stroke-dasharray="263.9"
+              stroke-dashoffset="263.9"></circle>
+          </svg>
+          <div class="ring-label" style="color:var(--text-secondary)">0<small>%</small></div>
+        </div>
+      </div>
+    </article>
+
+    <!-- Card 3: Rust 系统编程 — 100% completed -->
+    <article class="program-card completed-card" role="button" aria-label="查看 Rust 系统编程课程详情" tabindex="0">
+      <div class="card-bg-icon">
+        <svg viewBox="0 0 80 80" fill="none"><circle cx="40" cy="40" r="14" stroke="currentColor" stroke-width="2.5"/><circle cx="40" cy="40" r="6" fill="currentColor" opacity=".2"/><path d="M40 22v-4M40 62v-4M22 40h-4M62 40h-4M28.3 28.3l-2.8-2.8M54.5 54.5l-2.8-2.8M28.3 51.7l-2.8 2.8M54.5 25.5l-2.8 2.8" stroke="currentColor" stroke-width="3" stroke-linecap="round"/></svg>
+      </div>
+      <div class="card-top">
+        <div class="card-icon">
+          <svg viewBox="0 0 48 48" fill="none"><circle cx="24" cy="24" r="9" stroke="var(--completed)" stroke-width="2.5"/><circle cx="24" cy="24" r="4" fill="var(--completed)" opacity=".2"/><path d="M24 12v-3M24 39v-3M12 24H9M39 24h-3M16 16l-2-2M34 34l-2-2M16 32l-2 2M34 16l-2-2" stroke="var(--completed)" stroke-width="2.5" stroke-linecap="round"/></svg>
+        </div>
+        <div class="card-title-area">
+          <div class="card-title">Rust 系统编程</div>
+          <div class="card-desc">所有权、生命周期与高性能系统设计</div>
+        </div>
+        <span class="card-status-tag tag-done">已完成</span>
+      </div>
+      <div class="card-meta">
+        <span><strong>2</strong> subjects</span>
+        <span><strong>8</strong> lessons</span>
+        <span>2026-03-15</span>
+      </div>
+      <div class="card-progress-row">
+        <div class="gradient-bar-wrap">
+          <div class="gradient-bar-track">
+            <div class="gradient-bar-fill complete" style="width:100%"></div>
+          </div>
+        </div>
+        <div class="ring-wrap">
+          <svg viewBox="0 0 100 100">
+            <circle class="ring-bg" cx="50" cy="50" r="42"></circle>
+            <circle class="ring-fg complete" cx="50" cy="50" r="42"
+              stroke-dasharray="263.9"
+              stroke-dashoffset="0"></circle>
+          </svg>
+          <div class="ring-label" style="color:var(--completed)">100<small>%</small></div>
+        </div>
+      </div>
+    </article>
+
+  </div>
+</main>
+
+<!-- ════════════════════════════════════════════════════════
+     PAGE 2: Program Detail (/program/game-dev)
+     ════════════════════════════════════════════════════════ -->
+<main class="page-view" id="page-detail">
+
+  <!-- Detail Header -->
+  <div class="detail-header">
+    <a class="back-link" role="button" aria-label="返回课程列表" onclick="switchPage('list')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M15 18l-6-6 6-6"/></svg>
+      返回列表
+    </a>
+    <div class="detail-title-row">
+      <div class="detail-title">
+        <span class="icon">
+          <svg viewBox="0 0 48 48" fill="none"><rect x="6" y="15" width="36" height="21" rx="10" stroke="var(--accent)" stroke-width="2.5"/><circle cx="17" cy="25" r="3" stroke="var(--accent)" stroke-width="2"/><circle cx="31" cy="23" r="1.8" fill="var(--accent)"/><circle cx="35" cy="27" r="1.8" fill="var(--accent)"/><rect x="21" y="18" width="6" height="4" rx="2" fill="var(--accent)" opacity=".3"/></svg>
+        </span>
+        游戏开发
+      </div>
+      <div class="detail-progress-label">
+        进度 <strong>3</strong>/12
+      </div>
+    </div>
+    <div class="detail-bar">
+      <div class="gradient-bar-track">
+        <div class="gradient-bar-fill" style="width:25%"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Subject Groups (Accordion + Timeline) -->
+  <div class="subject-groups">
+
+    <!-- Subject 1: 游戏设计 — Expanded -->
+    <div class="subject-group">
+      <div class="subject-header" role="button" aria-expanded="true" aria-label="展开/折叠游戏设计" tabindex="0" onclick="toggleAccordion(this)">
+        <h3><svg class="subject-icon" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="1.8"><path d="M4 6h10v14H4z" rx="2"/><path d="M7 10h4M7 13h4M7 16h2" stroke-linecap="round"/><path d="M10 8h10v10H10" rx="2" opacity=".5"/></svg>游戏设计</h3>
+        <div class="subject-progress-wrap">
+          <div class="subject-progress-bar">
+            <div class="subject-progress-fill" style="width:40%"></div>
+          </div>
+          <span class="subject-progress-text">2/5</span>
+        </div>
+        <svg class="subject-chevron open" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+      </div>
+      <div class="subject-body">
+        <div class="lesson-timeline">
+          <!-- Completed line overlay -->
+          <div class="tl-completed-line" style="height:108px"></div>
+
+          <!-- Lesson 1: Completed -->
+          <div class="lesson-item completed" role="button" tabindex="0">
+            <div class="lesson-top">
+              <span class="lesson-title">游戏设计概论</span>
+              <span class="status-badge badge-completed">✓ 已完成</span>
+            </div>
+            <div class="lesson-meta">
+              <span>3 sections</span>
+            </div>
+          </div>
+
+          <!-- Lesson 2: Completed -->
+          <div class="lesson-item completed" role="button" tabindex="0">
+            <div class="lesson-top">
+              <span class="lesson-title">玩家心理学</span>
+              <span class="status-badge badge-completed">✓ 已完成</span>
+            </div>
+            <div class="lesson-meta">
+              <span>4 sections</span>
+            </div>
+          </div>
+
+          <!-- Lesson 3: In Progress -->
+          <div class="lesson-item in-progress" role="button" tabindex="0">
+            <div class="lesson-top">
+              <span class="lesson-title">核心游戏循环</span>
+              <span class="status-badge badge-in-progress">📖 学习中</span>
+            </div>
+            <div class="lesson-meta">
+              <span>3 sections (2/3 已读)</span>
+            </div>
+            <div class="lesson-section-progress">
+              <div class="section-progress-wrap">
+                <div class="section-progress-bar">
+                  <div class="section-progress-fill" style="width:66%; background:var(--in-progress)"></div>
+                </div>
+                <span class="section-progress-text">2/3</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Lesson 4: Prepared -->
+          <div class="lesson-item prepared" role="button" tabindex="0">
+            <div class="lesson-top">
+              <span class="lesson-title">关卡设计方法论</span>
+              <span class="status-badge badge-prepared">已备课</span>
+            </div>
+            <div class="lesson-meta">
+              <span>5 sections</span>
+            </div>
+          </div>
+
+          <!-- Lesson 5: Pending -->
+          <div class="lesson-item pending" role="button" tabindex="0">
+            <div class="lesson-top">
+              <span class="lesson-title">原型设计与迭代</span>
+              <span class="status-badge badge-pending">待备课</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Subject 2: 游戏编程 — Collapsed -->
+    <div class="subject-group">
+      <div class="subject-header" role="button" aria-expanded="false" aria-label="展开/折叠游戏编程" tabindex="0" onclick="toggleAccordion(this)">
+        <h3><svg class="subject-icon" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="1.8"><rect x="3" y="4" width="18" height="14" rx="2"/><path d="M7 21h10" stroke-linecap="round"/><path d="M12 18v3"/><path d="M8 9l2 2-2 2M13 9h3" stroke-linecap="round" stroke-linejoin="round"/></svg>游戏编程</h3>
+        <div class="subject-progress-wrap">
+          <div class="subject-progress-bar">
+            <div class="subject-progress-fill" style="width:25%"></div>
+          </div>
+          <span class="subject-progress-text">1/4</span>
+        </div>
+        <svg class="subject-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+      </div>
+      <div class="subject-body collapsed">
+        <div class="lesson-timeline">
+          <div class="tl-completed-line" style="height:40px"></div>
+          <div class="lesson-item completed" role="button" tabindex="0">
+            <div class="lesson-top">
+              <span class="lesson-title">编程语言选择</span>
+              <span class="status-badge badge-completed">✓ 已完成</span>
+            </div>
+            <div class="lesson-meta">
+              <span>3 sections</span>
+            </div>
+          </div>
+          <div class="lesson-item pending" role="button" tabindex="0">
+            <div class="lesson-top">
+              <span class="lesson-title">游戏引擎架构</span>
+              <span class="status-badge badge-pending">待备课</span>
+            </div>
+          </div>
+          <div class="lesson-item pending" role="button" tabindex="0">
+            <div class="lesson-top">
+              <span class="lesson-title">渲染管线基础</span>
+              <span class="status-badge badge-pending">待备课</span>
+            </div>
+          </div>
+          <div class="lesson-item pending" role="button" tabindex="0">
+            <div class="lesson-top">
+              <span class="lesson-title">物理引擎入门</span>
+              <span class="status-badge badge-pending">待备课</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Subject 3: 游戏美术 — Collapsed -->
+    <div class="subject-group">
+      <div class="subject-header" role="button" aria-expanded="false" aria-label="展开/折叠游戏美术" tabindex="0" onclick="toggleAccordion(this)">
+        <h3><svg class="subject-icon" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><circle cx="9" cy="9" r="1.5" fill="var(--accent)"/><circle cx="15" cy="9" r="1.5" fill="var(--accent)" opacity=".7"/><circle cx="9" cy="14" r="1.5" fill="var(--accent)" opacity=".5"/><path d="M14 15c1.5-1 3 0 3 2s-2 3-4 2-1-3 1-4z" fill="var(--accent)" opacity=".3"/></svg>游戏美术</h3>
+        <div class="subject-progress-wrap">
+          <div class="subject-progress-bar">
+            <div class="subject-progress-fill" style="width:0%"></div>
+          </div>
+          <span class="subject-progress-text">0/3</span>
+        </div>
+        <svg class="subject-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+      </div>
+      <div class="subject-body collapsed">
+        <div class="lesson-timeline">
+          <div class="lesson-item prepared" role="button" tabindex="0">
+            <div class="lesson-top">
+              <span class="lesson-title">像素艺术基础</span>
+              <span class="status-badge badge-prepared">已备课</span>
+            </div>
+            <div class="lesson-meta">
+              <span>4 sections</span>
+            </div>
+          </div>
+          <div class="lesson-item pending" role="button" tabindex="0">
+            <div class="lesson-top">
+              <span class="lesson-title">角色动画设计</span>
+              <span class="status-badge badge-pending">待备课</span>
+            </div>
+          </div>
+          <div class="lesson-item pending" role="button" tabindex="0">
+            <div class="lesson-top">
+              <span class="lesson-title">UI 与视觉设计</span>
+              <span class="status-badge badge-pending">待备课</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</main>
+
+<!-- ════════════════════════════════════════════════════════
+     JavaScript
+     ════════════════════════════════════════════════════════ -->
+<script>
+  // ── Theme Toggle ──
+  const toggle = document.getElementById('themeToggle');
+  const opts = toggle.querySelectorAll('.opt');
+
+  toggle.addEventListener('click', () => {
+    const html = document.documentElement;
+    const current = html.getAttribute('data-theme');
+    const next = current === 'dark' ? 'light' : 'dark';
+    html.setAttribute('data-theme', next);
+
+    opts.forEach(o => {
+      o.classList.toggle('active', o.dataset.theme === next);
+    });
+  });
+
+  // ── Page Tab Switch ──
+  const tabs = document.querySelectorAll('.page-tab');
+  const views = document.querySelectorAll('.page-view');
+
+  function switchPage(pageId) {
+    tabs.forEach(t => t.classList.toggle('active', t.dataset.page === pageId));
+    views.forEach(v => {
+      v.classList.toggle('active', v.id === 'page-' + pageId);
+    });
+  }
+
+  tabs.forEach(tab => {
+    tab.addEventListener('click', () => switchPage(tab.dataset.page));
+  });
+
+  // ── Accordion Toggle ──
+  function toggleAccordion(headerEl) {
+    const chevron = headerEl.querySelector('.subject-chevron');
+    const body = headerEl.nextElementSibling;
+    const isOpen = chevron.classList.toggle('open');
+    body.classList.toggle('collapsed');
+    headerEl.setAttribute('aria-expanded', isOpen);
+  }
+
+  // ── Animate progress rings on page load ──
+  function animateRings() {
+    document.querySelectorAll('.ring-fg').forEach(circle => {
+      const target = circle.getAttribute('stroke-dashoffset');
+      // Start from full offset, animate to target
+      circle.style.strokeDashoffset = '263.9';
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          circle.style.strokeDashoffset = target;
+        });
+      });
+    });
+  }
+
+  // ── Animate gradient bars on scroll into view ──
+  function animateBars() {
+    document.querySelectorAll('.gradient-bar-fill').forEach(bar => {
+      const target = bar.style.width;
+      bar.style.width = '0%';
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          bar.style.width = target;
+        });
+      });
+    });
+  }
+
+  // Run animations after a short delay for visual effect
+  setTimeout(() => {
+    animateRings();
+    animateBars();
+  }, 200);
+
+  // ── Program card click navigates to detail ──
+  document.querySelectorAll('.program-card').forEach((card, i) => {
+    card.addEventListener('click', () => {
+      if (i === 0) switchPage('detail'); // Only first card has detail page
+    });
+  });
+</script>
+</body>
+</html>

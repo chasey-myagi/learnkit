@@ -1,0 +1,1840 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LearnKit — Case C: 笔记本风教案模板</title>
+<style>
+/* ==================== CSS Variables ==================== */
+:root {
+  --bg: #f5f0e8;
+  --card: #fffdf8;
+  --border: #e0d8c8;
+  --text: #2a2520;
+  --secondary: #8a8078;
+  --accent: #6c5ce7;
+  --accent-light: rgba(108, 92, 231, 0.12);
+  --highlight: rgba(255, 237, 74, 0.42);
+  --highlight-strong: rgba(255, 224, 0, 0.48);
+  --shadow: rgba(60, 50, 30, 0.08);
+  --paper-line: rgba(180, 168, 148, 0.18);
+  --ink: #2a2520;
+  --ink-light: #6a6058;
+  --margin-note: #a09888;
+  --quote-border: #c4b8a4;
+  --toc-active: rgba(108, 92, 231, 0.08);
+  --checkbox-border: #b8a890;
+  --nav-bg: #fffdf8;
+  --progress-bg: #e8e0d4;
+  --progress-fill: #6c5ce7;
+  --answer-bg: #fffdf8;
+  --qa-panel-bg: #faf6ee;
+  --toolbar-bg: #fffdf8;
+  --divider-color: #d8cebf;
+}
+
+[data-theme="dark"] {
+  --bg: #1a1814;
+  --card: #242018;
+  --border: #3a3428;
+  --text: #d8d0c4;
+  --secondary: #8a8078;
+  --accent: #6c5ce7;
+  --accent-light: rgba(108, 92, 231, 0.18);
+  --highlight: rgba(255, 237, 74, 0.18);
+  --highlight-strong: rgba(255, 224, 0, 0.24);
+  --shadow: rgba(0, 0, 0, 0.3);
+  --paper-line: rgba(100, 90, 70, 0.2);
+  --ink: #d8d0c4;
+  --ink-light: #9a9088;
+  --margin-note: #7a7068;
+  --quote-border: #5a5040;
+  --toc-active: rgba(108, 92, 231, 0.15);
+  --checkbox-border: #5a5040;
+  --nav-bg: #242018;
+  --progress-bg: #3a3428;
+  --progress-fill: #6c5ce7;
+  --answer-bg: #2a2520;
+  --qa-panel-bg: #1e1a14;
+  --toolbar-bg: #2a2520;
+  --divider-color: #3a3428;
+}
+
+/* ==================== Reset & Base ==================== */
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  font-family: 'Georgia', 'Noto Serif SC', 'Source Han Serif SC', serif;
+  background: var(--bg);
+  color: var(--text);
+  line-height: 1.8;
+  transition: background 0.35s ease, color 0.35s ease;
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* Paper texture via CSS */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  background-image:
+    repeating-linear-gradient(
+      0deg,
+      transparent,
+      transparent 28px,
+      var(--paper-line) 28px,
+      var(--paper-line) 29px
+    );
+  opacity: 0.18;
+}
+
+/* Noise texture overlay */
+body::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  opacity: 0.025;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  background-size: 256px 256px;
+}
+
+[data-theme="dark"] body::after {
+  opacity: 0.04;
+}
+
+/* ==================== Case Banner ==================== */
+.case-banner {
+  background: var(--accent);
+  color: #fff;
+  text-align: center;
+  padding: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  font-family: system-ui, -apple-system, sans-serif;
+  position: relative;
+  z-index: 100;
+}
+
+/* ==================== Navigation Bar ==================== */
+.lesson-nav {
+  position: sticky;
+  top: 0;
+  z-index: 90;
+  background: var(--nav-bg);
+  border-bottom: 1px solid var(--border);
+  font-family: system-ui, -apple-system, sans-serif;
+  backdrop-filter: blur(8px);
+  transition: background 0.35s ease, border-color 0.35s ease;
+}
+
+.lesson-nav::after {
+  content: '';
+  position: absolute;
+  bottom: -1px;
+  left: 10%;
+  right: 10%;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--accent) 30%, var(--accent) 70%, transparent);
+  opacity: 0.3;
+}
+
+.nav-inner {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 24px;
+  height: 52px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.nav-left {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.nav-back {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--secondary);
+  text-decoration: none;
+  font-size: 13px;
+  transition: color 0.2s;
+  cursor: pointer;
+}
+.nav-back:hover { color: var(--accent); }
+.nav-back svg { width: 16px; height: 16px; }
+
+.nav-breadcrumb {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  color: var(--secondary);
+}
+.nav-breadcrumb span { color: var(--text); font-weight: 600; }
+.nav-crumb-sep { opacity: 0.4; }
+
+.nav-right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.nav-lesson-switch {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.nav-lesson-switch button {
+  background: none;
+  border: 1px solid var(--border);
+  color: var(--secondary);
+  width: 32px;
+  height: 32px;
+  border-radius: 6px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+  font-family: inherit;
+}
+.nav-lesson-switch button:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+.nav-lesson-switch button svg { width: 14px; height: 14px; }
+
+.theme-toggle-btn {
+  background: none;
+  border: 1px solid var(--border);
+  color: var(--secondary);
+  width: 32px;
+  height: 32px;
+  border-radius: 6px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+  font-size: 15px;
+}
+.theme-toggle-btn:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.qa-toggle-btn {
+  background: none;
+  border: 1px solid var(--border);
+  color: var(--secondary);
+  height: 32px;
+  padding: 0 10px;
+  border-radius: 6px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 12px;
+  font-family: system-ui, -apple-system, sans-serif;
+  transition: all 0.2s;
+}
+.qa-toggle-btn:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+.qa-toggle-btn .qa-count {
+  background: var(--accent);
+  color: #fff;
+  font-size: 10px;
+  font-weight: 700;
+  padding: 1px 6px;
+  border-radius: 8px;
+  min-width: 18px;
+  text-align: center;
+}
+
+/* ==================== Main Layout ==================== */
+.lesson-layout {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  grid-template-columns: 220px 1fr 180px;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 24px;
+  gap: 0;
+  min-height: calc(100vh - 90px);
+}
+
+/* ==================== TOC Sidebar ==================== */
+.lesson-toc {
+  position: sticky;
+  top: 72px;
+  align-self: start;
+  padding: 28px 0 28px 0;
+  max-height: calc(100vh - 90px);
+  overflow-y: auto;
+  font-family: system-ui, -apple-system, sans-serif;
+}
+
+.toc-title {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  color: var(--secondary);
+  padding: 0 16px 12px 16px;
+  border-bottom: 1px dashed var(--border);
+  margin-bottom: 8px;
+}
+
+.toc-list {
+  list-style: none;
+}
+
+.toc-item {
+  position: relative;
+}
+
+.toc-item a {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 16px;
+  color: var(--secondary);
+  text-decoration: none;
+  font-size: 13px;
+  line-height: 1.4;
+  border-radius: 0 6px 6px 0;
+  transition: all 0.2s;
+  border-left: 2px solid transparent;
+}
+
+.toc-item a:hover {
+  color: var(--text);
+  background: var(--toc-active);
+}
+
+.toc-item.active a {
+  color: var(--accent);
+  font-weight: 600;
+  background: var(--toc-active);
+  border-left-color: var(--accent);
+}
+
+/* Bookmark dot for active toc item */
+.toc-item a::before {
+  content: '';
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--border);
+  flex-shrink: 0;
+  transition: all 0.25s ease;
+}
+
+.toc-item.active a::before {
+  background: var(--accent);
+  box-shadow: 0 0 0 2px var(--accent-light);
+}
+
+/* ==================== Paper / Content Area ==================== */
+.lesson-paper {
+  background: var(--card);
+  border-left: 1px solid var(--border);
+  border-right: 1px solid var(--border);
+  padding: 48px 56px 80px 56px;
+  min-height: calc(100vh - 90px);
+  position: relative;
+  box-shadow: 0 0 40px var(--shadow);
+  transition: background 0.35s ease, border-color 0.35s ease;
+}
+
+/* Red margin line */
+.lesson-paper::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 50px;
+  width: 1px;
+  background: rgba(220, 80, 80, 0.15);
+}
+
+[data-theme="dark"] .lesson-paper::before {
+  background: rgba(220, 80, 80, 0.08);
+}
+
+/* Paper top punched holes decoration */
+.paper-holes {
+  position: absolute;
+  top: 16px;
+  left: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+.paper-holes span {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  border: 1.5px solid var(--border);
+  display: block;
+  margin-bottom: 60px;
+  opacity: 0.5;
+}
+
+/* ==================== Content Typography ==================== */
+.lesson-header {
+  margin-bottom: 40px;
+  padding-bottom: 24px;
+  border-bottom: 2px solid var(--border);
+  position: relative;
+}
+
+.lesson-header::after {
+  content: '';
+  position: absolute;
+  bottom: -3px;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: var(--border);
+}
+
+.lesson-meta {
+  font-family: system-ui, -apple-system, sans-serif;
+  font-size: 12px;
+  color: var(--secondary);
+  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.lesson-meta-dot { opacity: 0.4; }
+
+.lesson-title {
+  font-size: 28px;
+  font-weight: 700;
+  line-height: 1.4;
+  color: var(--text);
+  letter-spacing: -0.3px;
+}
+
+.lesson-subtitle {
+  font-size: 15px;
+  color: var(--secondary);
+  margin-top: 8px;
+  font-style: italic;
+}
+
+/* Section headings */
+.section-heading {
+  font-size: 22px;
+  font-weight: 700;
+  margin: 48px 0 20px 0;
+  color: var(--text);
+  position: relative;
+  padding-bottom: 8px;
+  scroll-margin-top: 80px;
+}
+
+.section-heading::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 3px;
+  background: url("data:image/svg+xml,%3Csvg width='100' height='4' viewBox='0 0 100 4' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M0 2 Q5 0 10 2 Q15 4 20 2 Q25 0 30 2 Q35 4 40 2 Q45 0 50 2 Q55 4 60 2 Q65 0 70 2 Q75 4 80 2 Q85 0 90 2 Q95 4 100 2' stroke='%236c5ce7' stroke-width='1.5' fill='none' opacity='0.4'/%3E%3C/svg%3E") repeat-x;
+  background-size: 100px 4px;
+}
+
+.subsection-heading {
+  font-size: 18px;
+  font-weight: 600;
+  margin: 32px 0 14px 0;
+  color: var(--text);
+  scroll-margin-top: 80px;
+}
+
+/* Paragraphs */
+.lesson-paper p {
+  margin-bottom: 16px;
+  font-size: 16px;
+  line-height: 1.9;
+  color: var(--ink);
+}
+
+/* Highlight / marker effect */
+.highlight {
+  background: linear-gradient(180deg, transparent 55%, var(--highlight) 55%, var(--highlight) 90%, transparent 90%);
+  padding: 0 2px;
+  border-radius: 2px;
+}
+
+.highlight-strong {
+  background: linear-gradient(180deg, transparent 45%, var(--highlight-strong) 45%, var(--highlight-strong) 95%, transparent 95%);
+  padding: 0 2px;
+  border-radius: 2px;
+  font-weight: 600;
+}
+
+/* Interactive highlighter */
+.highlightable {
+  cursor: pointer;
+  padding: 0 2px;
+  border-radius: 2px;
+  position: relative;
+  transition: none;
+  background-size: 0% 100%;
+  background-repeat: no-repeat;
+  background-image: linear-gradient(180deg, transparent 50%, var(--highlight) 50%, var(--highlight) 92%, transparent 92%);
+}
+
+.highlightable.marked {
+  background-size: 100% 100%;
+  animation: marker-stroke 0.3s ease-out forwards;
+}
+
+@keyframes marker-stroke {
+  0% { background-size: 0% 100%; }
+  100% { background-size: 100% 100%; }
+}
+
+.highlightable:hover:not(.marked) {
+  background-image: linear-gradient(180deg, transparent 50%, rgba(255, 237, 74, 0.2) 50%, rgba(255, 237, 74, 0.2) 92%, transparent 92%);
+  background-size: 100% 100%;
+}
+
+.highlightable:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+
+/* Quiz / fill-in-the-blank */
+.quiz-card {
+  margin: 28px 0;
+  padding: 20px 24px;
+  background: var(--card);
+  border: 1.5px dashed var(--border);
+  border-radius: 10px;
+  position: relative;
+  font-family: system-ui, -apple-system, sans-serif;
+}
+
+.quiz-card::before {
+  content: '';
+  position: absolute;
+  top: -1px;
+  left: 20px;
+  right: 20px;
+  height: 2px;
+  background: url("data:image/svg+xml,%3Csvg width='100' height='3' viewBox='0 0 100 3' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M0 1.5 Q5 0 10 1.5 Q15 3 20 1.5 Q25 0 30 1.5 Q35 3 40 1.5 Q45 0 50 1.5 Q55 3 60 1.5 Q65 0 70 1.5 Q75 3 80 1.5 Q85 0 90 1.5 Q95 3 100 1.5' stroke='%23c4b8a4' stroke-width='1' fill='none' opacity='0.5'/%3E%3C/svg%3E") repeat-x;
+  background-size: 100px 3px;
+}
+
+.quiz-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--secondary);
+  margin-bottom: 12px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.quiz-label .quiz-icon {
+  font-size: 15px;
+}
+
+.quiz-question {
+  font-size: 15px;
+  line-height: 1.8;
+  color: var(--ink);
+  margin-bottom: 14px;
+  font-family: 'Georgia', 'Noto Serif SC', serif;
+}
+
+.quiz-blank {
+  display: inline-block;
+  min-width: 120px;
+  border-bottom: 2px dashed var(--accent);
+  color: transparent;
+  position: relative;
+  padding: 0 4px;
+  margin: 0 2px;
+  cursor: pointer;
+}
+
+.quiz-reveal-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  background: none;
+  border: 1.5px solid var(--border);
+  border-radius: 6px;
+  font-size: 13px;
+  color: var(--secondary);
+  cursor: pointer;
+  transition: all 0.2s;
+  font-family: system-ui, -apple-system, sans-serif;
+}
+
+.quiz-reveal-btn:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.quiz-reveal-btn:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.quiz-answer {
+  overflow: hidden;
+  max-height: 0;
+  opacity: 0;
+  transition: max-height 0.4s ease, opacity 0.3s ease, padding 0.3s ease;
+  padding: 0 16px;
+  margin-top: 0;
+  background: var(--accent-light);
+  border-radius: 6px;
+  font-size: 14px;
+  line-height: 1.7;
+  color: var(--ink);
+}
+
+.quiz-answer.revealed {
+  max-height: 200px;
+  opacity: 1;
+  padding: 14px 16px;
+  margin-top: 12px;
+}
+
+.quiz-answer::before {
+  content: '';
+  display: block;
+  width: 100%;
+  height: 0;
+  transform-origin: top;
+}
+
+.quiz-answer-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--accent);
+  margin-bottom: 4px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+/* Hand-drawn checkbox lists */
+.checklist {
+  list-style: none;
+  margin: 16px 0;
+  padding: 0;
+}
+
+.checklist li {
+  position: relative;
+  padding: 4px 0 4px 32px;
+  font-size: 15px;
+  line-height: 1.8;
+  color: var(--ink);
+}
+
+.checklist li::before {
+  content: '';
+  position: absolute;
+  left: 2px;
+  top: 9px;
+  width: 16px;
+  height: 16px;
+  border: 2px solid var(--checkbox-border);
+  border-radius: 3px;
+  transition: all 0.2s;
+  /* Slight hand-drawn skew */
+  transform: rotate(-1deg);
+}
+
+.checklist li.checked::before {
+  background: var(--accent);
+  border-color: var(--accent);
+  transform: rotate(0deg);
+}
+
+.checklist li.checked::after {
+  content: '';
+  position: absolute;
+  left: 7px;
+  top: 13px;
+  width: 7px;
+  height: 4px;
+  border-left: 2px solid #fff;
+  border-bottom: 2px solid #fff;
+  transform: rotate(-45deg);
+}
+
+/* Quote blocks */
+.lesson-quote {
+  margin: 20px 0;
+  padding: 16px 20px;
+  border-left: 3px solid var(--quote-border);
+  background: rgba(108, 92, 231, 0.03);
+  border-radius: 0 6px 6px 0;
+  position: relative;
+  font-style: italic;
+  color: var(--ink-light);
+}
+
+[data-theme="dark"] .lesson-quote {
+  background: rgba(108, 92, 231, 0.06);
+}
+
+/* Wavy underline on the left border to make it feel hand-drawn */
+.lesson-quote::before {
+  content: '';
+  position: absolute;
+  left: -4px;
+  top: 0;
+  bottom: 0;
+  width: 5px;
+  background: url("data:image/svg+xml,%3Csvg width='5' height='40' viewBox='0 0 5 40' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M2.5 0 Q0 5 2.5 10 Q5 15 2.5 20 Q0 25 2.5 30 Q5 35 2.5 40' stroke='%236c5ce7' stroke-width='2' fill='none' opacity='0.5'/%3E%3C/svg%3E") repeat-y;
+  background-size: 5px 40px;
+}
+
+.lesson-quote .quote-source {
+  display: block;
+  margin-top: 8px;
+  font-size: 13px;
+  font-style: normal;
+  color: var(--secondary);
+}
+
+/* Hand-drawn divider */
+.hand-divider {
+  margin: 36px 0;
+  border: none;
+  height: 8px;
+  background: url("data:image/svg+xml,%3Csvg width='200' height='8' viewBox='0 0 200 8' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M0 4 Q10 1 20 4 Q30 7 40 4 Q50 1 60 4 Q70 7 80 4 Q90 1 100 4 Q110 7 120 4 Q130 1 140 4 Q150 7 160 4 Q170 1 180 4 Q190 7 200 4' stroke='%23c4b8a4' stroke-width='1' fill='none'/%3E%3C/svg%3E") repeat-x center;
+  background-size: 200px 8px;
+  opacity: 0.6;
+}
+
+[data-theme="dark"] .hand-divider {
+  opacity: 0.3;
+}
+
+/* Tables */
+.lesson-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 20px 0;
+  font-size: 14px;
+  font-family: system-ui, -apple-system, sans-serif;
+}
+.lesson-table th {
+  background: var(--accent-light);
+  color: var(--accent);
+  text-align: left;
+  padding: 10px 14px;
+  font-weight: 600;
+  font-size: 13px;
+  border-bottom: 2px solid var(--border);
+}
+.lesson-table td {
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--border);
+  color: var(--ink);
+}
+.lesson-table tr:last-child td { border-bottom: none; }
+.lesson-table tr:hover td { background: var(--accent-light); }
+
+/* Code inline */
+.inline-code {
+  font-family: 'SF Mono', 'Fira Code', monospace;
+  font-size: 13px;
+  background: var(--accent-light);
+  color: var(--accent);
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+
+/* Concept callout card */
+.concept-card {
+  margin: 24px 0;
+  padding: 20px 24px;
+  background: var(--accent-light);
+  border: 1px dashed var(--accent);
+  border-radius: 8px;
+  position: relative;
+}
+.concept-card::before {
+  content: 'concept';
+  position: absolute;
+  top: -9px;
+  left: 16px;
+  font-family: system-ui, -apple-system, sans-serif;
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--accent);
+  background: var(--card);
+  padding: 0 6px;
+}
+.concept-card h4 {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--accent);
+  margin-bottom: 8px;
+}
+.concept-card p {
+  font-size: 14px;
+  margin-bottom: 0;
+}
+
+/* ==================== Margin Notes ==================== */
+.margin-notes {
+  position: sticky;
+  top: 72px;
+  align-self: start;
+  padding: 28px 0 28px 20px;
+  max-height: calc(100vh - 90px);
+  overflow-y: auto;
+  font-family: system-ui, -apple-system, sans-serif;
+}
+
+.margin-note {
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--margin-note);
+  padding: 8px 0;
+  border-left: 2px solid var(--border);
+  padding-left: 12px;
+  margin-bottom: 16px;
+  position: relative;
+  transition: color 0.2s, border-color 0.2s;
+}
+
+.margin-note:hover {
+  color: var(--text);
+  border-left-color: var(--accent);
+}
+
+.margin-note .note-ref {
+  display: inline-block;
+  width: 16px;
+  height: 16px;
+  background: var(--accent-light);
+  color: var(--accent);
+  font-size: 10px;
+  font-weight: 700;
+  text-align: center;
+  line-height: 16px;
+  border-radius: 50%;
+  margin-right: 4px;
+}
+
+.margin-note .note-icon {
+  font-size: 13px;
+  margin-right: 4px;
+}
+
+/* Corresponding ref markers in content */
+.note-marker {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  background: var(--accent-light);
+  color: var(--accent);
+  font-family: system-ui, -apple-system, sans-serif;
+  font-size: 10px;
+  font-weight: 700;
+  border-radius: 50%;
+  vertical-align: super;
+  cursor: default;
+  margin-left: 2px;
+}
+
+/* ==================== Section Progress ==================== */
+.section-progress-bar {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 80;
+  background: var(--nav-bg);
+  border-top: 1px solid var(--border);
+  padding: 0;
+  font-family: system-ui, -apple-system, sans-serif;
+  transition: background 0.35s ease, border-color 0.35s ease;
+}
+
+.progress-inner {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 10px 24px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.progress-track {
+  flex: 1;
+  height: 4px;
+  background: var(--progress-bg);
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.progress-fill {
+  height: 100%;
+  background: var(--accent);
+  border-radius: 2px;
+  transition: width 0.5s ease;
+}
+
+.progress-pct {
+  font-size: 12px;
+  color: var(--accent);
+  font-weight: 700;
+  min-width: 32px;
+  text-align: right;
+}
+
+/* ==================== Ask Inline Input (划词提问) ==================== */
+.ask-inline {
+  position: absolute;
+  z-index: 200;
+  width: 320px;
+  animation: ask-in 0.2s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.ask-inline input {
+  width: 100%;
+  height: 36px;
+  border: 1.5px dashed var(--border);
+  border-radius: 8px;
+  padding: 0 12px;
+  font-size: 13px;
+  font-family: system-ui, -apple-system, sans-serif;
+  background: var(--answer-bg);
+  color: var(--text);
+  outline: none;
+  transition: border-color 0.2s;
+}
+.ask-inline input:focus {
+  border-color: var(--accent);
+}
+.ask-inline input::placeholder {
+  color: var(--secondary);
+}
+@keyframes ask-in {
+  from { opacity: 0; transform: translateY(-4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.ask-inline.closing {
+  animation: ask-out 0.15s forwards;
+}
+@keyframes ask-out {
+  to { opacity: 0; transform: translateY(-4px); }
+}
+
+/* ==================== Answer Card ==================== */
+.answer-card {
+  position: absolute;
+  z-index: 300;
+  width: 400px;
+  max-height: 320px;
+  background: var(--answer-bg);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  box-shadow: 0 4px 20px var(--shadow);
+  display: none;
+  flex-direction: column;
+  font-family: system-ui, -apple-system, sans-serif;
+  overflow: hidden;
+}
+
+.answer-card.visible {
+  display: flex;
+  animation: card-appear 0.25s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+@keyframes card-appear {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.answer-card.closing {
+  animation: card-unstick 0.2s cubic-bezier(0.4, 0, 1, 1) forwards;
+}
+@keyframes card-unstick {
+  to { opacity: 0; transform: translateY(12px) rotate(1deg); }
+}
+
+.answer-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 16px;
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+
+.answer-card-label {
+  font-size: 12px;
+  color: var(--secondary);
+  font-weight: 500;
+}
+
+.answer-card-close {
+  background: none;
+  border: none;
+  color: var(--secondary);
+  cursor: pointer;
+  font-size: 18px;
+  line-height: 1;
+  padding: 0 2px;
+  border-radius: 4px;
+  transition: color 0.15s;
+}
+.answer-card-close:hover {
+  color: var(--text);
+}
+
+.answer-card-body {
+  padding: 14px 16px;
+  overflow-y: auto;
+  flex: 1;
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--text);
+}
+
+.answer-card-body p {
+  margin-bottom: 8px;
+}
+.answer-card-body p:last-child { margin-bottom: 0; }
+.answer-card-body p:empty { display: none; }
+
+/* ==================== QA History Panel ==================== */
+.qa-panel {
+  position: fixed;
+  top: 0;
+  right: -400px;
+  width: 400px;
+  height: 100%;
+  z-index: 400;
+  background: var(--qa-panel-bg);
+  border-left: 1px solid var(--border);
+  box-shadow: -4px 0 24px var(--shadow);
+  transition: right 0.3s ease;
+  display: flex;
+  flex-direction: column;
+  font-family: system-ui, -apple-system, sans-serif;
+}
+
+.qa-panel.open { right: 0; }
+
+.qa-panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--border);
+}
+
+.qa-panel-header h3 {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.qa-panel-close {
+  background: none;
+  border: none;
+  color: var(--secondary);
+  width: 32px;
+  height: 32px;
+  border-radius: 6px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  transition: all 0.2s;
+}
+.qa-panel-close:hover {
+  background: var(--accent-light);
+  color: var(--accent);
+}
+
+.qa-panel-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 12px 0;
+}
+
+.qa-item {
+  padding: 14px 20px;
+  border-bottom: 1px solid var(--border);
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.qa-item:hover { background: var(--accent-light); }
+.qa-item:last-child { border-bottom: none; }
+
+.qa-item-q {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text);
+  margin-bottom: 6px;
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+}
+.qa-item-q::before {
+  content: 'Q';
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  background: var(--accent);
+  color: #fff;
+  font-size: 10px;
+  font-weight: 700;
+  border-radius: 4px;
+}
+
+.qa-item-a {
+  font-size: 12px;
+  color: var(--secondary);
+  line-height: 1.5;
+  margin-left: 24px;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.qa-item-time {
+  font-size: 11px;
+  color: var(--secondary);
+  opacity: 0.6;
+  margin-left: 24px;
+  margin-top: 4px;
+}
+
+.qa-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 399;
+  background: rgba(0, 0, 0, 0.2);
+  display: none;
+  backdrop-filter: blur(2px);
+}
+.qa-overlay.visible { display: block; }
+
+/* ==================== Selection highlight in text ==================== */
+::selection {
+  background: var(--highlight-strong);
+  color: var(--text);
+}
+
+/* ==================== Responsive ==================== */
+@media (max-width: 960px) {
+  .lesson-layout {
+    grid-template-columns: 1fr;
+  }
+  .lesson-toc,
+  .margin-notes {
+    display: none;
+  }
+  .lesson-paper {
+    border-left: none;
+    border-right: none;
+    padding: 32px 24px 80px;
+  }
+  .lesson-paper::before { display: none; }
+  .paper-holes { display: none; }
+}
+
+@media (max-width: 600px) {
+  .nav-breadcrumb { display: none; }
+  .answer-card { width: calc(100vw - 32px); left: 16px !important; }
+  .qa-panel { width: 100%; right: -100%; }
+}
+
+/* ==================== Smooth transitions for theme ==================== */
+.lesson-nav, .lesson-paper, .section-progress-bar, .lesson-toc, .margin-notes {
+  transition: background 0.35s ease, border-color 0.35s ease, box-shadow 0.35s ease;
+}
+
+/* ==================== Focus Visible ==================== */
+:focus { outline: none; }
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+button:focus-visible,
+a:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* ==================== Reduced Motion ==================== */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+
+  .highlightable.marked {
+    animation: none;
+    background-size: 100% 100%;
+  }
+
+  .quiz-answer {
+    transition: none;
+  }
+
+  .qa-panel {
+    transition: none;
+  }
+
+  .progress-fill {
+    transition: none;
+  }
+}
+</style>
+</head>
+
+<body>
+
+<!-- ==================== Case Banner ==================== -->
+<div class="case-banner">
+  Case C: 笔记本风 — Bear / 实体笔记本感
+</div>
+
+<!-- ==================== Navigation Bar ==================== -->
+<nav class="lesson-nav" aria-label="课程导航">
+  <div class="nav-inner">
+    <div class="nav-left">
+      <a class="nav-back" href="#">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+        返回
+      </a>
+      <div class="nav-breadcrumb">
+        游戏开发 <span class="nav-crumb-sep">/</span> 游戏设计 <span class="nav-crumb-sep">/</span> <span>MDA 框架</span>
+      </div>
+    </div>
+    <div class="nav-right">
+      <div class="nav-lesson-switch">
+        <button title="上一课">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+        </button>
+        <button title="下一课">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg>
+        </button>
+      </div>
+      <button class="qa-toggle-btn" id="qaToggle">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+        问答
+        <span class="qa-count">3</span>
+      </button>
+      <button class="theme-toggle-btn" id="themeToggle" title="切换主题">
+        <span id="themeIcon">&#9789;</span>
+      </button>
+    </div>
+  </div>
+</nav>
+
+<!-- ==================== Main Layout ==================== -->
+<div class="lesson-layout">
+
+  <!-- ==================== TOC Sidebar ==================== -->
+  <aside class="lesson-toc" role="navigation" aria-label="文章目录">
+    <div class="toc-title">目录</div>
+    <ul class="toc-list">
+      <li class="toc-item active">
+        <a href="#section-1">什么是 MDA</a>
+      </li>
+      <li class="toc-item">
+        <a href="#section-2">Mechanics 机制层</a>
+      </li>
+      <li class="toc-item">
+        <a href="#section-3">Dynamics 动态层</a>
+      </li>
+      <li class="toc-item">
+        <a href="#section-4">Aesthetics 体验层</a>
+      </li>
+      <li class="toc-item">
+        <a href="#section-5">案例分析</a>
+      </li>
+    </ul>
+  </aside>
+
+  <!-- ==================== Paper Content Area ==================== -->
+  <main class="lesson-paper" role="main">
+    <div class="paper-holes">
+      <span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span>
+    </div>
+
+    <!-- Header -->
+    <header class="lesson-header">
+      <div class="lesson-meta">
+        <span>游戏设计</span>
+        <span class="lesson-meta-dot">&middot;</span>
+        <span>约 20 分钟阅读</span>
+      </div>
+      <h1 class="lesson-title">MDA 框架</h1>
+      <p class="lesson-subtitle">Mechanics, Dynamics, Aesthetics &mdash; 理解游戏设计的核心分析框架</p>
+    </header>
+
+    <!-- Section 1 -->
+    <section id="section-1">
+      <h2 class="section-heading">什么是 MDA</h2>
+
+      <p>
+        <span class="highlight-strong">MDA 框架</span>（Mechanics, Dynamics, Aesthetics）由 Marc LeBlanc、Robin Hunicke 和 Robert Zubek 于 2004 年在 GDC 上正式提出。它是游戏设计领域最具影响力的分析工具之一，提供了一种<span class="highlight">从设计者和玩家两个视角</span>理解游戏的方法论。<span class="note-marker">1</span>
+      </p>
+
+      <p>
+        传统的游戏讨论往往停留在"好不好玩"这样模糊的层面。<span class="highlightable" role="button" tabindex="0" aria-label="点击高亮此句">MDA 的价值在于将"好玩"拆解为可分析、可设计、可迭代的组成部分，让设计者能够有意识地创造特定的玩家体验。</span>
+      </p>
+
+      <div class="concept-card">
+        <h4>MDA 的核心洞察</h4>
+        <p>设计者从 Mechanics 出发向右思考（我设计了什么规则），而玩家从 Aesthetics 出发向左感受（这个游戏给我什么感觉）。好的设计需要同时掌握这两个方向。</p>
+      </div>
+
+      <p>
+        框架将游戏拆解为三个相互关联的层次，每一层都有明确的分析对象和设计手段：
+      </p>
+
+      <table class="lesson-table">
+        <thead>
+          <tr>
+            <th>层次</th>
+            <th>英文</th>
+            <th>关注什么</th>
+            <th>谁的视角</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><span class="highlight">机制</span></td>
+            <td>Mechanics</td>
+            <td>规则、数值、系统</td>
+            <td>设计者</td>
+          </tr>
+          <tr>
+            <td><span class="highlight">动态</span></td>
+            <td>Dynamics</td>
+            <td>玩家行为与系统互动</td>
+            <td>中间层</td>
+          </tr>
+          <tr>
+            <td><span class="highlight">体验</span></td>
+            <td>Aesthetics</td>
+            <td>情感、乐趣、感受</td>
+            <td>玩家</td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+
+    <hr class="hand-divider">
+
+    <!-- Section 2 -->
+    <section id="section-2">
+      <h2 class="section-heading">Mechanics 机制层</h2>
+
+      <p>
+        <span class="highlight-strong">Mechanics</span>（机制）是游戏最底层的规则和系统。它们是设计者直接控制的部分——代码里写死的东西。<span class="note-marker">2</span>
+      </p>
+
+      <p>
+        机制包括但不限于：
+      </p>
+
+      <ul class="checklist">
+        <li class="checked">游戏规则（移动方式、攻击判定、胜负条件）</li>
+        <li class="checked">数值系统（生命值、伤害、经验值曲线）</li>
+        <li>资源管理（金币、能量、行动点数）</li>
+        <li>随机系统（掉落概率、暴击率）</li>
+        <li>空间规则（地图大小、碰撞体积、视野范围）</li>
+      </ul>
+
+      <div class="lesson-quote">
+        Mechanics are the various actions, behaviors, and control mechanisms afforded to the player within a game context.
+        <span class="quote-source">— Hunicke, LeBlanc, Zubek, 2004</span>
+      </div>
+
+      <h3 class="subsection-heading">好机制的特征</h3>
+
+      <p>
+        <span class="highlightable" role="button" tabindex="0" aria-label="点击高亮此句">设计机制时，核心问题不是"这个规则是否合理"，而是"这个规则会催生什么样的玩家行为"。</span>一条看似简单的规则可能导致极其丰富的动态涌现——这正是从 Mechanics 到 Dynamics 的过渡。<span class="note-marker">3</span>
+      </p>
+
+      <p>
+        举个例子：围棋只有"落子"和"气"两条核心规则，却产生了几乎无穷的策略深度。<span class="highlightable" role="button" tabindex="0" aria-label="点击高亮此句">这就是优秀机制设计的典范——用最少的规则产生最丰富的动态。</span>
+      </p>
+    </section>
+
+    <hr class="hand-divider">
+
+    <!-- Section 3 -->
+    <section id="section-3">
+      <h2 class="section-heading">Dynamics 动态层</h2>
+
+      <p>
+        <span class="highlight-strong">Dynamics</span>（动态）是机制在运行时产生的行为模式。它不是设计者直接写出来的，而是玩家与规则互动后<span class="highlight">涌现出来的</span>。<span class="note-marker">4</span>
+      </p>
+
+      <p>
+        理解 Dynamics 需要区分两个概念：
+      </p>
+
+      <ul class="checklist">
+        <li class="checked"><span class="highlight">设计意图</span> — 设计者希望玩家做什么</li>
+        <li><span class="highlight">实际行为</span> — 玩家真正在做什么</li>
+      </ul>
+
+      <p>
+        <span class="highlightable" role="button" tabindex="0" aria-label="点击高亮此句">当这两者出现偏差时，说明 Mechanics 到 Dynamics 的映射出了问题。</span>这也是为什么游戏需要大量 playtest——你无法仅凭规则文本预测动态行为。
+      </p>
+
+      <div class="concept-card">
+        <h4>涌现性设计 vs 脚本化设计</h4>
+        <p>涌现性设计：少量规则 + 规则之间的交互 = 无穷的可能性（如 Minecraft、Dwarf Fortress）。脚本化设计：每个情境都预先编排（如线性叙事游戏）。大部分好游戏在这个光谱的中间位置。</p>
+      </div>
+    </section>
+
+    <hr class="hand-divider">
+
+    <!-- Section 4 -->
+    <section id="section-4">
+      <h2 class="section-heading">Aesthetics 体验层</h2>
+
+      <p>
+        <span class="highlight-strong">Aesthetics</span>（体验）是玩家实际感受到的情感和乐趣。这里的 Aesthetics 不是指视觉美术，而是<span class="highlight">游戏带来的情感体验</span>。
+      </p>
+
+      <p>
+        LeBlanc 定义了 8 种基本的游戏体验类型，这个分类今天仍然被广泛使用：
+      </p>
+
+      <table class="lesson-table">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>体验类型</th>
+            <th>英文</th>
+            <th>典型游戏</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td>1</td><td>感官愉悦</td><td>Sensation</td><td>Journey, Flower</td></tr>
+          <tr><td>2</td><td>幻想</td><td>Fantasy</td><td>Skyrim, D&D</td></tr>
+          <tr><td>3</td><td>叙事</td><td>Narrative</td><td>The Last of Us</td></tr>
+          <tr><td>4</td><td>挑战</td><td>Challenge</td><td>Dark Souls, Celeste</td></tr>
+          <tr><td>5</td><td>社交</td><td>Fellowship</td><td>Among Us, MMO</td></tr>
+          <tr><td>6</td><td>探索</td><td>Discovery</td><td>Outer Wilds, BotW</td></tr>
+          <tr><td>7</td><td>表达</td><td>Expression</td><td>Minecraft, Sims</td></tr>
+          <tr><td>8</td><td>消遣</td><td>Submission</td><td>Candy Crush, 扫雷</td></tr>
+        </tbody>
+      </table>
+
+      <div class="lesson-quote">
+        The game designer's job is to create a set of mechanics that, through dynamics, produce the desired aesthetic experience. You cannot design fun directly — you can only design the conditions that make fun emerge.
+        <span class="quote-source">— Robin Hunicke</span>
+      </div>
+    </section>
+
+    <hr class="hand-divider">
+
+    <!-- Section 5 -->
+    <section id="section-5">
+      <h2 class="section-heading">案例分析</h2>
+
+      <p>
+        让我们用 MDA 框架分析一款经典游戏——<span class="highlight-strong">俄罗斯方块</span>（Tetris）。<span class="note-marker">5</span>
+      </p>
+
+      <ul class="checklist">
+        <li class="checked"><strong>Mechanics：</strong>方块随机出现、可旋转、可左右移动、到底固定、满行消除、速度递增</li>
+        <li class="checked"><strong>Dynamics：</strong>玩家不断做出快速决策，权衡"堆高等好形状"和"尽快消行"的策略，速度压力持续增大</li>
+        <li class="checked"><strong>Aesthetics：</strong>挑战（Challenge）+ 消遣（Submission）+ 感官愉悦（Sensation，消行的反馈感）</li>
+      </ul>
+
+      <p>
+        注意这三层如何串联：速度递增（Mechanics）导致决策压力增大（Dynamics），进而产生紧张刺激的挑战感（Aesthetics）。<span class="highlightable" role="button" tabindex="0" aria-label="点击高亮此句">改变任何一层的设计都会影响其他层</span>——比如如果去掉速度递增，游戏就从"挑战"变成了纯粹的"消遣"。
+      </p>
+
+      <div class="concept-card">
+        <h4>反向分析练习</h4>
+        <p>选一款你喜欢的游戏，从 Aesthetics 出发反推：它给你什么感觉？这个感觉来自什么 Dynamics？这个 Dynamics 由什么 Mechanics 驱动？这种反向分析是训练游戏设计思维的好方法。</p>
+      </div>
+
+      <!-- Quiz 1 -->
+      <div class="quiz-card" role="region" aria-label="填空练习">
+        <div class="quiz-label"><span class="quiz-icon">&#9998;</span> 填一填</div>
+        <p class="quiz-question">
+          俄罗斯方块的核心 Mechanics 是 <span class="quiz-blank" aria-hidden="true">________</span>
+        </p>
+        <button class="quiz-reveal-btn" aria-expanded="false" onclick="toggleQuiz(this)">点击查看答案</button>
+        <div class="quiz-answer" role="region" aria-live="polite">
+          <div class="quiz-answer-label">Answer</div>
+          方块的<strong>旋转</strong>和<strong>下落</strong>规则 —— 方块随机出现、可旋转、可左右移动、到底固定、满行消除。这些简单规则的组合催生了丰富的策略动态。
+        </div>
+      </div>
+
+      <!-- Quiz 2 -->
+      <div class="quiz-card" role="region" aria-label="填空练习">
+        <div class="quiz-label"><span class="quiz-icon">&#9998;</span> 填一填</div>
+        <p class="quiz-question">
+          MDA 框架中，设计者从 <span class="quiz-blank" aria-hidden="true">________</span> 出发设计，而玩家从 <span class="quiz-blank" aria-hidden="true">________</span> 出发感受。
+        </p>
+        <button class="quiz-reveal-btn" aria-expanded="false" onclick="toggleQuiz(this)">点击查看答案</button>
+        <div class="quiz-answer" role="region" aria-live="polite">
+          <div class="quiz-answer-label">Answer</div>
+          设计者从 <strong>Mechanics</strong>（机制）出发向右思考，玩家从 <strong>Aesthetics</strong>（体验）出发向左感受。好的设计需要同时掌握这两个方向。
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- ==================== Margin Notes ==================== -->
+  <aside class="margin-notes" aria-label="侧边批注">
+    <div class="margin-note" style="margin-top: 140px;">
+      <span class="note-ref">1</span>
+      论文原名: "MDA: A Formal Approach to Game Design and Game Research"，可在 GDC Vault 免费获取。
+    </div>
+    <div class="margin-note" style="margin-top: 80px;">
+      <span class="note-ref">2</span>
+      注意区分 Game Mechanics 和 Game Engine Mechanics。前者指游戏规则，后者指技术引擎的物理模拟。
+    </div>
+    <div class="margin-note" style="margin-top: 60px;">
+      <span class="note-ref">3</span>
+      <span class="note-icon">&#9997;</span>
+      参考: 《Rules of Play》第 4 章对"涌现"有更深入的讨论。
+    </div>
+    <div class="margin-note" style="margin-top: 200px;">
+      <span class="note-ref">4</span>
+      Dynamics 是最难预测的层次——这就是为什么 playtest 如此重要。
+    </div>
+    <div class="margin-note" style="margin-top: 340px;">
+      <span class="note-ref">5</span>
+      <span class="note-icon">&#128161;</span>
+      试着用同样的方法分析你正在玩的游戏，体会三层之间的因果关系。
+    </div>
+  </aside>
+
+</div>
+
+<!-- ==================== Answer Card ==================== -->
+<div class="answer-card" id="answerCard">
+  <div class="answer-card-header">
+    <span class="answer-card-label">回答</span>
+    <button class="answer-card-close" onclick="closeAnswerCard()">&times;</button>
+  </div>
+  <div class="answer-card-body" id="answerBody"></div>
+</div>
+
+<!-- ==================== QA History Panel ==================== -->
+<div class="qa-overlay" id="qaOverlay"></div>
+<aside class="qa-panel" id="qaPanel" aria-label="问答历史">
+  <div class="qa-panel-header">
+    <h3>问答历史</h3>
+    <button class="qa-panel-close" id="qaPanelClose">&times;</button>
+  </div>
+  <div class="qa-panel-body">
+    <div class="qa-item">
+      <div class="qa-item-q">什么叫"涌现"？和"预设"有什么区别？</div>
+      <div class="qa-item-a">"涌现"（Emergence）是一个系统论概念，指的是整体展现出部分所不具备的性质。在游戏设计中，它特指设计者只定义了底层规则，但玩家互动时产生了未预编排的复杂行为...</div>
+      <div class="qa-item-time">3 分钟前</div>
+    </div>
+    <div class="qa-item">
+      <div class="qa-item-q">MDA 框架有什么局限性？</div>
+      <div class="qa-item-a">MDA 框架的主要局限在于：1) 它更适合分析而非生成，告诉你如何理解游戏但不直接告诉你如何设计；2) 对 narrative-heavy 游戏的分析不够细致...</div>
+      <div class="qa-item-time">8 分钟前</div>
+    </div>
+    <div class="qa-item">
+      <div class="qa-item-q">8 种体验类型是否完备？</div>
+      <div class="qa-item-a">LeBlanc 自己也承认这 8 种分类不是完备的。后续有研究者提出了更多维度，比如"掌控感"（Mastery）、"惊奇"（Surprise）等。这更像是一个实用的分析起点...</div>
+      <div class="qa-item-time">15 分钟前</div>
+    </div>
+  </div>
+</aside>
+
+<!-- ==================== Reading Progress Bar ==================== -->
+<div class="section-progress-bar" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100" aria-label="阅读进度">
+  <div class="progress-inner">
+    <div class="progress-track">
+      <div class="progress-fill" id="progressFill" style="width: 0%;"></div>
+    </div>
+    <span class="progress-pct" id="progressPct">0%</span>
+  </div>
+</div>
+
+<!-- ==================== JavaScript ==================== -->
+<script>
+(function() {
+  // ========== Theme Toggle ==========
+  const themeBtn = document.getElementById('themeToggle');
+  const themeIcon = document.getElementById('themeIcon');
+  const root = document.documentElement;
+
+  function setTheme(dark) {
+    if (dark) {
+      root.setAttribute('data-theme', 'dark');
+      themeIcon.innerHTML = '&#9788;';
+    } else {
+      root.removeAttribute('data-theme');
+      themeIcon.innerHTML = '&#9789;';
+    }
+  }
+
+  themeBtn.addEventListener('click', function() {
+    const isDark = root.getAttribute('data-theme') === 'dark';
+    setTheme(!isDark);
+  });
+
+  // ========== TOC Active Tracking ==========
+  const sections = document.querySelectorAll('section[id]');
+  const tocItems = document.querySelectorAll('.toc-item');
+
+  function updateActiveToc() {
+    let current = '';
+    sections.forEach(function(section) {
+      const rect = section.getBoundingClientRect();
+      if (rect.top <= 120) {
+        current = section.id;
+      }
+    });
+    tocItems.forEach(function(item, idx) {
+      const link = item.querySelector('a');
+      if (link && link.getAttribute('href') === '#' + current) {
+        item.classList.add('active');
+      } else {
+        item.classList.remove('active');
+      }
+    });
+  }
+
+  window.addEventListener('scroll', updateActiveToc, { passive: true });
+
+  // ========== Ask Inline Input (划词提问) ==========
+  let askInline = null;
+  let selectedRange = null;
+
+  document.addEventListener('mouseup', function(e) {
+    const sel = window.getSelection();
+    const text = sel.toString().trim();
+    if (text.length < 2) return;
+    if (e.target.closest('.ask-inline') || e.target.closest('.answer-card') ||
+        e.target.closest('.qa-panel') || e.target.closest('.lesson-nav')) return;
+
+    // 移除旧的输入框
+    if (askInline) askInline.remove();
+
+    // 保存选区
+    selectedRange = sel.getRangeAt(0);
+    const rect = selectedRange.getBoundingClientRect();
+
+    // 创建内联输入框
+    askInline = document.createElement('div');
+    askInline.className = 'ask-inline';
+    askInline.style.left = rect.left + 'px';
+    askInline.style.top = (rect.bottom + window.scrollY + 8) + 'px';
+    askInline.innerHTML = '<input type="text" placeholder="输入你的问题..." autofocus>';
+    document.body.appendChild(askInline);
+
+    const input = askInline.querySelector('input');
+    input.focus();
+
+    // 回车发送
+    input.addEventListener('keydown', function(ev) {
+      if (ev.key === 'Enter' && input.value.trim()) {
+        const question = input.value.trim();
+        askInline.classList.add('closing');
+        setTimeout(function() {
+          if (askInline) { askInline.remove(); askInline = null; }
+        }, 150);
+        window.getSelection().removeAllRanges();
+        setTimeout(function() { showAnswer(question, rect); }, 600);
+      }
+      if (ev.key === 'Escape') {
+        askInline.remove();
+        askInline = null;
+      }
+    });
+
+    // 点击外部关闭
+    input.addEventListener('blur', function() {
+      setTimeout(function() {
+        if (askInline && !askInline.contains(document.activeElement)) {
+          askInline.remove();
+          askInline = null;
+        }
+      }, 100);
+    });
+  });
+
+  function showAnswer(question, rect) {
+    const card = document.getElementById('answerCard');
+    card.style.left = Math.min(rect.left, window.innerWidth - 420) + 'px';
+    card.style.top = (rect.bottom + window.scrollY + 12) + 'px';
+    card.classList.remove('closing');
+    card.classList.add('visible');
+
+    const body = document.getElementById('answerBody');
+    const mockAnswer = '在 MDA 框架中，这个概念指的是游戏设计的三个核心层次之间的关系。设计者从 Mechanics 出发，通过规则和系统的设定，产生 Dynamics（玩家与系统的互动行为），最终创造出 Aesthetics（玩家的情感体验）。\n\n理解这个分层很重要，因为它帮助我们意识到：同样的机制在不同玩家手中会产生不同的动态行为，进而带来不同的情感体验。';
+    streamAnswer(mockAnswer, body);
+  }
+
+  function streamAnswer(text, container) {
+    container.innerHTML = '';
+    var p = document.createElement('p');
+    container.appendChild(p);
+    var i = 0;
+    var interval = setInterval(function() {
+      if (i >= text.length) { clearInterval(interval); return; }
+      if (text[i] === '\n' && text[i+1] === '\n') {
+        p = document.createElement('p');
+        container.appendChild(p);
+        i += 2;
+      } else {
+        p.textContent += text[i];
+        i++;
+      }
+      container.scrollTop = container.scrollHeight;
+    }, 30);
+  }
+
+  // closeAnswerCard — 暴露到 window 供 onclick 调用
+  window.closeAnswerCard = function() {
+    var card = document.getElementById('answerCard');
+    if (!card.classList.contains('visible')) return;
+    card.classList.add('closing');
+    card.addEventListener('animationend', function handler() {
+      card.removeEventListener('animationend', handler);
+      card.classList.remove('visible', 'closing');
+    });
+  };
+
+  // ========== QA History Panel ==========
+  const qaToggle = document.getElementById('qaToggle');
+  const qaPanel = document.getElementById('qaPanel');
+  const qaPanelClose = document.getElementById('qaPanelClose');
+  const qaOverlay = document.getElementById('qaOverlay');
+
+  function openQA() {
+    qaPanel.classList.add('open');
+    qaOverlay.classList.add('visible');
+  }
+
+  function closeQA() {
+    qaPanel.classList.remove('open');
+    qaOverlay.classList.remove('visible');
+  }
+
+  qaToggle.addEventListener('click', openQA);
+  qaPanelClose.addEventListener('click', closeQA);
+  qaOverlay.addEventListener('click', closeQA);
+
+  // Close QA panel with Escape key
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+      closeQA();
+      if (window.closeAnswerCard) window.closeAnswerCard();
+    }
+  });
+
+  // ========== Smooth scroll for TOC links ==========
+  document.querySelectorAll('.toc-item a').forEach(function(link) {
+    link.addEventListener('click', function(e) {
+      e.preventDefault();
+      const target = document.querySelector(this.getAttribute('href'));
+      if (target) {
+        target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+    });
+  });
+
+  // ========== Interactive Highlighter ==========
+  document.querySelectorAll('.highlightable').forEach(function(el) {
+    function toggle() {
+      el.classList.toggle('marked');
+    }
+    el.addEventListener('click', function(e) {
+      // Don't interfere with text selection
+      if (window.getSelection().toString().length > 0) return;
+      toggle();
+    });
+    el.addEventListener('keydown', function(e) {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        toggle();
+      }
+    });
+  });
+
+  // ========== Reading Progress ==========
+  var progressFill = document.getElementById('progressFill');
+  var progressPct = document.getElementById('progressPct');
+  var progressBar = document.querySelector('.section-progress-bar');
+
+  function updateProgress() {
+    var scrollTop = window.scrollY;
+    var docHeight = document.documentElement.scrollHeight - window.innerHeight;
+    if (docHeight <= 0) return;
+    var pct = Math.min(Math.round((scrollTop / docHeight) * 100), 100);
+    progressFill.style.width = pct + '%';
+    progressPct.textContent = pct + '%';
+    progressBar.setAttribute('aria-valuenow', pct);
+  }
+
+  window.addEventListener('scroll', updateProgress, { passive: true });
+  updateProgress();
+})();
+
+// ========== Quiz Toggle (global) ==========
+function toggleQuiz(btn) {
+  var answer = btn.nextElementSibling;
+  var isRevealed = answer.classList.contains('revealed');
+  if (isRevealed) {
+    answer.classList.remove('revealed');
+    btn.textContent = '点击查看答案';
+    btn.setAttribute('aria-expanded', 'false');
+  } else {
+    answer.classList.add('revealed');
+    btn.textContent = '收起答案';
+    btn.setAttribute('aria-expanded', 'true');
+  }
+}
+</script>
+
+</body>
+</html>

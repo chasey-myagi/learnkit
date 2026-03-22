@@ -1,0 +1,1163 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AppHeader — 应用顶栏设计方案</title>
+<style>
+  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --accent: #6c5ce7;
+    --accent-light: #a29bfe;
+    --accent-glow: rgba(108, 92, 231, 0.3);
+
+    --dark-bg: #0a0a12;
+    --dark-text: #e0e0e8;
+    --dark-border: #1e1e3a;
+    --dark-surface: #12121f;
+
+    --light-bg: #f5f6fa;
+    --light-text: #1a1a2e;
+    --light-border: #d5d5e2;
+    --light-surface: #ffffff;
+
+    --page-bg: #1a1a2e;
+    --font: system-ui, -apple-system, sans-serif;
+  }
+
+  body {
+    background: var(--page-bg);
+    color: #c8c8d8;
+    font-family: var(--font);
+    line-height: 1.6;
+    padding: 40px 0 120px;
+  }
+
+  /* ── Page Layout ── */
+  .page-header {
+    max-width: 1200px;
+    margin: 0 auto 60px;
+    padding: 0 40px;
+  }
+  .page-header h1 {
+    font-size: 32px;
+    font-weight: 700;
+    color: #fff;
+    margin-bottom: 12px;
+    letter-spacing: -0.5px;
+  }
+  .page-header p {
+    font-size: 15px;
+    color: #8888a8;
+    max-width: 680px;
+    line-height: 1.7;
+  }
+  .page-header .tag {
+    display: inline-block;
+    background: var(--accent);
+    color: #fff;
+    font-size: 11px;
+    font-weight: 600;
+    padding: 3px 10px;
+    border-radius: 20px;
+    margin-bottom: 16px;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+  }
+
+  section {
+    max-width: 1200px;
+    margin: 0 auto 72px;
+    padding: 0 40px;
+  }
+  section h2 {
+    font-size: 22px;
+    font-weight: 700;
+    color: #fff;
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  section h2 .badge {
+    font-size: 11px;
+    font-weight: 600;
+    background: rgba(108, 92, 231, 0.15);
+    color: var(--accent-light);
+    padding: 3px 10px;
+    border-radius: 20px;
+    letter-spacing: 0.5px;
+  }
+  section > p.desc {
+    font-size: 14px;
+    color: #7878a0;
+    margin-bottom: 28px;
+  }
+  h3 {
+    font-size: 13px;
+    font-weight: 600;
+    color: #6868a0;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 12px;
+  }
+
+  .preview-pair {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+    margin-bottom: 12px;
+  }
+  .preview-box {
+    border-radius: 12px;
+    overflow: hidden;
+    border: 1px solid rgba(255,255,255,0.06);
+    box-shadow: 0 4px 24px rgba(0,0,0,0.3);
+  }
+  .preview-box.light-container {
+    background: var(--light-bg);
+  }
+  .preview-box.dark-container {
+    background: var(--dark-bg);
+  }
+  .preview-content {
+    height: 120px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 13px;
+    color: #555;
+    opacity: 0.4;
+  }
+  .preview-box.dark-container .preview-content { color: #888; }
+
+  /* ── Logo SVG ── */
+  .logo-svg {
+    width: 26px;
+    height: 26px;
+    flex-shrink: 0;
+  }
+
+  /* ── Theme Toggle Base ── */
+  .theme-toggle {
+    width: 44px;
+    height: 24px;
+    border-radius: 12px;
+    border: none;
+    cursor: pointer;
+    position: relative;
+    transition: background 0.3s;
+    flex-shrink: 0;
+  }
+  .theme-toggle::after {
+    content: '';
+    position: absolute;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    top: 3px;
+    left: 3px;
+    transition: transform 0.3s, background 0.3s;
+  }
+  .theme-toggle.night { background: #2d2d4a; }
+  .theme-toggle.night::after { background: var(--accent-light); transform: translateX(20px); }
+  .theme-toggle.day { background: var(--light-border); }
+  .theme-toggle.day::after { background: #fff; transform: translateX(0); }
+
+  /* ── Icon buttons ── */
+  .icon-btn {
+    width: 36px;
+    height: 36px;
+    border-radius: 8px;
+    border: none;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.2s;
+    background: transparent;
+  }
+
+  /* ══════════════════════════════════════════════════
+     OPTION A — 极简线条
+     ══════════════════════════════════════════════════ */
+  .header-a {
+    height: 52px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 24px;
+    position: relative;
+  }
+  .header-a::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 1px;
+  }
+  .header-a .logo-area {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .header-a .app-name {
+    font-size: 16px;
+    font-weight: 600;
+    letter-spacing: -0.3px;
+  }
+  .header-a .right-area {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  /* Dark */
+  .header-a.dark {
+    background: transparent;
+    color: var(--dark-text);
+  }
+  .header-a.dark::after { background: var(--dark-border); }
+  .header-a.dark .app-name { color: var(--dark-text); }
+  /* Light */
+  .header-a.light {
+    background: transparent;
+    color: var(--light-text);
+  }
+  .header-a.light::after { background: var(--light-border); }
+  .header-a.light .app-name { color: var(--light-text); }
+
+  /* ══════════════════════════════════════════════════
+     OPTION B — 毛玻璃
+     ══════════════════════════════════════════════════ */
+  .header-b {
+    height: 56px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 24px;
+    border-bottom: 1px solid;
+  }
+  .header-b .logo-area {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .header-b .app-name {
+    font-size: 16px;
+    font-weight: 700;
+    letter-spacing: -0.3px;
+  }
+  .header-b .right-area {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  /* Dark */
+  .header-b.dark {
+    background: rgba(10, 10, 18, 0.65);
+    backdrop-filter: blur(20px) saturate(1.4);
+    -webkit-backdrop-filter: blur(20px) saturate(1.4);
+    border-color: rgba(108, 92, 231, 0.12);
+    color: var(--dark-text);
+  }
+  .header-b.dark .app-name { color: var(--dark-text); }
+  /* Light */
+  .header-b.light {
+    background: rgba(245, 246, 250, 0.7);
+    backdrop-filter: blur(20px) saturate(1.4);
+    -webkit-backdrop-filter: blur(20px) saturate(1.4);
+    border-color: rgba(108, 92, 231, 0.1);
+    color: var(--light-text);
+  }
+  .header-b.light .app-name { color: var(--light-text); }
+
+  /* glass toggle */
+  .glass-toggle {
+    width: 48px;
+    height: 28px;
+    border-radius: 14px;
+    border: none;
+    cursor: pointer;
+    position: relative;
+    transition: background 0.3s;
+  }
+  .glass-toggle::after {
+    content: '';
+    position: absolute;
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    top: 3px;
+    left: 3px;
+    transition: transform 0.3s, background 0.3s, box-shadow 0.3s;
+  }
+  .glass-toggle.night {
+    background: rgba(108, 92, 231, 0.25);
+    box-shadow: inset 0 1px 2px rgba(0,0,0,0.3);
+  }
+  .glass-toggle.night::after {
+    background: var(--accent);
+    transform: translateX(20px);
+    box-shadow: 0 0 8px var(--accent-glow);
+  }
+  .glass-toggle.day {
+    background: rgba(0,0,0,0.08);
+    box-shadow: inset 0 1px 2px rgba(0,0,0,0.06);
+  }
+  .glass-toggle.day::after {
+    background: #fff;
+    transform: translateX(0);
+    box-shadow: 0 1px 3px rgba(0,0,0,0.15);
+  }
+
+  /* ══════════════════════════════════════════════════
+     OPTION C — 实色渐变
+     ══════════════════════════════════════════════════ */
+  .header-c {
+    height: 56px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 28px;
+    position: relative;
+  }
+  .header-c .logo-area {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .header-c .app-name {
+    font-size: 17px;
+    font-weight: 700;
+    letter-spacing: -0.3px;
+  }
+  .header-c .right-area {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  /* Dark */
+  .header-c.dark {
+    background: linear-gradient(135deg, #0f0f1e 0%, #161630 100%);
+    box-shadow: 0 1px 0 rgba(108, 92, 231, 0.15), 0 4px 12px rgba(0,0,0,0.4);
+    color: var(--dark-text);
+  }
+  .header-c.dark .app-name { color: #fff; }
+  /* Light */
+  .header-c.light {
+    background: linear-gradient(135deg, #ffffff 0%, #f0f0ff 100%);
+    box-shadow: 0 1px 0 rgba(108, 92, 231, 0.08), 0 2px 8px rgba(0,0,0,0.06);
+    color: var(--light-text);
+  }
+  .header-c.light .app-name { color: var(--light-text); }
+
+  /* pill toggle */
+  .pill-toggle {
+    display: flex;
+    align-items: center;
+    gap: 0;
+    height: 32px;
+    border-radius: 16px;
+    overflow: hidden;
+    border: none;
+    padding: 0;
+  }
+  .pill-toggle button {
+    height: 32px;
+    padding: 0 14px;
+    border: none;
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: 500;
+    font-family: var(--font);
+    transition: background 0.2s, color 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+  }
+  .pill-toggle.dark-mode {
+    background: rgba(255,255,255,0.06);
+  }
+  .pill-toggle.dark-mode button {
+    color: #7878a0;
+    background: transparent;
+  }
+  .pill-toggle.dark-mode button.active {
+    background: var(--accent);
+    color: #fff;
+  }
+  .pill-toggle.light-mode {
+    background: rgba(0,0,0,0.06);
+  }
+  .pill-toggle.light-mode button {
+    color: #888;
+    background: transparent;
+  }
+  .pill-toggle.light-mode button.active {
+    background: var(--accent);
+    color: #fff;
+  }
+
+  /* ══════════════════════════════════════════════════
+     OPTION D — 深色永驻
+     ══════════════════════════════════════════════════ */
+  /* ── D: 渐变底边 + 浮动胶囊切换 ── */
+  .header-d {
+    height: 56px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 24px;
+    position: relative;
+  }
+  .header-d.dark {
+    background: var(--dark-bg);
+    border-bottom: 1px solid var(--dark-border);
+  }
+  .header-d.light {
+    background: var(--light-surface);
+    border-bottom: 1px solid var(--light-border);
+  }
+  .header-d::after {
+    content: '';
+    position: absolute;
+    bottom: -1px;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, var(--accent), var(--accent-light), transparent 70%);
+  }
+  .header-d .logo-area {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .header-d .logo-icon {
+    font-size: 20px;
+  }
+  .header-d.dark .app-name {
+    font-size: 15px;
+    font-weight: 700;
+    color: #fff;
+    letter-spacing: -0.3px;
+  }
+  .header-d.light .app-name {
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--light-text);
+    letter-spacing: -0.3px;
+  }
+  .header-d .app-name span {
+    background: linear-gradient(135deg, var(--accent), var(--accent-light));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+  .header-d .right-area {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .header-d .capsule-toggle {
+    display: flex;
+    align-items: center;
+    gap: 0;
+    border-radius: 999px;
+    padding: 3px;
+    cursor: pointer;
+    border: none;
+    transition: background 0.2s;
+  }
+  .header-d.dark .capsule-toggle {
+    background: rgba(255,255,255,0.06);
+  }
+  .header-d.light .capsule-toggle {
+    background: rgba(0,0,0,0.06);
+  }
+  .capsule-toggle .opt {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    transition: all 0.25s;
+  }
+  .capsule-toggle .opt.active {
+    background: var(--accent);
+    box-shadow: 0 0 8px rgba(108,92,231,0.4);
+  }
+
+  /* ══════════════════════════════════════════════════
+     OPTION E — 嵌入式搜索 + 极简右侧操作
+     ══════════════════════════════════════════════════ */
+  .header-e {
+    height: 54px;
+    display: flex;
+    align-items: center;
+    padding: 0 20px;
+    gap: 16px;
+  }
+  .header-e.dark {
+    background: var(--dark-bg);
+    border-bottom: 1px solid var(--dark-border);
+  }
+  .header-e.light {
+    background: var(--light-surface);
+    border-bottom: 1px solid var(--light-border);
+  }
+  .header-e .logo-area {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-shrink: 0;
+  }
+  .header-e .logo-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--accent);
+    box-shadow: 0 0 6px var(--accent-glow);
+  }
+  .header-e.dark .app-name {
+    font-size: 14px;
+    font-weight: 700;
+    color: #fff;
+    letter-spacing: -0.3px;
+  }
+  .header-e.light .app-name {
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--light-text);
+    letter-spacing: -0.3px;
+  }
+  .header-e .search-box {
+    flex: 1;
+    max-width: 400px;
+    height: 32px;
+    border-radius: 8px;
+    border: none;
+    padding: 0 12px 0 32px;
+    font-size: 13px;
+    font-family: var(--font);
+    outline: none;
+    transition: box-shadow 0.2s, border 0.2s;
+    background-repeat: no-repeat;
+    background-position: 10px center;
+    background-size: 14px;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='%237878a0'%3E%3Ccircle cx='6.5' cy='6.5' r='4.5' stroke='%237878a0' stroke-width='1.5' fill='none'/%3E%3Cpath d='M10 10l4 4' stroke='%237878a0' stroke-width='1.5' stroke-linecap='round'/%3E%3C/svg%3E");
+  }
+  .header-e.dark .search-box {
+    background-color: rgba(255,255,255,0.05);
+    color: var(--dark-text);
+  }
+  .header-e.dark .search-box::placeholder { color: #5a5a80; }
+  .header-e.dark .search-box:focus {
+    box-shadow: 0 0 0 2px rgba(108,92,231,0.3);
+    background-color: rgba(255,255,255,0.08);
+  }
+  .header-e.light .search-box {
+    background-color: rgba(0,0,0,0.04);
+    color: var(--light-text);
+  }
+  .header-e.light .search-box::placeholder { color: #999; }
+  .header-e.light .search-box:focus {
+    box-shadow: 0 0 0 2px rgba(108,92,231,0.2);
+    background-color: #fff;
+  }
+  .header-e .right-area {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    margin-left: auto;
+  }
+  .header-e .icon-btn-e {
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.15s;
+    font-size: 16px;
+  }
+  .header-e.dark .icon-btn-e { color: #7878a0; }
+  .header-e.dark .icon-btn-e:hover { background: rgba(255,255,255,0.06); color: #c0c0d8; }
+  .header-e.light .icon-btn-e { color: #999; }
+  .header-e.light .icon-btn-e:hover { background: rgba(0,0,0,0.05); color: #333; }
+
+  /* keep round-toggle for backward compat but restyle */
+  .round-toggle {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    border: none;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.2s;
+  }
+  .round-toggle.dark-mode {
+    background: rgba(255,255,255,0.06);
+    color: #a0a0c0;
+  }
+  .round-toggle.dark-mode:hover { background: rgba(255,255,255,0.1); }
+  .round-toggle.light-mode {
+    background: rgba(0,0,0,0.06);
+    color: #666;
+  }
+  .round-toggle.light-mode:hover { background: rgba(0,0,0,0.1); }
+
+  /* ══════════════════════════════════════════════════
+     OVERVIEW COMPARISON
+     ══════════════════════════════════════════════════ */
+  .overview {
+    max-width: 1200px;
+    margin: 80px auto 0;
+    padding: 0 40px;
+  }
+  .overview h2 {
+    font-size: 24px;
+    font-weight: 700;
+    color: #fff;
+    margin-bottom: 32px;
+  }
+  .overview-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+    gap: 20px;
+  }
+  .overview-card {
+    border-radius: 12px;
+    overflow: hidden;
+    border: 1px solid rgba(255,255,255,0.06);
+    background: rgba(255,255,255,0.02);
+    transition: border-color 0.3s, transform 0.2s;
+  }
+  .overview-card:hover {
+    border-color: rgba(108, 92, 231, 0.3);
+    transform: translateY(-2px);
+  }
+  .overview-card .card-label {
+    padding: 12px 16px;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--accent-light);
+    border-bottom: 1px solid rgba(255,255,255,0.04);
+    background: rgba(0,0,0,0.2);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .overview-card .card-label span {
+    font-size: 11px;
+    color: #5a5a80;
+    font-weight: 400;
+  }
+  .overview-card .card-body {
+    background: var(--dark-bg);
+  }
+
+  .divider {
+    height: 1px;
+    background: linear-gradient(90deg, transparent 0%, rgba(108,92,231,0.2) 50%, transparent 100%);
+    margin: 12px 0 48px;
+    max-width: 1200px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+
+  /* table */
+  .comparison-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 32px;
+    font-size: 13px;
+  }
+  .comparison-table th {
+    text-align: left;
+    padding: 10px 16px;
+    color: #6868a0;
+    font-weight: 600;
+    border-bottom: 1px solid rgba(255,255,255,0.06);
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+  }
+  .comparison-table td {
+    padding: 12px 16px;
+    color: #a0a0c0;
+    border-bottom: 1px solid rgba(255,255,255,0.03);
+    vertical-align: top;
+  }
+  .comparison-table tr:hover td {
+    background: rgba(255,255,255,0.015);
+  }
+  .comparison-table .option-name {
+    color: var(--accent-light);
+    font-weight: 600;
+    white-space: nowrap;
+  }
+  .check { color: #55efc4; }
+  .cross { color: #ff6b6b; opacity: 0.5; }
+</style>
+</head>
+<body>
+
+<!-- ════════════════════════════════════════════════════════════════
+     PAGE HEADER
+     ════════════════════════════════════════════════════════════════ -->
+<div class="page-header">
+  <span class="tag">Component Design</span>
+  <h1>AppHeader — 应用顶栏</h1>
+  <p>
+    LearnKit 全局顶栏组件，固定在页面顶部。包含 Logo/应用名、日间/夜间主题切换。
+    未来可扩展：设置入口、当前 program 名、用户头像等。以下为 5 种不同风格的设计方案，
+    每种均展示日间与夜间两种模式。
+  </p>
+</div>
+
+
+<!-- ════════════════════════════════════════════════════════════════
+     OPTION A — 极简线条
+     ════════════════════════════════════════════════════════════════ -->
+<section id="option-a">
+  <h2>方案 A: 极简线条 <span class="badge">Minimal</span></h2>
+  <p class="desc">几乎透明的背景，仅靠一条底部细线与页面内容分隔。最大程度让出视觉空间，适合沉浸式阅读场景。</p>
+  <div class="preview-pair">
+    <div>
+      <h3>夜间模式</h3>
+      <div class="preview-box dark-container">
+        <div class="header-a dark">
+          <div class="logo-area">
+            <svg class="logo-svg" viewBox="0 0 26 26" fill="none">
+              <rect x="2" y="4" width="14" height="18" rx="2" stroke="#6c5ce7" stroke-width="1.8" fill="none"/>
+              <path d="M7 9h5M7 12h5M7 15h3" stroke="#6c5ce7" stroke-width="1.4" stroke-linecap="round"/>
+              <rect x="10" y="7" width="14" height="14" rx="2" fill="rgba(108,92,231,0.15)" stroke="#6c5ce7" stroke-width="1.2"/>
+              <path d="M14 12l2 2 4-4" stroke="#6c5ce7" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+            <span class="app-name">LearnKit</span>
+          </div>
+          <div class="right-area">
+            <button class="theme-toggle night" title="切换到日间模式"></button>
+          </div>
+        </div>
+        <div class="preview-content">页面内容区域</div>
+      </div>
+    </div>
+    <div>
+      <h3>日间模式</h3>
+      <div class="preview-box light-container">
+        <div class="header-a light">
+          <div class="logo-area">
+            <svg class="logo-svg" viewBox="0 0 26 26" fill="none">
+              <rect x="2" y="4" width="14" height="18" rx="2" stroke="#6c5ce7" stroke-width="1.8" fill="none"/>
+              <path d="M7 9h5M7 12h5M7 15h3" stroke="#6c5ce7" stroke-width="1.4" stroke-linecap="round"/>
+              <rect x="10" y="7" width="14" height="14" rx="2" fill="rgba(108,92,231,0.08)" stroke="#6c5ce7" stroke-width="1.2"/>
+              <path d="M14 12l2 2 4-4" stroke="#6c5ce7" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+            <span class="app-name">LearnKit</span>
+          </div>
+          <div class="right-area">
+            <button class="theme-toggle day" title="切换到夜间模式"></button>
+          </div>
+        </div>
+        <div class="preview-content">页面内容区域</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- ════════════════════════════════════════════════════════════════
+     OPTION B — 毛玻璃效果
+     ════════════════════════════════════════════════════════════════ -->
+<section id="option-b">
+  <h2>方案 B: 毛玻璃效果 <span class="badge">Glassmorphism</span></h2>
+  <p class="desc">backdrop-filter 毛玻璃背景，半透明质感。顶栏浮于内容之上，视觉层次分明，适合内容丰富的界面。</p>
+  <div class="preview-pair">
+    <div>
+      <h3>夜间模式</h3>
+      <div class="preview-box dark-container" style="position:relative;">
+        <!-- fake content behind glass -->
+        <div style="position:absolute;top:20px;left:40px;width:200px;height:30px;background:rgba(108,92,231,0.08);border-radius:6px;"></div>
+        <div style="position:absolute;top:20px;right:60px;width:120px;height:20px;background:rgba(108,92,231,0.05);border-radius:4px;"></div>
+        <div class="header-b dark" style="position:relative;z-index:2;">
+          <div class="logo-area">
+            <svg class="logo-svg" viewBox="0 0 26 26" fill="none">
+              <rect x="2" y="4" width="14" height="18" rx="2" stroke="#a29bfe" stroke-width="1.8" fill="none"/>
+              <path d="M7 9h5M7 12h5M7 15h3" stroke="#a29bfe" stroke-width="1.4" stroke-linecap="round"/>
+              <rect x="10" y="7" width="14" height="14" rx="2" fill="rgba(108,92,231,0.2)" stroke="#a29bfe" stroke-width="1.2"/>
+              <path d="M14 12l2 2 4-4" stroke="#a29bfe" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+            <span class="app-name">LearnKit</span>
+          </div>
+          <div class="right-area">
+            <button class="glass-toggle night" title="切换到日间模式"></button>
+          </div>
+        </div>
+        <div class="preview-content">页面内容区域</div>
+      </div>
+    </div>
+    <div>
+      <h3>日间模式</h3>
+      <div class="preview-box light-container" style="position:relative;">
+        <div style="position:absolute;top:20px;left:40px;width:200px;height:30px;background:rgba(108,92,231,0.06);border-radius:6px;"></div>
+        <div style="position:absolute;top:20px;right:60px;width:120px;height:20px;background:rgba(108,92,231,0.04);border-radius:4px;"></div>
+        <div class="header-b light" style="position:relative;z-index:2;">
+          <div class="logo-area">
+            <svg class="logo-svg" viewBox="0 0 26 26" fill="none">
+              <rect x="2" y="4" width="14" height="18" rx="2" stroke="#6c5ce7" stroke-width="1.8" fill="none"/>
+              <path d="M7 9h5M7 12h5M7 15h3" stroke="#6c5ce7" stroke-width="1.4" stroke-linecap="round"/>
+              <rect x="10" y="7" width="14" height="14" rx="2" fill="rgba(108,92,231,0.08)" stroke="#6c5ce7" stroke-width="1.2"/>
+              <path d="M14 12l2 2 4-4" stroke="#6c5ce7" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+            <span class="app-name">LearnKit</span>
+          </div>
+          <div class="right-area">
+            <button class="glass-toggle day" title="切换到夜间模式"></button>
+          </div>
+        </div>
+        <div class="preview-content">页面内容区域</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- ════════════════════════════════════════════════════════════════
+     OPTION C — 实色渐变
+     ════════════════════════════════════════════════════════════════ -->
+<section id="option-c">
+  <h2>方案 C: 实色背景 + 微妙渐变 <span class="badge">Solid Gradient</span></h2>
+  <p class="desc">实色背景配合 135 度微妙渐变，通过阴影建立层级。视觉稳定扎实，适合工具型应用。搭配分段式主题切换控件。</p>
+  <div class="preview-pair">
+    <div>
+      <h3>夜间模式</h3>
+      <div class="preview-box dark-container">
+        <div class="header-c dark">
+          <div class="logo-area">
+            <svg class="logo-svg" viewBox="0 0 26 26" fill="none">
+              <rect x="2" y="4" width="14" height="18" rx="2" stroke="#a29bfe" stroke-width="1.8" fill="rgba(108,92,231,0.08)"/>
+              <path d="M7 9h5M7 12h5M7 15h3" stroke="#a29bfe" stroke-width="1.4" stroke-linecap="round"/>
+              <rect x="10" y="7" width="14" height="14" rx="2" fill="rgba(108,92,231,0.15)" stroke="#a29bfe" stroke-width="1.2"/>
+              <path d="M14 12l2 2 4-4" stroke="#fff" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+            <span class="app-name">LearnKit</span>
+          </div>
+          <div class="right-area">
+            <div class="pill-toggle dark-mode">
+              <button>&#9788; 日间</button>
+              <button class="active">&#9790; 夜间</button>
+            </div>
+          </div>
+        </div>
+        <div class="preview-content">页面内容区域</div>
+      </div>
+    </div>
+    <div>
+      <h3>日间模式</h3>
+      <div class="preview-box light-container">
+        <div class="header-c light">
+          <div class="logo-area">
+            <svg class="logo-svg" viewBox="0 0 26 26" fill="none">
+              <rect x="2" y="4" width="14" height="18" rx="2" stroke="#6c5ce7" stroke-width="1.8" fill="rgba(108,92,231,0.05)"/>
+              <path d="M7 9h5M7 12h5M7 15h3" stroke="#6c5ce7" stroke-width="1.4" stroke-linecap="round"/>
+              <rect x="10" y="7" width="14" height="14" rx="2" fill="rgba(108,92,231,0.08)" stroke="#6c5ce7" stroke-width="1.2"/>
+              <path d="M14 12l2 2 4-4" stroke="#6c5ce7" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+            <span class="app-name">LearnKit</span>
+          </div>
+          <div class="right-area">
+            <div class="pill-toggle light-mode">
+              <button class="active">&#9788; 日间</button>
+              <button>&#9790; 夜间</button>
+            </div>
+          </div>
+        </div>
+        <div class="preview-content">页面内容区域</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- ════════════════════════════════════════════════════════════════
+     OPTION D — 深色永驻
+     ════════════════════════════════════════════════════════════════ -->
+<section id="option-d">
+  <h2>方案 D: 渐变底边 <span class="badge">Gradient Line</span></h2>
+  <p class="desc">干净的纯色背景，底部一条 2px 的品牌渐变线作为视觉签名。56px 高度，右侧胶囊形日/夜切换器。克制优雅，底边渐变是唯一的装饰。</p>
+  <div class="preview-pair">
+    <div>
+      <h3>夜间模式</h3>
+      <div class="preview-box dark-container">
+        <div class="header-d dark">
+          <div class="logo-area">
+            <span class="logo-icon">📚</span>
+            <span class="app-name"><span>Learn</span>Kit</span>
+          </div>
+          <div class="right-area">
+            <div class="capsule-toggle">
+              <span class="opt">☀️</span>
+              <span class="opt active">🌙</span>
+            </div>
+          </div>
+        </div>
+        <div class="preview-content">页面内容区域</div>
+      </div>
+    </div>
+    <div>
+      <h3>日间模式</h3>
+      <div class="preview-box light-container">
+        <div class="header-d light">
+          <div class="logo-area">
+            <span class="logo-icon">📚</span>
+            <span class="app-name"><span>Learn</span>Kit</span>
+          </div>
+          <div class="right-area">
+            <div class="capsule-toggle">
+              <span class="opt active">☀️</span>
+              <span class="opt">🌙</span>
+            </div>
+          </div>
+        </div>
+        <div class="preview-content" style="color:#1a1a2e;">页面内容区域</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- ════════════════════════════════════════════════════════════════
+     OPTION E — 嵌入式搜索 + 极简右侧操作
+     ════════════════════════════════════════════════════════════════ -->
+<section id="option-e">
+  <h2>方案 E: 搜索导航型 <span class="badge">Search Bar</span></h2>
+  <p class="desc">Logo 左置，中间嵌入搜索框（快速定位教案/知识点），右侧极简图标操作区。54px 高度，实用主义风格，搜索框 focus 时有品牌色光环。</p>
+  <div class="preview-pair">
+    <div>
+      <h3>夜间模式</h3>
+      <div class="preview-box dark-container">
+        <div class="header-e dark">
+          <div class="logo-area">
+            <div class="logo-dot"></div>
+            <span class="app-name">LearnKit</span>
+          </div>
+          <input class="search-box" type="text" placeholder="搜索教案、知识点...">
+          <div class="right-area">
+            <button class="icon-btn-e" title="通知">🔔</button>
+            <button class="icon-btn-e" title="切换主题">🌙</button>
+          </div>
+        </div>
+        <div class="preview-content">页面内容区域</div>
+      </div>
+    </div>
+    <div>
+      <h3>日间模式</h3>
+      <div class="preview-box light-container">
+        <div class="header-e light">
+          <div class="logo-area">
+            <div class="logo-dot"></div>
+            <span class="app-name">LearnKit</span>
+          </div>
+          <input class="search-box" type="text" placeholder="搜索教案、知识点...">
+          <div class="right-area">
+            <button class="icon-btn-e" title="通知">🔔</button>
+            <button class="icon-btn-e" title="切换主题">☀️</button>
+          </div>
+        </div>
+        <div class="preview-content" style="color:#1a1a2e;">页面内容区域</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- ════════════════════════════════════════════════════════════════
+     OVERVIEW — 总览对比
+     ════════════════════════════════════════════════════════════════ -->
+<div class="overview">
+  <h2>总览对比</h2>
+
+  <!-- Mini preview cards -->
+  <div class="overview-grid">
+    <div class="overview-card">
+      <div class="card-label">A: 极简线条 <span>52px / Minimal</span></div>
+      <div class="card-body">
+        <div class="header-a dark" style="height:44px;font-size:14px;">
+          <div class="logo-area">
+            <svg width="20" height="20" viewBox="0 0 26 26" fill="none">
+              <rect x="2" y="4" width="14" height="18" rx="2" stroke="#6c5ce7" stroke-width="1.8" fill="none"/>
+              <path d="M7 9h5M7 12h5" stroke="#6c5ce7" stroke-width="1.4" stroke-linecap="round"/>
+              <rect x="10" y="7" width="14" height="14" rx="2" fill="rgba(108,92,231,0.15)" stroke="#6c5ce7" stroke-width="1.2"/>
+              <path d="M14 12l2 2 4-4" stroke="#6c5ce7" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+            <span class="app-name" style="font-size:14px;">LearnKit</span>
+          </div>
+          <button class="theme-toggle night" style="width:36px;height:20px;border-radius:10px;" title="toggle"></button>
+        </div>
+      </div>
+    </div>
+
+    <div class="overview-card">
+      <div class="card-label">B: 毛玻璃 <span>56px / Glass</span></div>
+      <div class="card-body">
+        <div class="header-b dark" style="height:44px;font-size:14px;">
+          <div class="logo-area">
+            <svg width="20" height="20" viewBox="0 0 26 26" fill="none">
+              <rect x="2" y="4" width="14" height="18" rx="2" stroke="#a29bfe" stroke-width="1.8" fill="none"/>
+              <path d="M7 9h5M7 12h5" stroke="#a29bfe" stroke-width="1.4" stroke-linecap="round"/>
+              <rect x="10" y="7" width="14" height="14" rx="2" fill="rgba(108,92,231,0.2)" stroke="#a29bfe" stroke-width="1.2"/>
+              <path d="M14 12l2 2 4-4" stroke="#a29bfe" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+            <span class="app-name" style="font-size:14px;">LearnKit</span>
+          </div>
+          <button class="glass-toggle night" style="width:40px;height:22px;border-radius:11px;" title="toggle"></button>
+        </div>
+      </div>
+    </div>
+
+    <div class="overview-card">
+      <div class="card-label">C: 实色渐变 <span>56px / Gradient</span></div>
+      <div class="card-body">
+        <div class="header-c dark" style="height:44px;font-size:14px;">
+          <div class="logo-area">
+            <svg width="20" height="20" viewBox="0 0 26 26" fill="none">
+              <rect x="2" y="4" width="14" height="18" rx="2" stroke="#a29bfe" stroke-width="1.8" fill="rgba(108,92,231,0.08)"/>
+              <path d="M7 9h5M7 12h5" stroke="#a29bfe" stroke-width="1.4" stroke-linecap="round"/>
+              <rect x="10" y="7" width="14" height="14" rx="2" fill="rgba(108,92,231,0.15)" stroke="#a29bfe" stroke-width="1.2"/>
+              <path d="M14 12l2 2 4-4" stroke="#fff" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+            <span class="app-name" style="font-size:14px;color:#fff;">LearnKit</span>
+          </div>
+          <div class="pill-toggle dark-mode" style="height:26px;">
+            <button style="height:26px;padding:0 10px;font-size:11px;">&#9788;</button>
+            <button class="active" style="height:26px;padding:0 10px;font-size:11px;">&#9790;</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="overview-card">
+      <div class="card-label">D: 深色永驻 <span>48px / Always Dark</span></div>
+      <div class="card-body">
+        <div class="header-d" style="height:44px;font-size:13px;">
+          <div class="logo-area">
+            <div class="logo-mark" style="width:24px;height:24px;border-radius:6px;">
+              <svg viewBox="0 0 16 16" fill="none" style="width:13px;height:13px;">
+                <path d="M3 3h6v10H3z" stroke="#fff" stroke-width="1.2" fill="none" rx="1"/>
+                <path d="M5 6h2M5 8h2" stroke="#fff" stroke-width="1" stroke-linecap="round"/>
+              </svg>
+            </div>
+            <span class="app-name" style="font-size:13px;">LearnKit</span>
+          </div>
+          <button class="mini-toggle night" style="width:30px;height:16px;border-radius:8px;" title="toggle"></button>
+        </div>
+      </div>
+    </div>
+
+    <div class="overview-card">
+      <div class="card-label">E: 居中导航 <span>60px / Centered</span></div>
+      <div class="card-body">
+        <div class="header-e dark" style="height:44px;font-size:13px;">
+          <div class="logo-area">
+            <span class="app-name" style="font-size:14px;">LearnKit</span>
+          </div>
+          <div class="center-nav">
+            <button class="nav-item active" style="font-size:11px;padding:4px 10px;">学习</button>
+            <button class="nav-item" style="font-size:11px;padding:4px 10px;">复习</button>
+            <button class="nav-item" style="font-size:11px;padding:4px 10px;">统计</button>
+          </div>
+          <div class="right-area">
+            <button class="round-toggle dark-mode" style="width:28px;height:28px;" title="toggle">
+              <svg width="14" height="14" viewBox="0 0 18 18" fill="none">
+                <path d="M15.5 10.5a6.5 6.5 0 01-8-8A6.5 6.5 0 1015.5 10.5z" stroke="currentColor" stroke-width="1.4"/>
+              </svg>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Comparison table -->
+  <table class="comparison-table">
+    <thead>
+      <tr>
+        <th>方案</th>
+        <th>高度</th>
+        <th>风格</th>
+        <th>切换控件</th>
+        <th>扩展性</th>
+        <th>推荐场景</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td class="option-name">A: 极简线条</td>
+        <td>52px</td>
+        <td>透明 + 底线分隔</td>
+        <td>滑动开关</td>
+        <td>低 — 空间有限</td>
+        <td>沉浸阅读、极简偏好</td>
+      </tr>
+      <tr>
+        <td class="option-name">B: 毛玻璃</td>
+        <td>56px</td>
+        <td>半透明模糊背景</td>
+        <td>胶囊开关（带发光）</td>
+        <td>中 — 可加图标按钮</td>
+        <td>内容丰富、现代感</td>
+      </tr>
+      <tr>
+        <td class="option-name">C: 实色渐变</td>
+        <td>56px</td>
+        <td>实色 + 135 度渐变</td>
+        <td>分段按钮（日/夜）</td>
+        <td>高 — 可扩展多操作</td>
+        <td>工具型应用、正式感</td>
+      </tr>
+      <tr>
+        <td class="option-name">D: 深色永驻</td>
+        <td>48px</td>
+        <td>恒定深色 + 渐变Logo块</td>
+        <td>迷你开关</td>
+        <td>高 — 已预留分隔符和图标位</td>
+        <td>一致体验、专注工具</td>
+      </tr>
+      <tr>
+        <td class="option-name">E: 居中导航</td>
+        <td>60px</td>
+        <td>三栏布局 + 渐变文字</td>
+        <td>圆形图标按钮</td>
+        <td>最高 — 导航 + 操作区</td>
+        <td>多页面、功能丰富</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div style="margin-top:40px;padding:20px 24px;background:rgba(108,92,231,0.08);border:1px solid rgba(108,92,231,0.15);border-radius:10px;">
+    <p style="font-size:14px;color:var(--accent-light);font-weight:600;margin-bottom:8px;">建议</p>
+    <p style="font-size:13px;color:#8888a8;line-height:1.7;">
+      LearnKit 作为个人学习工具，核心诉求是<strong style="color:#c0c0d8;">沉浸 + 可扩展</strong>。
+      推荐 <strong style="color:var(--accent-light);">方案 B（毛玻璃）</strong>作为首选——视觉层次清晰、现代感强、不抢内容焦点，
+      且切换控件的发光效果给夜间模式增添精致感。
+      如果未来功能扩展较多（多页面导航），则可考虑 <strong style="color:var(--accent-light);">方案 E</strong> 的三栏布局。
+    </p>
+  </div>
+</div>
+
+</body>
+</html>

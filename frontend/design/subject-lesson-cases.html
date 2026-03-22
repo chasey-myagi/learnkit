@@ -1,0 +1,1047 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LearnKit — SubjectGroup + LessonItem 设计方案</title>
+<style>
+  :root {
+    --bg: #0a0a12;
+    --card: #141425;
+    --border: #1e1e3a;
+    --text: #e0e0e8;
+    --text-secondary: #7878a0;
+    --accent: #6c5ce7;
+    --accent-glow: rgba(108, 92, 231, 0.25);
+    --completed: #10ac84;
+    --in-progress: #feca57;
+    --prepared: #48dbfb;
+    --pending: #7878a0;
+    --failed: #ff6b6b;
+    --radius: 8px;
+    --radius-sm: 5px;
+  }
+
+  [data-theme="light"] {
+    --bg: #f5f6fa;
+    --card: #ffffff;
+    --border: #d5d5e2;
+    --text: #1a1a2e;
+    --text-secondary: #6a6a85;
+    --accent-glow: rgba(108, 92, 231, 0.12);
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: system-ui, -apple-system, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.6;
+    transition: background 0.3s, color 0.3s;
+  }
+
+  /* ========== Page Layout ========== */
+  .page-header {
+    text-align: center;
+    padding: 48px 24px 32px;
+    border-bottom: 1px solid var(--border);
+  }
+  .page-header h1 {
+    font-size: 28px;
+    font-weight: 700;
+    letter-spacing: -0.5px;
+    margin-bottom: 6px;
+  }
+  .page-header p {
+    color: var(--text-secondary);
+    font-size: 14px;
+  }
+
+  .theme-toggle {
+    position: fixed;
+    top: 20px;
+    right: 24px;
+    z-index: 100;
+    display: flex;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    overflow: hidden;
+    cursor: pointer;
+  }
+  .theme-toggle button {
+    background: none;
+    border: none;
+    color: var(--text-secondary);
+    padding: 8px 14px;
+    font-size: 13px;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-family: inherit;
+  }
+  .theme-toggle button.active {
+    background: var(--accent);
+    color: #fff;
+  }
+
+  .cases-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 40px 24px 80px;
+  }
+
+  .case-section {
+    margin-bottom: 64px;
+  }
+  .case-label {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 20px;
+  }
+  .case-label .tag {
+    background: var(--accent);
+    color: #fff;
+    font-size: 11px;
+    font-weight: 700;
+    padding: 3px 10px;
+    border-radius: 4px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+  }
+  .case-label h2 {
+    font-size: 18px;
+    font-weight: 600;
+  }
+  .case-label .desc {
+    color: var(--text-secondary);
+    font-size: 13px;
+    margin-left: 4px;
+  }
+
+  /* ========== Status Badges (shared) ========== */
+  .status-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 11px;
+    font-weight: 600;
+    padding: 3px 10px;
+    border-radius: 12px;
+    white-space: nowrap;
+  }
+  .status-completed { background: rgba(16,172,132,0.15); color: var(--completed); }
+  .status-in-progress { background: rgba(254,202,87,0.15); color: var(--in-progress); }
+  .status-prepared { background: rgba(72,219,251,0.15); color: var(--prepared); }
+  .status-pending { background: rgba(120,120,160,0.15); color: var(--pending); }
+  .status-failed { background: rgba(255,107,107,0.15); color: var(--failed); }
+
+  /* ========== Progress Bar (shared) ========== */
+  .progress-bar-wrap {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .progress-bar {
+    flex: 1;
+    height: 4px;
+    background: var(--border);
+    border-radius: 2px;
+    overflow: hidden;
+  }
+  .progress-bar-fill {
+    height: 100%;
+    background: var(--accent);
+    border-radius: 2px;
+    transition: width 0.4s ease;
+  }
+  .progress-text {
+    font-size: 12px;
+    color: var(--text-secondary);
+    white-space: nowrap;
+    font-weight: 500;
+  }
+
+  /* ====================================================
+     方案 A — 缩进列表风（Tree View）
+     ==================================================== */
+  .tree-group {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 20px 24px;
+  }
+  .tree-group-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 14px;
+    cursor: pointer;
+    user-select: none;
+  }
+  .tree-group-header .chevron {
+    width: 18px;
+    height: 18px;
+    color: var(--text-secondary);
+    transition: transform 0.2s;
+    flex-shrink: 0;
+  }
+  .tree-group-header .chevron.collapsed { transform: rotate(-90deg); }
+  .tree-group-header h3 {
+    font-size: 15px;
+    font-weight: 600;
+    flex: 1;
+  }
+  .tree-group .progress-bar-wrap {
+    max-width: 180px;
+  }
+  .tree-list {
+    margin-left: 30px;
+    border-left: 2px solid var(--border);
+    padding-left: 0;
+  }
+  .tree-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 16px;
+    margin-left: -1px;
+    border-left: 2px solid transparent;
+    cursor: pointer;
+    transition: all 0.15s;
+    position: relative;
+  }
+  .tree-item:hover {
+    background: var(--accent-glow);
+    border-left-color: var(--accent);
+  }
+  .tree-item::before {
+    content: '';
+    position: absolute;
+    left: -17px;
+    top: 50%;
+    width: 14px;
+    height: 1px;
+    background: var(--border);
+  }
+  .tree-item .dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+  .tree-item .dot.completed { background: var(--completed); }
+  .tree-item .dot.in-progress { background: var(--in-progress); box-shadow: 0 0 6px var(--in-progress); }
+  .tree-item .dot.prepared { background: var(--prepared); }
+  .tree-item .dot.pending { background: var(--pending); opacity: 0.5; }
+  .tree-item .dot.failed { background: var(--failed); }
+  .tree-item .lesson-title {
+    font-size: 14px;
+    flex: 1;
+  }
+  .tree-item .section-count {
+    font-size: 12px;
+    color: var(--text-secondary);
+  }
+
+  /* ====================================================
+     方案 B — 卡片式
+     ==================================================== */
+  .cards-group {
+    margin-bottom: 8px;
+  }
+  .cards-group-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 16px;
+    padding-bottom: 12px;
+    border-bottom: 2px solid var(--accent);
+  }
+  .cards-group-header h3 {
+    font-size: 16px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .cards-group-header h3 .icon {
+    width: 20px;
+    height: 20px;
+    background: var(--accent);
+    border-radius: 5px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 11px;
+    color: #fff;
+  }
+  .cards-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 12px;
+  }
+  .card-item {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 16px;
+    cursor: pointer;
+    transition: all 0.2s;
+    position: relative;
+    overflow: hidden;
+  }
+  .card-item::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+  }
+  .card-item.completed::before { background: var(--completed); }
+  .card-item.in-progress::before { background: var(--in-progress); }
+  .card-item.prepared::before { background: var(--prepared); }
+  .card-item.pending::before { background: var(--border); }
+  .card-item.failed::before { background: var(--failed); }
+  .card-item:hover {
+    border-color: var(--accent);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(0,0,0,0.15);
+  }
+  .card-item .card-num {
+    font-size: 11px;
+    color: var(--text-secondary);
+    margin-bottom: 6px;
+    font-weight: 500;
+  }
+  .card-item .card-title {
+    font-size: 14px;
+    font-weight: 600;
+    margin-bottom: 12px;
+    line-height: 1.4;
+  }
+  .card-item .card-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+  }
+  .card-item .card-sections {
+    font-size: 11px;
+    color: var(--text-secondary);
+  }
+
+  /* ====================================================
+     方案 C — 时间线风格
+     ==================================================== */
+  .timeline-group {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 24px;
+  }
+  .timeline-group-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 24px;
+  }
+  .timeline-group-header h3 {
+    font-size: 16px;
+    font-weight: 700;
+  }
+  .timeline-group-header .progress-bar-wrap {
+    max-width: 200px;
+  }
+  .timeline-list {
+    position: relative;
+    padding-left: 32px;
+  }
+  .timeline-list::before {
+    content: '';
+    position: absolute;
+    left: 11px;
+    top: 4px;
+    bottom: 4px;
+    width: 2px;
+    background: var(--border);
+  }
+  .timeline-item {
+    position: relative;
+    padding: 12px 16px;
+    margin-bottom: 4px;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .timeline-item:hover {
+    background: var(--accent-glow);
+  }
+  .timeline-item::before {
+    content: '';
+    position: absolute;
+    left: -25px;
+    top: 18px;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    border: 2px solid var(--card);
+    z-index: 1;
+  }
+  .timeline-item.completed::before { background: var(--completed); box-shadow: 0 0 0 3px rgba(16,172,132,0.2); }
+  .timeline-item.in-progress::before { background: var(--in-progress); box-shadow: 0 0 0 3px rgba(254,202,87,0.2); animation: pulse-dot 2s infinite; }
+  .timeline-item.prepared::before { background: var(--prepared); box-shadow: 0 0 0 3px rgba(72,219,251,0.2); }
+  .timeline-item.pending::before { background: var(--pending); opacity: 0.5; }
+  .timeline-item.failed::before { background: var(--failed); box-shadow: 0 0 0 3px rgba(255,107,107,0.2); }
+
+  @keyframes pulse-dot {
+    0%, 100% { box-shadow: 0 0 0 3px rgba(254,202,87,0.2); }
+    50% { box-shadow: 0 0 0 6px rgba(254,202,87,0.1); }
+  }
+
+  .timeline-item .tl-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+  }
+  .timeline-item .tl-title {
+    font-size: 14px;
+    font-weight: 600;
+  }
+  .timeline-item .tl-meta {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 4px;
+  }
+  .timeline-item .tl-sections {
+    font-size: 12px;
+    color: var(--text-secondary);
+  }
+  /* Active lesson in timeline gets a subtle progress */
+  .timeline-item.in-progress .tl-progress {
+    margin-top: 8px;
+  }
+  .timeline-item.in-progress .tl-progress .progress-bar {
+    height: 3px;
+  }
+
+  /* connector line highlighted for completed */
+  .timeline-list .timeline-item.completed + .timeline-item::after {
+    content: '';
+    position: absolute;
+    left: -20px;
+    top: -8px;
+    width: 2px;
+    height: 26px;
+    background: var(--completed);
+    z-index: 0;
+  }
+
+  /* ====================================================
+     方案 F — 手风琴 + 时间线混合
+     ==================================================== */
+  .hybrid-group {
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    overflow: hidden;
+    margin-bottom: 12px;
+    background: var(--card);
+  }
+  .hybrid-header {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 18px 22px;
+    cursor: pointer;
+    user-select: none;
+    transition: background 0.15s;
+  }
+  .hybrid-header:hover {
+    background: var(--accent-glow);
+  }
+  .hybrid-header h3 {
+    font-size: 16px;
+    font-weight: 700;
+    flex: 1;
+  }
+  .hybrid-header .hybrid-progress {
+    max-width: 140px;
+    flex-shrink: 0;
+  }
+  .hybrid-header .hybrid-chevron {
+    width: 20px;
+    height: 20px;
+    color: var(--text-secondary);
+    transition: transform 0.3s ease;
+    flex-shrink: 0;
+  }
+  .hybrid-header .hybrid-chevron.open {
+    transform: rotate(180deg);
+  }
+  .hybrid-body {
+    background: var(--bg);
+    overflow: hidden;
+    padding: 20px 24px 24px 24px;
+    border-top: 1px solid var(--border);
+  }
+  .hybrid-body.collapsed {
+    display: none;
+  }
+
+  /* Timeline inside accordion */
+  .hybrid-timeline {
+    position: relative;
+    padding-left: 28px;
+  }
+  .hybrid-timeline::before {
+    content: '';
+    position: absolute;
+    left: 7px;
+    top: 8px;
+    bottom: 8px;
+    width: 2px;
+    background: var(--border);
+  }
+
+  /* Completed segment overlay on the timeline line */
+  .hybrid-timeline .ht-completed-line {
+    position: absolute;
+    left: 7px;
+    top: 8px;
+    width: 2px;
+    background: var(--completed);
+    border-radius: 1px;
+    transition: height 0.4s ease;
+  }
+
+  .hybrid-lesson {
+    position: relative;
+    padding: 10px 14px;
+    margin-bottom: 6px;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .hybrid-lesson:last-child {
+    margin-bottom: 0;
+  }
+  .hybrid-lesson:hover {
+    background: var(--accent-glow);
+  }
+
+  /* Node dot */
+  .hybrid-lesson::before {
+    content: '';
+    position: absolute;
+    left: -23px;
+    top: 16px;
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    border: 2.5px solid var(--card);
+    z-index: 2;
+  }
+  .hybrid-lesson.completed::before {
+    background: var(--completed);
+    box-shadow: 0 0 0 3px rgba(16,172,132,0.2);
+  }
+  .hybrid-lesson.in-progress::before {
+    background: var(--in-progress);
+    box-shadow: 0 0 0 3px rgba(254,202,87,0.2);
+    animation: hybrid-pulse 2s infinite;
+  }
+  .hybrid-lesson.prepared::before {
+    background: var(--prepared);
+    box-shadow: 0 0 0 3px rgba(72,219,251,0.2);
+  }
+  .hybrid-lesson.pending::before {
+    background: var(--pending);
+    opacity: 0.5;
+  }
+
+  @keyframes hybrid-pulse {
+    0%, 100% { box-shadow: 0 0 0 3px rgba(254,202,87,0.2); }
+    50% { box-shadow: 0 0 0 8px rgba(254,202,87,0.08); }
+  }
+
+  .hybrid-lesson .hl-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+  }
+  .hybrid-lesson .hl-title {
+    font-size: 14px;
+    font-weight: 600;
+  }
+  .hybrid-lesson .hl-meta {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-top: 4px;
+    font-size: 12px;
+    color: var(--text-secondary);
+    flex-wrap: wrap;
+  }
+  .hybrid-lesson .hl-meta .hl-sep {
+    opacity: 0.4;
+  }
+  .hybrid-lesson .hl-duration {
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+  }
+  .hybrid-lesson .hl-duration svg {
+    width: 12px;
+    height: 12px;
+    flex-shrink: 0;
+  }
+
+  /* Section progress bar for in-progress lesson */
+  .hybrid-lesson .hl-section-progress {
+    margin-top: 8px;
+    max-width: 200px;
+  }
+  .hybrid-lesson .hl-section-progress .progress-bar {
+    height: 3px;
+  }
+
+  /* Completed lesson strike-through style for duration */
+  .hybrid-lesson.completed .hl-actual-time {
+    color: var(--completed);
+    font-weight: 500;
+  }
+  .hybrid-lesson.in-progress .hl-actual-time {
+    color: var(--in-progress);
+    font-weight: 500;
+  }
+
+  /* ========== Utility ========== */
+  .sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0,0,0,0);
+    border: 0;
+  }
+</style>
+</head>
+<body>
+
+<!-- Theme Toggle -->
+<div class="theme-toggle" id="themeToggle">
+  <button class="active" data-theme="dark">Dark</button>
+  <button data-theme="light">Light</button>
+</div>
+
+<div class="page-header">
+  <h1>SubjectGroup + LessonItem</h1>
+  <p>4 种设计方案对比 — LearnKit 个人学习工具</p>
+</div>
+
+<div class="cases-container">
+
+  <!-- =====================================================
+       方案 A — 缩进列表风 (Tree View)
+       ===================================================== -->
+  <section class="case-section">
+    <div class="case-label">
+      <span class="tag">A</span>
+      <h2>缩进列表风</h2>
+      <span class="desc">Tree View 感觉，简洁紧凑</span>
+    </div>
+
+    <div class="tree-group">
+      <div class="tree-group-header" onclick="this.querySelector('.chevron').classList.toggle('collapsed'); this.parentElement.querySelector('.tree-list').classList.toggle('collapsed-list')">
+        <svg class="chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+        <h3>🎮 游戏设计</h3>
+        <div class="progress-bar-wrap">
+          <div class="progress-bar"><div class="progress-bar-fill" style="width:40%"></div></div>
+          <span class="progress-text">2/5</span>
+        </div>
+      </div>
+      <div class="tree-list">
+        <div class="tree-item" title="点击查看教案">
+          <span class="dot completed"></span>
+          <span class="lesson-title">游戏设计概论</span>
+          <span class="status-badge status-completed">✓ 已完成</span>
+          <span class="section-count">3 sections</span>
+        </div>
+        <div class="tree-item">
+          <span class="dot completed"></span>
+          <span class="lesson-title">玩家心理学</span>
+          <span class="status-badge status-completed">✓ 已完成</span>
+          <span class="section-count">4 sections</span>
+        </div>
+        <div class="tree-item">
+          <span class="dot in-progress"></span>
+          <span class="lesson-title">核心游戏循环</span>
+          <span class="status-badge status-in-progress">📖 学习中</span>
+          <span class="section-count">2/3 sections</span>
+        </div>
+        <div class="tree-item">
+          <span class="dot prepared"></span>
+          <span class="lesson-title">关卡设计方法论</span>
+          <span class="status-badge status-prepared">已备课</span>
+          <span class="section-count">5 sections</span>
+        </div>
+        <div class="tree-item">
+          <span class="dot pending"></span>
+          <span class="lesson-title">原型设计与迭代</span>
+          <span class="status-badge status-pending">待备课</span>
+          <span class="section-count">—</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- =====================================================
+       方案 B — 卡片式
+       ===================================================== -->
+  <section class="case-section">
+    <div class="case-label">
+      <span class="tag">B</span>
+      <h2>卡片式</h2>
+      <span class="desc">每个 Lesson 一张卡片，视觉分区清晰</span>
+    </div>
+
+    <div class="cards-group">
+      <div class="cards-group-header">
+        <h3>
+          <span class="icon">🎮</span>
+          游戏设计
+        </h3>
+        <div class="progress-bar-wrap" style="max-width:200px">
+          <div class="progress-bar"><div class="progress-bar-fill" style="width:40%"></div></div>
+          <span class="progress-text">2/5 已完成</span>
+        </div>
+      </div>
+      <div class="cards-grid">
+        <div class="card-item completed">
+          <div class="card-num">LESSON 01</div>
+          <div class="card-title">游戏设计概论</div>
+          <div class="card-footer">
+            <span class="status-badge status-completed">✓ 已完成</span>
+            <span class="card-sections">3 sections</span>
+          </div>
+        </div>
+        <div class="card-item completed">
+          <div class="card-num">LESSON 02</div>
+          <div class="card-title">玩家心理学</div>
+          <div class="card-footer">
+            <span class="status-badge status-completed">✓ 已完成</span>
+            <span class="card-sections">4 sections</span>
+          </div>
+        </div>
+        <div class="card-item in-progress">
+          <div class="card-num">LESSON 03</div>
+          <div class="card-title">核心游戏循环</div>
+          <div class="card-footer">
+            <span class="status-badge status-in-progress">📖 学习中</span>
+            <span class="card-sections">2/3 read</span>
+          </div>
+        </div>
+        <div class="card-item prepared">
+          <div class="card-num">LESSON 04</div>
+          <div class="card-title">关卡设计方法论</div>
+          <div class="card-footer">
+            <span class="status-badge status-prepared">已备课</span>
+            <span class="card-sections">5 sections</span>
+          </div>
+        </div>
+        <div class="card-item pending">
+          <div class="card-num">LESSON 05</div>
+          <div class="card-title">原型设计与迭代</div>
+          <div class="card-footer">
+            <span class="status-badge status-pending">待备课</span>
+            <span class="card-sections">—</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- =====================================================
+       方案 C — 时间线风格
+       ===================================================== -->
+  <section class="case-section">
+    <div class="case-label">
+      <span class="tag">C</span>
+      <h2>时间线风格</h2>
+      <span class="desc">学习路径感，进度一目了然</span>
+    </div>
+
+    <div class="timeline-group">
+      <div class="timeline-group-header">
+        <h3>🎮 游戏设计</h3>
+        <div class="progress-bar-wrap" style="max-width:200px">
+          <div class="progress-bar"><div class="progress-bar-fill" style="width:40%"></div></div>
+          <span class="progress-text">2/5 已完成</span>
+        </div>
+      </div>
+      <div class="timeline-list">
+        <div class="timeline-item completed">
+          <div class="tl-top">
+            <span class="tl-title">游戏设计概论</span>
+            <span class="status-badge status-completed">✓ 已完成</span>
+          </div>
+          <div class="tl-meta">
+            <span class="tl-sections">3 sections</span>
+          </div>
+        </div>
+        <div class="timeline-item completed">
+          <div class="tl-top">
+            <span class="tl-title">玩家心理学</span>
+            <span class="status-badge status-completed">✓ 已完成</span>
+          </div>
+          <div class="tl-meta">
+            <span class="tl-sections">4 sections</span>
+          </div>
+        </div>
+        <div class="timeline-item in-progress">
+          <div class="tl-top">
+            <span class="tl-title">核心游戏循环</span>
+            <span class="status-badge status-in-progress">📖 学习中</span>
+          </div>
+          <div class="tl-meta">
+            <span class="tl-sections">2/3 sections 已阅读</span>
+          </div>
+          <div class="tl-progress">
+            <div class="progress-bar-wrap">
+              <div class="progress-bar"><div class="progress-bar-fill" style="width:66%; background: var(--in-progress)"></div></div>
+              <span class="progress-text">2/3</span>
+            </div>
+          </div>
+        </div>
+        <div class="timeline-item prepared">
+          <div class="tl-top">
+            <span class="tl-title">关卡设计方法论</span>
+            <span class="status-badge status-prepared">已备课</span>
+          </div>
+          <div class="tl-meta">
+            <span class="tl-sections">5 sections · 待学习</span>
+          </div>
+        </div>
+        <div class="timeline-item pending">
+          <div class="tl-top">
+            <span class="tl-title">原型设计与迭代</span>
+            <span class="status-badge status-pending">待备课</span>
+          </div>
+          <div class="tl-meta">
+            <span class="tl-sections">尚未生成教案</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- =====================================================
+       方案 F — 手风琴 + 时间线混合
+       ===================================================== -->
+  <section class="case-section">
+    <div class="case-label">
+      <span class="tag">F</span>
+      <h2>手风琴 + 时间线混合</h2>
+      <span class="desc">Subject 折叠 + Lesson 时间线，兼顾概览与细节</span>
+    </div>
+
+    <!-- 展开态 Subject：游戏设计 -->
+    <div class="hybrid-group">
+      <div class="hybrid-header" onclick="this.querySelector('.hybrid-chevron').classList.toggle('open'); this.nextElementSibling.classList.toggle('collapsed')">
+        <h3>🎮 游戏设计</h3>
+        <div class="progress-bar-wrap hybrid-progress">
+          <div class="progress-bar"><div class="progress-bar-fill" style="width:40%"></div></div>
+          <span class="progress-text">2/5</span>
+        </div>
+        <svg class="hybrid-chevron open" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+      </div>
+      <div class="hybrid-body">
+        <div class="hybrid-timeline">
+          <!-- 已完成的连线高亮 — 覆盖前两个节点 -->
+          <div class="ht-completed-line" style="height: 108px;"></div>
+
+          <!-- Lesson 1: 已完成 -->
+          <div class="hybrid-lesson completed">
+            <div class="hl-top">
+              <span class="hl-title">游戏设计概论</span>
+              <span class="status-badge status-completed">✓ 已完成</span>
+            </div>
+            <div class="hl-meta">
+              <span>3 sections</span>
+              <span class="hl-sep">·</span>
+              <span class="hl-duration">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                预计 15 分钟
+              </span>
+              <span class="hl-sep">·</span>
+              <span class="hl-actual-time">实际 23 分钟</span>
+            </div>
+          </div>
+
+          <!-- Lesson 2: 已完成 -->
+          <div class="hybrid-lesson completed">
+            <div class="hl-top">
+              <span class="hl-title">玩家心理学</span>
+              <span class="status-badge status-completed">✓ 已完成</span>
+            </div>
+            <div class="hl-meta">
+              <span>4 sections</span>
+              <span class="hl-sep">·</span>
+              <span class="hl-duration">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                预计 20 分钟
+              </span>
+              <span class="hl-sep">·</span>
+              <span class="hl-actual-time">实际 18 分钟</span>
+            </div>
+          </div>
+
+          <!-- Lesson 3: 学习中 -->
+          <div class="hybrid-lesson in-progress">
+            <div class="hl-top">
+              <span class="hl-title">核心游戏循环</span>
+              <span class="status-badge status-in-progress">📖 学习中</span>
+            </div>
+            <div class="hl-meta">
+              <span>3 sections (2/3 已读)</span>
+              <span class="hl-sep">·</span>
+              <span class="hl-duration">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                预计 25 分钟
+              </span>
+              <span class="hl-sep">·</span>
+              <span class="hl-actual-time">已学 12 分钟</span>
+            </div>
+            <div class="hl-section-progress">
+              <div class="progress-bar-wrap">
+                <div class="progress-bar"><div class="progress-bar-fill" style="width:66%; background: var(--in-progress)"></div></div>
+                <span class="progress-text">2/3</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Lesson 4: 已备课 -->
+          <div class="hybrid-lesson prepared">
+            <div class="hl-top">
+              <span class="hl-title">关卡设计方法论</span>
+              <span class="status-badge status-prepared">已备课</span>
+            </div>
+            <div class="hl-meta">
+              <span>5 sections</span>
+              <span class="hl-sep">·</span>
+              <span class="hl-duration">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                预计 30 分钟
+              </span>
+            </div>
+          </div>
+
+          <!-- Lesson 5: 待备课 -->
+          <div class="hybrid-lesson pending">
+            <div class="hl-top">
+              <span class="hl-title">原型设计与迭代</span>
+              <span class="status-badge status-pending">待备课</span>
+            </div>
+            <div class="hl-meta">
+              <span class="hl-duration">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                预计 20 分钟
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 折叠态 Subject：游戏编程 -->
+    <div class="hybrid-group">
+      <div class="hybrid-header" onclick="this.querySelector('.hybrid-chevron').classList.toggle('open'); this.nextElementSibling.classList.toggle('collapsed')">
+        <h3>💻 游戏编程</h3>
+        <div class="progress-bar-wrap hybrid-progress">
+          <div class="progress-bar"><div class="progress-bar-fill" style="width:0%"></div></div>
+          <span class="progress-text">0/4</span>
+        </div>
+        <svg class="hybrid-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+      </div>
+      <div class="hybrid-body collapsed">
+        <div class="hybrid-timeline">
+          <div class="hybrid-lesson pending">
+            <div class="hl-top">
+              <span class="hl-title">编程语言选择</span>
+              <span class="status-badge status-pending">待备课</span>
+            </div>
+            <div class="hl-meta">
+              <span class="hl-duration">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                预计 20 分钟
+              </span>
+            </div>
+          </div>
+          <div class="hybrid-lesson pending">
+            <div class="hl-top">
+              <span class="hl-title">游戏引擎架构</span>
+              <span class="status-badge status-pending">待备课</span>
+            </div>
+            <div class="hl-meta">
+              <span class="hl-duration">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                预计 35 分钟
+              </span>
+            </div>
+          </div>
+          <div class="hybrid-lesson pending">
+            <div class="hl-top">
+              <span class="hl-title">渲染管线基础</span>
+              <span class="status-badge status-pending">待备课</span>
+            </div>
+            <div class="hl-meta">
+              <span class="hl-duration">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                预计 40 分钟
+              </span>
+            </div>
+          </div>
+          <div class="hybrid-lesson pending">
+            <div class="hl-top">
+              <span class="hl-title">物理引擎入门</span>
+              <span class="status-badge status-pending">待备课</span>
+            </div>
+            <div class="hl-meta">
+              <span class="hl-duration">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                预计 30 分钟
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+</div>
+
+<script>
+  // Theme toggle
+  const toggle = document.getElementById('themeToggle');
+  toggle.addEventListener('click', (e) => {
+    if (e.target.tagName !== 'BUTTON') return;
+    const theme = e.target.dataset.theme;
+    document.documentElement.setAttribute('data-theme', theme === 'light' ? 'light' : '');
+    toggle.querySelectorAll('button').forEach(b => b.classList.remove('active'));
+    e.target.classList.add('active');
+  });
+
+  // Collapsed list utility for Tree View
+  const style = document.createElement('style');
+  style.textContent = '.collapsed-list { display: none; }';
+  document.head.appendChild(style);
+</script>
+</body>
+</html>
