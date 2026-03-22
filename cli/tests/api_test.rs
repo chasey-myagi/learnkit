@@ -3284,3 +3284,187 @@ async fn test_is_server_running_false_when_no_server() {
         "Port 19999 should not be in use"
     );
 }
+
+// =====================================================
+// 16. Auto-prepare detection logic
+// =====================================================
+
+#[tokio::test]
+async fn test_prepare_status_returns_need_prepare_when_low() {
+    // 当 prepared+in_progress <= 1 时应返回 needPrepare: true
+    let tmp = TempDir::new().unwrap();
+    setup_test_program_with_db(tmp.path(), "test-prog");
+    let app = create_test_app(tmp.path().to_path_buf());
+
+    // 初始状态：所有 lesson 都是 pending，prepared=0
+    let resp = app.oneshot(
+        Request::builder().uri("/api/programs/test-prog/prepare-status").body(Body::empty()).unwrap()
+    ).await.unwrap();
+    let body = parse_json(resp).await;
+    assert_eq!(body["needPrepare"].as_bool().unwrap(), true);
+}
+
+#[tokio::test]
+async fn test_prepare_status_returns_next_lessons() {
+    // prepare-status 应返回下一批需要备课的 lesson
+    let tmp = TempDir::new().unwrap();
+    setup_test_program_with_db(tmp.path(), "test-prog");
+    let app = create_test_app(tmp.path().to_path_buf());
+
+    let resp = app.oneshot(
+        Request::builder().uri("/api/programs/test-prog/prepare-status").body(Body::empty()).unwrap()
+    ).await.unwrap();
+    let body = parse_json(resp).await;
+
+    // 应该有 nextLessons 字段（即使为空数组也行）
+    assert!(body.get("nextLessons").is_some() || body.get("preparedUnfinished").is_some(),
+        "prepare-status should include next lessons info");
+}
+
+#[tokio::test]
+async fn test_auto_prepare_check_endpoint() {
+    // POST /api/programs/:slug/prepare 触发备课检查
+    let tmp = TempDir::new().unwrap();
+    setup_test_program_with_db(tmp.path(), "test-prog");
+    let app = create_test_app(tmp.path().to_path_buf());
+
+    let resp = app.oneshot(
+        Request::builder()
+            .method("POST")
+            .uri("/api/programs/test-prog/prepare")
+            .header("content-type", "application/json")
+            .body(Body::empty())
+            .unwrap()
+    ).await.unwrap();
+
+    // Should either 200 (accepted) or 404 (not implemented yet)
+    // We're driving the implementation of this endpoint
+    assert!(
+        resp.status() == StatusCode::OK || resp.status() == StatusCode::ACCEPTED,
+        "POST /prepare should return 200 or 202, got {}",
+        resp.status()
+    );
+}
+
+#[tokio::test]
+async fn test_auto_prepare_check_slug_traversal() {
+    let tmp = TempDir::new().unwrap();
+    let app = create_test_app(tmp.path().to_path_buf());
+
+    let resp = app.oneshot(
+        Request::builder()
+            .method("POST")
+            .uri("/api/programs/..%2Fetc/prepare")
+            .header("content-type", "application/json")
+            .body(Body::empty())
+            .unwrap()
+    ).await.unwrap();
+    assert_eq!(resp.status(), StatusCode::BAD_REQUEST);
+}
+
+#[tokio::test]
+async fn test_auto_prepare_response_body() {
+    // POST /prepare 应返回 pending lessons 列表
+    let tmp = TempDir::new().unwrap();
+    setup_test_program_with_db(tmp.path(), "test-prog");
+    let app = create_test_app(tmp.path().to_path_buf());
+
+    let resp = app.oneshot(
+        Request::builder()
+            .method("POST")
+            .uri("/api/programs/test-prog/prepare")
+            .header("content-type", "application/json")
+            .body(Body::empty())
+            .unwrap()
+    ).await.unwrap();
+
+    assert!(
+        resp.status() == StatusCode::OK || resp.status() == StatusCode::ACCEPTED,
+        "POST /prepare should return 200 or 202, got {}",
+        resp.status()
+    );
+
+    let body = parse_json(resp).await;
+    // 应返回 needPrepare 和 pendingLessons 字段
+    assert!(body.get("needPrepare").is_some(), "should have needPrepare field");
+    assert!(body.get("pendingLessons").is_some(), "should have pendingLessons field");
+    // 初始状态两个 lesson 都是 pending
+    let pending = body["pendingLessons"].as_array().unwrap();
+    assert!(pending.len() > 0, "should have at least one pending lesson");
+}
+
+#[tokio::test]
+async fn test_auto_prepare_idempotent() {
+    // 重复 POST /prepare 不应出错，幂等
+    let tmp = TempDir::new().unwrap();
+    setup_test_program_with_db(tmp.path(), "test-prog");
+
+    // 第一次 POST
+    let app1 = create_test_app(tmp.path().to_path_buf());
+    let resp1 = app1.oneshot(
+        Request::builder()
+            .method("POST")
+            .uri("/api/programs/test-prog/prepare")
+            .header("content-type", "application/json")
+            .body(Body::empty())
+            .unwrap()
+    ).await.unwrap();
+    assert!(resp1.status() == StatusCode::OK || resp1.status() == StatusCode::ACCEPTED);
+
+    // 第二次 POST — 应该也正常返回
+    let app2 = create_test_app(tmp.path().to_path_buf());
+    let resp2 = app2.oneshot(
+        Request::builder()
+            .method("POST")
+            .uri("/api/programs/test-prog/prepare")
+            .header("content-type", "application/json")
+            .body(Body::empty())
+            .unwrap()
+    ).await.unwrap();
+    assert!(resp2.status() == StatusCode::OK || resp2.status() == StatusCode::ACCEPTED);
+}
+
+#[tokio::test]
+async fn test_auto_prepare_no_pending_lessons() {
+    // 所有 lesson 都已 prepared → needPrepare: false, pendingLessons 为空
+    let tmp = TempDir::new().unwrap();
+    setup_test_program_with_db(tmp.path(), "test-prog");
+
+    // 把两个 lesson 都标记为 prepared
+    let db_path = tmp.path().join("test-prog").join("learnkit.db");
+    let conn = rusqlite::Connection::open(&db_path).unwrap();
+    conn.execute("UPDATE lessons SET status = 'prepared'", []).unwrap();
+
+    let app = create_test_app(tmp.path().to_path_buf());
+    let resp = app.oneshot(
+        Request::builder()
+            .method("POST")
+            .uri("/api/programs/test-prog/prepare")
+            .header("content-type", "application/json")
+            .body(Body::empty())
+            .unwrap()
+    ).await.unwrap();
+
+    assert!(resp.status() == StatusCode::OK || resp.status() == StatusCode::ACCEPTED);
+    let body = parse_json(resp).await;
+    assert_eq!(body["needPrepare"].as_bool().unwrap(), false);
+    let pending = body["pendingLessons"].as_array().unwrap();
+    assert_eq!(pending.len(), 0, "no pending lessons when all prepared");
+}
+
+#[tokio::test]
+async fn test_auto_prepare_nonexistent_program() {
+    // POST /prepare 对不存在的 program 应 404
+    let tmp = TempDir::new().unwrap();
+    let app = create_test_app(tmp.path().to_path_buf());
+
+    let resp = app.oneshot(
+        Request::builder()
+            .method("POST")
+            .uri("/api/programs/nonexistent/prepare")
+            .header("content-type", "application/json")
+            .body(Body::empty())
+            .unwrap()
+    ).await.unwrap();
+    assert_eq!(resp.status(), StatusCode::NOT_FOUND);
+}

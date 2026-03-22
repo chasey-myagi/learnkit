@@ -179,3 +179,55 @@ pub async fn prepare_status(
 
     Ok(Json(result?))
 }
+
+/// POST /api/programs/:slug/prepare — trigger a prepare check.
+///
+/// Returns the list of pending lessons and whether preparation is needed.
+/// This is idempotent: calling it multiple times has no additional side effects.
+pub async fn trigger_prepare(
+    State(state): State<Arc<AppState>>,
+    Path(slug): Path<String>,
+) -> Result<impl IntoResponse, AppError> {
+    validate_slug(&slug)?;
+
+    let result = tokio::task::spawn_blocking(move || -> Result<serde_json::Value, AppError> {
+        // Check program directory exists
+        let program_dir = state.learnkit_root.join(&slug);
+        if !program_dir.exists() {
+            return Err(AppError::NotFound(format!("program '{slug}' not found")));
+        }
+
+        match state.open_db(&slug)? {
+            Some(conn) => {
+                let ready_count = crate::db::lessons::count_prepared_unfinished(&conn)?;
+                let need_prepare = ready_count <= 1;
+
+                let pending_lessons = crate::db::lessons::get_pending_lessons(&conn, 5)?;
+                let pending_json: Vec<serde_json::Value> = pending_lessons
+                    .iter()
+                    .map(|l| {
+                        serde_json::json!({
+                            "id": l.id,
+                            "subject": l.subject,
+                            "lesson": l.lesson,
+                            "title": l.title,
+                        })
+                    })
+                    .collect();
+
+                Ok(serde_json::json!({
+                    "needPrepare": need_prepare,
+                    "preparedUnfinished": ready_count,
+                    "pendingLessons": pending_json,
+                }))
+            }
+            None => Err(AppError::NotFound(format!(
+                "program '{slug}' has no database"
+            ))),
+        }
+    })
+    .await
+    .map_err(|e| AppError::Internal(format!("task join error: {e}")))?;
+
+    Ok(Json(result?))
+}

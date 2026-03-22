@@ -128,7 +128,41 @@ async fn main() -> anyhow::Result<()> {
             if let Some(ref dist) = frontend_dist {
                 println!("Serving frontend from: {}", dist.display());
             }
-            let app = server::create_router_with_frontend(state, frontend_dist);
+            let app = server::create_router_with_frontend(state.clone(), frontend_dist);
+
+            // Spawn auto-prepare check timer
+            let state_for_timer = state.clone();
+            tokio::spawn(async move {
+                let mut interval = tokio::time::interval(std::time::Duration::from_secs(60));
+                loop {
+                    interval.tick().await;
+                    // Scan all programs for prepare status
+                    let root = state_for_timer.learnkit_root.clone();
+                    if let Ok(entries) = std::fs::read_dir(&root) {
+                        for entry in entries.flatten() {
+                            if entry.path().is_dir() {
+                                let slug = entry.file_name().to_string_lossy().to_string();
+                                if let Ok(Some(conn)) = state_for_timer.open_db(&slug) {
+                                    if let Ok(ready_count) = db::lessons::count_prepared_unfinished(&conn) {
+                                        if ready_count <= 1 {
+                                            if let Ok(pending) = db::lessons::get_pending_lessons(&conn, 3) {
+                                                if !pending.is_empty() {
+                                                    let ids: Vec<&str> = pending.iter().map(|l| l.id.as_str()).collect();
+                                                    eprintln!(
+                                                        "[learnkit] Auto-prepare: program '{}' needs preparation. Pending: {:?}",
+                                                        slug, ids
+                                                    );
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+
             let addr = std::net::SocketAddr::from(([127, 0, 0, 1], port));
             println!("LearnKit server running on http://{}", addr);
             let listener = tokio::net::TcpListener::bind(addr).await?;

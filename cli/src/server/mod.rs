@@ -36,6 +36,7 @@ pub fn create_router_with_frontend(
         .route("/api/programs/:slug/progress", post(progress::update_progress))
         .route("/api/programs/:slug/qa-history", get(programs::qa_history))
         .route("/api/programs/:slug/prepare-status", get(progress::prepare_status))
+        .route("/api/programs/:slug/prepare", post(progress::trigger_prepare))
         .route("/api/programs/:slug/ask", post(ask::submit_ask))
         .route("/api/programs/:slug/answer/:request_id", get(ask::poll_answer))
         // Static file serving for lesson HTML files
