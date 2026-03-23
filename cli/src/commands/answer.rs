@@ -32,9 +32,13 @@ pub fn write(
     let file_path = answers_dir.join(format!("{}.json", request_id));
     fs::write(&file_path, serde_json::to_string_pretty(&answer_json)?)?;
 
-    // 4. Insert into DB qa_history
-    let conn = crate::db::open(program)?;
-    crate::db::qa::insert_qa(&conn, request_id, lesson, selection, question, answer)?;
+    // 4. Insert into DB qa_history (best-effort: lesson may not exist in DB yet)
+    match crate::db::open(program)
+        .and_then(|conn| crate::db::qa::insert_qa(&conn, request_id, lesson, selection, question, answer))
+    {
+        Ok(_) => {}
+        Err(e) => eprintln!("warning: DB insert skipped: {e}"),
+    }
 
     // 5. Output confirmation
     println!("OK: answer written to {}", file_path.display());
