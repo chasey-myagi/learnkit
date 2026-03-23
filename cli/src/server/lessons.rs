@@ -82,7 +82,10 @@ pub async fn serve_lesson(
     State(state): State<Arc<AppState>>,
     Path((program, subject, lesson)): Path<(String, String, String)>,
 ) -> Result<impl IntoResponse, AppError> {
-    // 1. Validate slugs for safety (prevent path traversal)
+    // 1. Strip .html suffix if present (backward compatibility)
+    let lesson = lesson.strip_suffix(".html").unwrap_or(&lesson).to_string();
+
+    // 2. Validate slugs for safety (prevent path traversal)
     validate_slug(&program)?;
     validate_slug(&subject)?;
     validate_slug(&lesson)?;

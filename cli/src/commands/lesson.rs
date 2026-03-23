@@ -5,6 +5,9 @@ use std::path::PathBuf;
 use crate::config;
 use crate::db;
 
+/// Embedded default template — compiled into the binary so it works from any install path.
+const DEFAULT_TEMPLATE: &str = include_str!("../../templates/_template.html");
+
 /// Build the lesson file path: {program_root}/lessons/{subject}/{lesson}.html
 fn lesson_file_path(program: &str, subject: &str, lesson: &str) -> PathBuf {
     config::program_root(program)
@@ -33,12 +36,22 @@ pub fn write(program: &str, subject: &str, lesson: &str, content_file: &str) -> 
     // 3. Validate content
     validate_content(content)?;
 
-    // 4. Create directory and write file (body only, no template)
+    // 4. Apply template and write file
+    let template = if let Ok(dir) = std::env::var("LEARNKIT_TEMPLATE_DIR") {
+        fs::read_to_string(std::path::Path::new(&dir).join("_template.html"))
+            .unwrap_or_else(|_| DEFAULT_TEMPLATE.to_string())
+    } else {
+        DEFAULT_TEMPLATE.to_string()
+    };
+
+    let title = lesson.replace('-', " ").replace('_', " ");
+    let html = apply_template(&template, content, &title, subject, program, lesson);
+
     let file_path = lesson_file_path(program, subject, lesson);
     if let Some(parent) = file_path.parent() {
         fs::create_dir_all(parent)?;
     }
-    fs::write(&file_path, content)?;
+    fs::write(&file_path, &html)?;
 
     // 5. Update DB
     let conn = db::open(program)?;

@@ -7,21 +7,32 @@
 
 ## 目录
 
+**基础排版**
 1. [基础排版](#基础排版)
 2. [代码相关](#代码相关)
-3. [提示框 Callout](#提示框-callout)
-4. [术语定义](#术语定义)
-5. [测验题](#测验题)
-6. [可展开思考题](#可展开思考题)
-7. [对比卡片](#对比卡片)
-8. [多 Tab 切换](#多-tab-切换)
-9. [步骤条](#步骤条)
-10. [快捷键标记](#快捷键标记)
-11. [文件树](#文件树)
-12. [公式](#公式)
-13. [流程图](#流程图)
-14. [时间线](#时间线)
-15. [图片与说明](#图片与说明)
+
+**内容组件**
+3. [概念提示 Callout](#概念提示-callout)
+4. [重点要点 Key Point](#重点要点-key-point)
+5. [测验题 Quiz](#测验题-quiz)
+6. [对比卡片 Compare](#对比卡片-compare)
+7. [步骤流程 Steps](#步骤流程-steps)
+8. [案例分析 Case Study](#案例分析-case-study)
+9. [术语定义 Definition](#术语定义-definition)
+10. [可展开区域 Expandable](#可展开区域-expandable)
+11. [引用名言 Quote Block](#引用名言-quote-block)
+12. [分隔装饰 Section Divider](#分隔装饰-section-divider)
+
+**已有组件**
+13. [可展开思考题（旧）](#可展开思考题旧)
+14. [对比卡片 VS（旧）](#对比卡片-vs旧)
+15. [多 Tab 切换](#多-tab-切换)
+16. [快捷键标记](#快捷键标记)
+17. [文件树](#文件树)
+18. [公式](#公式)
+19. [流程图](#流程图)
+20. [时间线](#时间线)
+21. [图片与说明](#图片与说明)
 
 ---
 
@@ -76,7 +87,6 @@
   <div class="code-tabs-nav">
     <button class="code-tab active" data-tab="gdscript">GDScript</button>
     <button class="code-tab" data-tab="rust">Rust</button>
-    <button class="code-tab" data-tab="csharp">C#</button>
   </div>
   <div class="code-tab-panel active" data-tab="gdscript">
     <pre><code class="language-gdscript">func _ready():
@@ -87,33 +97,6 @@
     println!("Hello");
 }</code></pre>
   </div>
-  <div class="code-tab-panel" data-tab="csharp">
-    <pre><code class="language-csharp">public override void _Ready() {
-    GD.Print("Hello");
-}</code></pre>
-  </div>
-</div>
-```
-
-### 文件树
-
-展示项目目录结构。
-
-```html
-<div class="file-tree">
-  <div class="file-tree-title">项目结构</div>
-  <pre class="file-tree-content">project/
-├── src/
-│   ├── main.rs
-│   ├── components/
-│   │   ├── player.rs
-│   │   └── enemy.rs
-│   └── systems/
-│       └── movement.rs
-├── assets/
-│   ├── sprites/
-│   └── audio/
-└── Cargo.toml</pre>
 </div>
 ```
 
@@ -132,64 +115,94 @@
 
 ---
 
-## 提示框 Callout
+## 概念提示 Callout
 
-四种类型：`tip`、`warning`、`note`、`important`。
+五种类型，各有不同颜色标记：
+
+| 类型 | class | 颜色 | 场景 |
+|------|-------|------|------|
+| 信息 | `callout-info` | 蓝 #3b82f6 | 核心概念、知识点 |
+| 提示 | `callout-tip` | 绿 #10b981 | 最佳实践、小技巧 |
+| 警告 | `callout-warning` | 橙 #f59e0b | 常见陷阱、注意事项 |
+| 重要 | `callout-important` | 紫 #8b5cf6 | 必须掌握的前置知识 |
+| 备注 | `callout-note` | 灰 | 补充说明、旁注 |
 
 ```html
+<div class="callout callout-info">
+  <div class="callout-title">核心概念</div>
+  <p>MDA 框架将游戏拆解为三个层次...</p>
+</div>
+
 <div class="callout callout-tip">
-  <div class="callout-indicator"></div>
-  <div class="callout-content">
-    <div class="callout-title">提示</div>
-    <p>使用 <code>delta</code> 使移动帧率无关。</p>
-  </div>
+  <div class="callout-title">提示</div>
+  <p>使用 <code>delta</code> 使移动帧率无关。</p>
 </div>
 
 <div class="callout callout-warning">
-  <div class="callout-indicator"></div>
-  <div class="callout-content">
-    <div class="callout-title">注意</div>
-    <p>不要在 <code>_process</code> 中直接修改物理状态。</p>
-  </div>
-</div>
-
-<div class="callout callout-note">
-  <div class="callout-indicator"></div>
-  <div class="callout-content">
-    <div class="callout-title">备注</div>
-    <p>此模式在 Godot 4 中略有不同。</p>
-  </div>
+  <div class="callout-title">注意</div>
+  <p>不要在 <code>_process</code> 中直接修改物理状态。</p>
 </div>
 
 <div class="callout callout-important">
-  <div class="callout-indicator"></div>
-  <div class="callout-content">
-    <div class="callout-title">重要</div>
-    <p>ECS 是 Bevy 的核心架构，必须理解。</p>
-  </div>
+  <div class="callout-title">重要</div>
+  <p>ECS 是 Bevy 的核心架构，必须理解。</p>
+</div>
+
+<div class="callout callout-note">
+  <div class="callout-title">备注</div>
+  <p>此模式在 Godot 4 中略有不同。</p>
 </div>
 ```
 
+**注意：**
+- `callout-title` 内容自定义，不限于"提示""注意"等固定文字
+- 每个 callout 内可包含多个 `<p>`、`<ul>`、`<code>` 等内容
+- 旧模板中 `.callout-indicator` + `.callout-content` 结构仍可用，但推荐使用上述扁平结构
+
 ---
 
-## 术语定义
+## 重点要点 Key Point
 
-关键概念的定义卡片。
+高亮一句话或一段关键知识。左侧有 accent 色竖线标记，背景有轻微渐变。
 
 ```html
-<div class="definition">
-  <div class="definition-term">Entity-Component-System (ECS)</div>
-  <div class="definition-body">
-    <p>一种数据驱动的架构模式，将游戏对象拆分为实体（ID）、组件（数据）和系统（逻辑）三个正交维度，以组合取代继承。</p>
-  </div>
+<div class="key-point">
+  设计者从 Mechanics 出发，而玩家从 Aesthetics 出发感受。
 </div>
 ```
 
+**使用场景：**
+- 每个章节的核心结论
+- 总结性的一句话
+- 需要读者一眼看到的重点
+
+**注意：**
+- 内容应该简短，1-3 句话为佳
+- 一个章节内不要超过 2 个 key-point
+- 不要和 callout 重复使用——callout 是"补充说明"，key-point 是"核心结论"
+
 ---
 
-## 测验题
+## 测验题 Quiz
 
-### 单选题
+### 选择题（推荐简化结构）
+
+```html
+<div class="quiz">
+  <div class="quiz-question">在 MDA 框架中，"紧张刺激"属于哪个层次？</div>
+  <div class="quiz-options">
+    <button class="quiz-option" data-correct="false">Mechanics</button>
+    <button class="quiz-option" data-correct="false">Dynamics</button>
+    <button class="quiz-option" data-correct="true"
+            data-explanation="Aesthetics 描述玩家的主观情感体验。">
+      Aesthetics
+    </button>
+  </div>
+  <div class="quiz-feedback"></div>
+</div>
+```
+
+### 选择题（完整结构，带字母标记）
 
 ```html
 <div class="quiz-block" data-type="single">
@@ -205,52 +218,6 @@
     <button class="quiz-option" data-correct="false" data-explanation="">
       <span class="quiz-option-letter">C</span> Development
     </button>
-    <button class="quiz-option" data-correct="false" data-explanation="">
-      <span class="quiz-option-letter">D</span> Distribution
-    </button>
-  </div>
-  <div class="quiz-feedback"></div>
-</div>
-```
-
-### 多选题
-
-```html
-<div class="quiz-block" data-type="multi">
-  <div class="quiz-header">多选题</div>
-  <p class="quiz-question">以下哪些属于游戏设计模式？（选择所有正确答案）</p>
-  <div class="quiz-options">
-    <button class="quiz-option" data-correct="true">
-      <span class="quiz-option-check"></span> 对象池模式
-    </button>
-    <button class="quiz-option" data-correct="true">
-      <span class="quiz-option-check"></span> 观察者模式
-    </button>
-    <button class="quiz-option" data-correct="false">
-      <span class="quiz-option-check"></span> 瀑布模型
-    </button>
-    <button class="quiz-option" data-correct="true">
-      <span class="quiz-option-check"></span> 状态机模式
-    </button>
-  </div>
-  <button class="quiz-submit">提交答案</button>
-  <div class="quiz-feedback"></div>
-</div>
-```
-
-### 判断题
-
-```html
-<div class="quiz-block" data-type="truefalse">
-  <div class="quiz-header">判断题</div>
-  <p class="quiz-question">在 ECS 架构中，组件（Component）包含行为逻辑。</p>
-  <div class="quiz-options">
-    <button class="quiz-option" data-correct="false" data-explanation="组件只持有数据，行为逻辑由系统（System）处理。">
-      <span class="quiz-option-letter">✓</span> 正确
-    </button>
-    <button class="quiz-option" data-correct="true" data-explanation="组件只持有数据，行为逻辑由系统（System）处理。">
-      <span class="quiz-option-letter">✗</span> 错误
-    </button>
   </div>
   <div class="quiz-feedback"></div>
 </div>
@@ -261,63 +228,223 @@
 ```html
 <div class="quiz-block" data-type="fill">
   <div class="quiz-header">填空题</div>
-  <p class="quiz-question">A* 算法的评估函数 f(n) = g(n) + <input class="quiz-fill-input" data-answer="h(n)" placeholder="?">，其中 g(n) 是实际代价，另一项是<input class="quiz-fill-input" data-answer="启发式估计" placeholder="?">。</p>
+  <p class="quiz-question">A* 算法的评估函数 f(n) = g(n) + <input class="quiz-fill-input" data-answer="h(n)" placeholder="?">。</p>
   <button class="quiz-submit">检查答案</button>
   <div class="quiz-feedback"></div>
 </div>
 ```
 
-### 排序题
+**属性：**
+- `data-correct`：`"true"` 或 `"false"`，标记正确答案
+- `data-explanation`：可选，答题后显示的解释文字
 
-```html
-<div class="quiz-block" data-type="order">
-  <div class="quiz-header">排序题</div>
-  <p class="quiz-question">将渲染管线的阶段按正确顺序排列：</p>
-  <div class="quiz-order-list">
-    <div class="quiz-order-item" data-order="3" draggable="true">
-      <span class="quiz-order-handle">⠿</span> 光栅化
-    </div>
-    <div class="quiz-order-item" data-order="1" draggable="true">
-      <span class="quiz-order-handle">⠿</span> 顶点处理
-    </div>
-    <div class="quiz-order-item" data-order="4" draggable="true">
-      <span class="quiz-order-handle">⠿</span> 片元着色
-    </div>
-    <div class="quiz-order-item" data-order="2" draggable="true">
-      <span class="quiz-order-handle">⠿</span> 图元装配
-    </div>
-  </div>
-  <button class="quiz-submit">检查顺序</button>
-  <div class="quiz-feedback"></div>
-</div>
-```
-
-### 连线匹配题
-
-```html
-<div class="quiz-block" data-type="match">
-  <div class="quiz-header">匹配题</div>
-  <p class="quiz-question">将设计模式与其主要用途连线：</p>
-  <div class="quiz-match">
-    <div class="quiz-match-left">
-      <div class="quiz-match-item" data-match="a">观察者模式</div>
-      <div class="quiz-match-item" data-match="b">对象池</div>
-      <div class="quiz-match-item" data-match="c">命令模式</div>
-    </div>
-    <div class="quiz-match-right">
-      <div class="quiz-match-item" data-match="c">撤销/重做</div>
-      <div class="quiz-match-item" data-match="a">事件解耦</div>
-      <div class="quiz-match-item" data-match="b">减少 GC 压力</div>
-    </div>
-  </div>
-  <button class="quiz-submit">检查匹配</button>
-  <div class="quiz-feedback"></div>
-</div>
-```
+**注意：**
+- `.quiz` 是简化结构，`.quiz-block` 是完整结构，两者 CSS 都在模板中
+- 简化结构更适合快速出题，完整结构支持多种题型（单选、多选、填空、排序、匹配）
+- 每篇教案至少包含 2 道测验题
 
 ---
 
-## 可展开思考题
+## 对比卡片 Compare
+
+两列或三列对比，自动响应布局。每列顶部有不同颜色标记（蓝、紫、绿）。
+
+### 两列对比
+
+```html
+<div class="compare">
+  <div class="compare-item">
+    <div class="compare-title">设计者视角</div>
+    <p>M → D → A</p>
+  </div>
+  <div class="compare-item">
+    <div class="compare-title">玩家视角</div>
+    <p>A → D → M</p>
+  </div>
+</div>
+```
+
+### 三列对比
+
+```html
+<div class="compare">
+  <div class="compare-item">
+    <div class="compare-title">Mechanics</div>
+    <p>规则、系统、数据</p>
+  </div>
+  <div class="compare-item">
+    <div class="compare-title">Dynamics</div>
+    <p>行为、策略、涌现</p>
+  </div>
+  <div class="compare-item">
+    <div class="compare-title">Aesthetics</div>
+    <p>感受、情感、体验</p>
+  </div>
+</div>
+```
+
+**注意：**
+- compare-item 内可包含 `<p>`、`<ul>`、`<ol>` 等内容
+- 移动端自动堆叠为单列
+- 颜色标记按子元素顺序自动分配（第1个蓝，第2个紫，第3个绿）
+
+---
+
+## 步骤流程 Steps
+
+带编号圆和连接线的步骤列表，适合教程操作指引、设计流程。
+
+```html
+<div class="steps">
+  <div class="step">
+    <div class="step-number">1</div>
+    <div class="step-content">
+      <div class="step-title">确定核心体验</div>
+      <p>从 Aesthetics 出发，想清楚你想让玩家感受到什么。</p>
+    </div>
+  </div>
+  <div class="step">
+    <div class="step-number">2</div>
+    <div class="step-content">
+      <div class="step-title">设计动态行为</div>
+      <p>思考什么样的 Dynamics 能产生目标体验。</p>
+    </div>
+  </div>
+  <div class="step">
+    <div class="step-number">3</div>
+    <div class="step-content">
+      <div class="step-title">构建底层机制</div>
+      <p>最后设计支撑动态行为的 Mechanics 规则和系统。</p>
+    </div>
+  </div>
+</div>
+```
+
+**注意：**
+- step-number 手动填写数字
+- step-content 内可嵌套代码块、列表等内容
+- 连接线自动在步骤间绘制（CSS 伪元素实现）
+
+---
+
+## 案例分析 Case Study
+
+带标签和标题的案例卡片，适合分析具体游戏、产品、项目。
+
+```html
+<div class="case-study">
+  <div class="case-study-header">
+    <span class="case-study-label">案例</span>
+    <span class="case-study-title">俄罗斯方块</span>
+  </div>
+  <div class="case-study-body">
+    <p><strong>Mechanics：</strong>方块随机生成、旋转、下落、消行。</p>
+    <p><strong>Dynamics：</strong>速度加快，策略从保守转向冒险。</p>
+    <p><strong>Aesthetics：</strong>"挑战"和"紧张"。</p>
+  </div>
+</div>
+```
+
+**注意：**
+- case-study-label 文字可自定义（"案例""实战""分析"等）
+- case-study-body 内可包含任意内容，包括列表、代码块
+- 每个案例应有明确的分析维度
+
+---
+
+## 术语定义 Definition
+
+使用语义化的 `<dl>` 标签，适合概念密集的章节开头或术语表。
+
+```html
+<dl class="definition">
+  <dt>Mechanics（机制）</dt>
+  <dd>游戏的规则和系统——数据表示、算法、玩家可执行的操作。</dd>
+  <dt>Dynamics（动态）</dt>
+  <dd>机制在运行时产生的行为模式——玩家策略、系统涌现。</dd>
+  <dt>Aesthetics（体验）</dt>
+  <dd>玩家的主观情感体验——乐趣、紧张、好奇。</dd>
+</dl>
+```
+
+**注意：**
+- 每个 `<dt>` 前有紫色圆点装饰
+- `<dd>` 之间有分隔线
+- 也可以使用旧的 `.definition` div 结构（`.definition-term` + `.definition-body`），两种都有 CSS 支持
+
+---
+
+## 可展开区域 Expandable
+
+基于 `<details>` 原生语义，默认折叠，点击展开。
+
+```html
+<details class="expandable">
+  <summary>展开查看详细分析</summary>
+  <div class="expandable-content">
+    <p>详细内容...</p>
+  </div>
+</details>
+```
+
+**使用场景：**
+- 思考题答案
+- 延伸阅读
+- 非核心但有用的补充信息
+- 代码完整实现（摘要只展示关键部分）
+
+**注意：**
+- 模板同时支持 `<details>` 和旧的 `.expandable` + `.expandable-trigger` JS 方案
+- 推荐使用 `<details>` 方案，更轻量且语义正确
+- expandable-content 内可嵌套任意组件
+
+---
+
+## 引用名言 Quote Block
+
+带来源归属的引用，使用语义化的 `<figure>` + `<blockquote>` 结构。
+
+```html
+<figure class="quote-block">
+  <blockquote>游戏设计不是关于规则，而是关于体验。</blockquote>
+  <figcaption>— Jesse Schell, The Art of Game Design</figcaption>
+</figure>
+```
+
+**使用场景：**
+- 行业专家名言
+- 论文/书籍摘要
+- 经典表述
+- 原始资料引用
+
+**注意：**
+- 与普通 `<blockquote>` 不同，这是带来源归属的完整引用
+- 引用文本会显示为斜体大号字
+- figcaption 以"—"开头标注来源
+
+---
+
+## 分隔装饰 Section Divider
+
+章节之间的视觉分隔符，中部有 accent 色渐变。
+
+```html
+<hr class="section-divider">
+```
+
+**使用场景：**
+- 大章节之间的过渡
+- 内容主题切换时的视觉断点
+
+**注意：**
+- 不要过度使用，一篇教案中 2-3 个为宜
+- 普通 `<hr>` 仍可用于较轻的分隔
+
+---
+
+## 可展开思考题（旧）
+
+旧的 JS 驱动方案，仍然可用。
 
 ```html
 <div class="expandable">
@@ -335,9 +462,9 @@
 
 ---
 
-## 对比卡片
+## 对比卡片 VS（旧）
 
-A vs B 双栏对比，适合引擎/技术/方案对比。
+旧的 A vs B 双栏对比，仍然可用。
 
 ```html
 <div class="vs-card">
@@ -346,8 +473,6 @@ A vs B 双栏对比，适合引擎/技术/方案对比。
     <ul>
       <li>节点继承体系</li>
       <li>信号通信</li>
-      <li>GDScript 脚本绑定</li>
-      <li>可视化编辑器</li>
     </ul>
   </div>
   <div class="vs-card-divider">VS</div>
@@ -356,8 +481,6 @@ A vs B 双栏对比，适合引擎/技术/方案对比。
     <ul>
       <li>数据驱动组合</li>
       <li>System 调度</li>
-      <li>Rust 类型安全</li>
-      <li>纯代码定义</li>
     </ul>
   </div>
 </div>
@@ -374,48 +497,12 @@ A vs B 双栏对比，适合引擎/技术/方案对比。
   <div class="content-tabs-nav">
     <button class="content-tab active" data-tab="godot">Godot 中</button>
     <button class="content-tab" data-tab="bevy">Bevy 中</button>
-    <button class="content-tab" data-tab="unity">Unity 中</button>
   </div>
   <div class="content-tab-panel active" data-tab="godot">
     <p>在 Godot 中，节点通过 <code>add_child()</code> 添加到场景树...</p>
   </div>
   <div class="content-tab-panel" data-tab="bevy">
     <p>在 Bevy 中，使用 <code>commands.spawn()</code> 创建实体...</p>
-  </div>
-  <div class="content-tab-panel" data-tab="unity">
-    <p>在 Unity 中，通过 <code>Instantiate()</code> 实例化预制体...</p>
-  </div>
-</div>
-```
-
----
-
-## 步骤条
-
-编号步骤的操作指引，适合教程类内容。
-
-```html
-<div class="steps">
-  <div class="step">
-    <div class="step-number">1</div>
-    <div class="step-content">
-      <div class="step-title">创建项目</div>
-      <p>打开 Godot，点击「新建项目」，选择一个空目录。</p>
-    </div>
-  </div>
-  <div class="step">
-    <div class="step-number">2</div>
-    <div class="step-content">
-      <div class="step-title">添加根节点</div>
-      <p>在场景面板中选择 <code>Node2D</code> 作为根节点。</p>
-    </div>
-  </div>
-  <div class="step">
-    <div class="step-number">3</div>
-    <div class="step-content">
-      <div class="step-title">编写脚本</div>
-      <p>右键根节点，选择「附加脚本」，编写你的第一个 GDScript。</p>
-    </div>
   </div>
 </div>
 ```
@@ -428,67 +515,46 @@ A vs B 双栏对比，适合引擎/技术/方案对比。
 
 ```html
 <p>按 <kbd>Ctrl</kbd> + <kbd>S</kbd> 保存场景。</p>
-<p>使用 <kbd>F5</kbd> 运行项目，<kbd>F6</kbd> 运行当前场景。</p>
-```
-
-复杂快捷键表格：
-
-```html
-<div class="shortcut-table">
-  <table>
-    <thead><tr><th>操作</th><th>快捷键</th></tr></thead>
-    <tbody>
-      <tr><td>运行项目</td><td><kbd>F5</kbd></td></tr>
-      <tr><td>运行当前场景</td><td><kbd>F6</kbd></td></tr>
-      <tr><td>暂停</td><td><kbd>F7</kbd></td></tr>
-      <tr><td>停止</td><td><kbd>F8</kbd></td></tr>
-    </tbody>
-  </table>
-</div>
 ```
 
 ---
 
 ## 文件树
 
-见 [代码相关](#文件树) 部分。
+展示项目目录结构。
+
+```html
+<div class="file-tree">
+  <div class="file-tree-title">项目结构</div>
+  <pre class="file-tree-content">project/
+├── src/
+│   ├── main.rs
+│   └── components/
+└── Cargo.toml</pre>
+</div>
+```
 
 ---
 
 ## 公式
 
-数学公式使用 `formula` 组件。行内用 `formula-inline`。
+数学公式使用 `formula` 组件。
 
-块级公式：
 ```html
 <div class="formula">
-  <div class="formula-content">damage = (ATK × skill_multiplier - DEF × armor_rate) × element_bonus</div>
-  <div class="formula-caption">伤害计算公式（减法型）</div>
+  <div class="formula-content">damage = ATK × multiplier - DEF × armor</div>
+  <div class="formula-caption">伤害计算公式</div>
 </div>
 ```
 
 行内公式：
 ```html
-<p>经验曲线通常采用 <span class="formula-inline">XP(n) = base × n<sup>exponent</sup></span> 的指数模型。</p>
-```
-
-含变量解释的公式：
-```html
-<div class="formula">
-  <div class="formula-content">f(n) = g(n) + h(n)</div>
-  <div class="formula-vars">
-    <div class="formula-var"><code>f(n)</code> — 节点 n 的总评估代价</div>
-    <div class="formula-var"><code>g(n)</code> — 从起点到 n 的实际代价</div>
-    <div class="formula-var"><code>h(n)</code> — 从 n 到终点的启发式估计</div>
-  </div>
-</div>
+<p>经验曲线采用 <span class="formula-inline">XP(n) = base × n<sup>exp</sup></span> 的指数模型。</p>
 ```
 
 ---
 
 ## 流程图
-
-使用 ASCII 或 HTML 结构的流程图。
 
 ### ASCII 流程图
 
@@ -497,9 +563,7 @@ A vs B 双栏对比，适合引擎/技术/方案对比。
   <div class="diagram-title">游戏主循环</div>
   <pre class="diagram-content">┌─────────┐     ┌──────────┐     ┌────────┐
 │  Input  │ ──▶ │  Update  │ ──▶ │ Render │
-└─────────┘     └──────────┘     └────────┘
-     ▲                                │
-     └────────────────────────────────┘</pre>
+└─────────┘     └──────────┘     └────────┘</pre>
 </div>
 ```
 
@@ -512,18 +576,6 @@ A vs B 双栏对比，适合引擎/技术/方案对比。
     <div class="flowchart-node">巡逻</div>
     <div class="flowchart-arrow">发现玩家 →</div>
     <div class="flowchart-node flowchart-node-active">追击</div>
-    <div class="flowchart-arrow">进入攻击范围 →</div>
-    <div class="flowchart-node">攻击</div>
-  </div>
-  <div class="flowchart-nodes">
-    <div class="flowchart-arrow-down">↑ 丢失目标</div>
-    <div class="flowchart-spacer"></div>
-    <div class="flowchart-arrow-down">↓ HP &lt; 30%</div>
-  </div>
-  <div class="flowchart-nodes">
-    <div class="flowchart-spacer"></div>
-    <div class="flowchart-spacer"></div>
-    <div class="flowchart-node flowchart-node-danger">逃跑</div>
   </div>
 </div>
 ```
@@ -532,8 +584,6 @@ A vs B 双栏对比，适合引擎/技术/方案对比。
 
 ## 时间线
 
-历史沿革、版本演进、开发阶段等。
-
 ```html
 <div class="timeline">
   <div class="timeline-item">
@@ -541,23 +591,7 @@ A vs B 双栏对比，适合引擎/技术/方案对比。
     <div class="timeline-content">
       <div class="timeline-date">2014</div>
       <div class="timeline-title">Godot 1.0 发布</div>
-      <p>首个公开版本，基于自研渲染器。</p>
-    </div>
-  </div>
-  <div class="timeline-item">
-    <div class="timeline-marker"></div>
-    <div class="timeline-content">
-      <div class="timeline-date">2018</div>
-      <div class="timeline-title">Godot 3.0</div>
-      <p>引入 PBR 渲染、GDNative、C# 支持。</p>
-    </div>
-  </div>
-  <div class="timeline-item">
-    <div class="timeline-marker"></div>
-    <div class="timeline-content">
-      <div class="timeline-date">2023</div>
-      <div class="timeline-title">Godot 4.0</div>
-      <p>全新 Vulkan 渲染器、GDScript 2.0、大幅 API 重构。</p>
+      <p>首个公开版本。</p>
     </div>
   </div>
 </div>
@@ -567,12 +601,10 @@ A vs B 双栏对比，适合引擎/技术/方案对比。
 
 ## 图片与说明
 
-带标题的图片。
-
 ```html
 <figure class="figure">
   <img src="path/to/image.png" alt="描述文字">
-  <figcaption>图 1：MDA 框架的三层模型示意图</figcaption>
+  <figcaption>图 1：MDA 框架示意图</figcaption>
 </figure>
 ```
 
@@ -586,3 +618,6 @@ A vs B 双栏对比，适合引擎/技术/方案对比。
 4. **测验题覆盖核心概念**：测验题应检验关键知识点，而非细枝末节
 5. **组件可嵌套**：例如步骤条内可以包含代码块，思考题内可以包含列表
 6. **保持克制**：不要在一个 section 内堆砌过多组件，保持阅读节奏
+7. **key-point vs callout**：key-point 用于核心结论（一个章节最多 2 个），callout 用于补充说明
+8. **quote-block vs blockquote**：quote-block 是带来源的正式引用，blockquote 是普通引用/强调
+9. **section-divider 适度**：一篇教案中 2-3 个为宜，用于大主题切换

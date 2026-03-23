@@ -1,0 +1,1144 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LearnKit — 教案组件展示</title>
+<style>
+  /* ══════════════════════════════════════════════
+     Design Tokens (from _template.html)
+     ══════════════════════════════════════════════ */
+  :root {
+    --bg: #0a0a12;
+    --card: #141425;
+    --border: #1e1e3a;
+    --text: #e0e0e8;
+    --text-secondary: #8a8ab4;
+    --accent: #6c5ce7;
+    --accent-light: #a29bfe;
+    --accent-dim: rgba(108, 92, 231, 0.12);
+    --accent-subtle: rgba(108, 92, 231, 0.06);
+    --surface: #12121f;
+
+    --completed: #10ac84;
+    --in-progress: #feca57;
+    --prepared: #48dbfb;
+    --pending: #8a8ab4;
+    --failed: #ff6b6b;
+
+    --font: system-ui, -apple-system, 'Segoe UI', sans-serif;
+    --mono: 'SF Mono', 'Fira Code', 'Cascadia Code', 'JetBrains Mono', monospace;
+    --radius: 12px;
+    --radius-sm: 6px;
+    --radius-lg: 16px;
+
+    --content-max: 720px;
+
+    --shadow-sm: 0 1px 3px rgba(0,0,0,0.2);
+    --shadow-md: 0 4px 16px rgba(0,0,0,0.25);
+    --shadow-lg: 0 8px 32px rgba(0,0,0,0.35);
+  }
+
+  [data-theme="light"] {
+    --bg: #f6f5fb;
+    --card: #ffffff;
+    --border: #ddd8ec;
+    --text: #1a1a2e;
+    --text-secondary: #6e6a8a;
+    --accent-dim: rgba(108, 92, 231, 0.08);
+    --accent-subtle: rgba(108, 92, 231, 0.04);
+    --surface: #eeedf6;
+
+    --shadow-sm: 0 1px 3px rgba(0,0,0,0.06);
+    --shadow-md: 0 4px 16px rgba(0,0,0,0.08);
+    --shadow-lg: 0 8px 32px rgba(0,0,0,0.12);
+  }
+
+  /* ══════════════════════════════════════════════
+     Reset & Base
+     ══════════════════════════════════════════════ */
+  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: var(--font);
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.7;
+    transition: background 200ms ease, color 200ms ease;
+    min-height: 100vh;
+  }
+
+  a { color: var(--accent); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+
+  ::selection {
+    background: rgba(108, 92, 231, 0.3);
+    color: var(--text);
+  }
+
+  /* ══════════════════════════════════════════════
+     Page Layout
+     ══════════════════════════════════════════════ */
+  .page-header {
+    border-bottom: 1px solid var(--border);
+    padding: 32px 24px;
+    transition: border-color 200ms ease;
+  }
+  .page-header-inner {
+    max-width: 880px;
+    margin: 0 auto;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+  }
+  .page-header h1 {
+    font-size: 22px;
+    font-weight: 700;
+    letter-spacing: -0.5px;
+  }
+  .page-header p {
+    font-size: 14px;
+    color: var(--text-secondary);
+    margin-top: 4px;
+  }
+
+  .theme-toggle {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    color: var(--text-secondary);
+    font-size: 13px;
+    height: 32px;
+    padding: 0 12px;
+    border-radius: 16px;
+    cursor: pointer;
+    font-family: var(--font);
+    transition: border-color 200ms ease, color 200ms ease;
+    flex-shrink: 0;
+    margin-top: 4px;
+  }
+  .theme-toggle:hover {
+    border-color: var(--text-secondary);
+    color: var(--text);
+  }
+
+  .page-body {
+    max-width: 880px;
+    margin: 0 auto;
+    padding: 0 24px 80px;
+  }
+
+  /* ══════════════════════════════════════════════
+     Component Section
+     ══════════════════════════════════════════════ */
+  .comp-section {
+    margin-top: 48px;
+  }
+  .comp-section-title {
+    font-size: 16px;
+    font-weight: 700;
+    letter-spacing: -0.3px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    transition: border-color 200ms ease;
+  }
+  .comp-section-title .comp-num {
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--accent);
+    background: var(--accent-dim);
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .comp-desc {
+    font-size: 13px;
+    color: var(--text-secondary);
+    margin-bottom: 16px;
+    line-height: 1.6;
+  }
+
+  /* Preview + Code */
+  .comp-preview {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius) var(--radius) 0 0;
+    padding: 28px 24px;
+    transition: background 200ms ease, border-color 200ms ease;
+  }
+  .comp-code {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-top: none;
+    border-radius: 0 0 var(--radius) var(--radius);
+    overflow: hidden;
+    transition: background 200ms ease, border-color 200ms ease;
+  }
+  .comp-code-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 14px;
+    border-bottom: 1px solid var(--border);
+    transition: border-color 200ms ease;
+  }
+  .comp-code-label {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+  }
+  .comp-code-copy {
+    font-size: 11px;
+    color: var(--text-secondary);
+    background: none;
+    border: 1px solid var(--border);
+    padding: 3px 10px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-family: var(--font);
+    transition: color 200ms ease, border-color 200ms ease;
+  }
+  .comp-code-copy:hover {
+    color: var(--text);
+    border-color: var(--text-secondary);
+  }
+  .comp-code-copy.copied {
+    color: var(--completed);
+    border-color: var(--completed);
+  }
+  .comp-code pre {
+    padding: 14px 16px;
+    overflow-x: auto;
+    font-family: var(--mono);
+    font-size: 12px;
+    line-height: 1.6;
+    color: var(--text-secondary);
+    tab-size: 2;
+  }
+  .comp-code code {
+    font-family: inherit;
+  }
+
+  /* ══════════════════════════════════════════════
+     Component CSS (mirrors _template.html)
+     ══════════════════════════════════════════════ */
+
+  /* ── Callout ── */
+  .comp-preview .callout {
+    display: flex;
+    gap: 0;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--accent);
+    padding: 14px 18px;
+    margin: 12px 0;
+    border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+    font-size: 14px;
+    line-height: 1.7;
+    transition: background 200ms ease, border-color 200ms ease;
+    flex-direction: column;
+  }
+  .comp-preview .callout:first-child { margin-top: 0; }
+  .comp-preview .callout:last-child { margin-bottom: 0; }
+  .comp-preview .callout p { margin-bottom: 6px; font-size: 14px; }
+  .comp-preview .callout p:last-child { margin-bottom: 0; }
+  .comp-preview .callout-title {
+    font-weight: 600;
+    font-size: 13px;
+    margin-bottom: 6px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .comp-preview .callout-info { border-left-color: #3b82f6; }
+  .comp-preview .callout-info .callout-title { color: #3b82f6; }
+  .comp-preview .callout-tip { border-left-color: #10b981; }
+  .comp-preview .callout-tip .callout-title { color: #10b981; }
+  .comp-preview .callout-warning { border-left-color: #f59e0b; }
+  .comp-preview .callout-warning .callout-title { color: #f59e0b; }
+  .comp-preview .callout-important { border-left-color: #8b5cf6; }
+  .comp-preview .callout-important .callout-title { color: #8b5cf6; }
+
+  /* ── Key Point ── */
+  .comp-preview .key-point {
+    position: relative;
+    background: linear-gradient(135deg, var(--accent-dim), var(--accent-subtle));
+    border: 1px solid rgba(108, 92, 231, 0.18);
+    border-radius: var(--radius);
+    padding: 18px 22px;
+    margin: 12px 0;
+    font-size: 15px;
+    font-weight: 500;
+    line-height: 1.7;
+    transition: background 200ms ease, border-color 200ms ease;
+  }
+  .comp-preview .key-point::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 14px;
+    bottom: 14px;
+    width: 3px;
+    background: var(--accent);
+    border-radius: 2px;
+  }
+
+  /* ── Quiz ── */
+  .comp-preview .quiz {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 24px;
+    transition: background 200ms ease, border-color 200ms ease;
+  }
+  .comp-preview .quiz-question {
+    font-size: 15px;
+    font-weight: 500;
+    margin-bottom: 16px;
+    line-height: 1.7;
+  }
+  .comp-preview .quiz-options {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .comp-preview .quiz-option {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 16px;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    font-size: 14px;
+    font-family: var(--font);
+    color: var(--text);
+    text-align: left;
+    transition: border-color 200ms ease, background 200ms ease;
+  }
+  .comp-preview .quiz-option:hover:not(.answered) {
+    border-color: var(--accent);
+    background: rgba(108, 92, 231, 0.06);
+  }
+  .comp-preview .quiz-option.correct {
+    border-color: var(--completed);
+    background: rgba(16, 172, 132, 0.1);
+  }
+  .comp-preview .quiz-option.wrong {
+    border-color: var(--failed);
+    background: rgba(255, 107, 107, 0.08);
+  }
+  .comp-preview .quiz-option.answered { cursor: default; opacity: 0.65; }
+  .comp-preview .quiz-option.answered.correct,
+  .comp-preview .quiz-option.answered.wrong { opacity: 1; }
+  .comp-preview .quiz-feedback {
+    margin-top: 14px;
+    font-size: 14px;
+    line-height: 1.6;
+    color: var(--text-secondary);
+  }
+  .comp-preview .quiz-feedback:empty { display: none; }
+
+  /* ── Compare ── */
+  .comp-preview .compare {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 12px;
+  }
+  .comp-preview .compare-item {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 20px;
+    transition: background 200ms ease, border-color 200ms ease;
+  }
+  .comp-preview .compare-item:first-child { border-top: 3px solid #3b82f6; }
+  .comp-preview .compare-item:nth-child(2) { border-top: 3px solid #8b5cf6; }
+  .comp-preview .compare-item:nth-child(3) { border-top: 3px solid #10b981; }
+  .comp-preview .compare-title {
+    font-size: 13px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--text-secondary);
+    margin-bottom: 10px;
+  }
+  .comp-preview .compare-item p { font-size: 14px; margin: 0; }
+  .comp-preview .compare-item ul { font-size: 14px; margin: 6px 0 0 18px; list-style: disc; }
+  .comp-preview .compare-item li { margin-bottom: 4px; line-height: 1.6; }
+
+  /* ── Steps ── */
+  .comp-preview .steps {
+    display: flex;
+    flex-direction: column;
+  }
+  .comp-preview .step {
+    display: flex;
+    gap: 16px;
+    padding: 16px 0;
+    position: relative;
+  }
+  .comp-preview .step:first-child { padding-top: 0; }
+  .comp-preview .step:last-child { padding-bottom: 0; }
+  .comp-preview .step:not(:last-child)::after {
+    content: '';
+    position: absolute;
+    left: 15px;
+    top: 48px;
+    bottom: 0;
+    width: 1px;
+    background: var(--border);
+  }
+  .comp-preview .step:first-child:not(:last-child)::after {
+    top: 32px;
+  }
+  .comp-preview .step-number {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: var(--accent);
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 13px;
+    font-weight: 700;
+    flex-shrink: 0;
+    position: relative;
+    z-index: 1;
+  }
+  .comp-preview .step-content { flex: 1; min-width: 0; padding-top: 4px; }
+  .comp-preview .step-title {
+    font-size: 15px;
+    font-weight: 600;
+    margin-bottom: 6px;
+    line-height: 1.4;
+  }
+  .comp-preview .step-content p {
+    font-size: 14px;
+    line-height: 1.7;
+    margin: 0;
+    color: var(--text-secondary);
+  }
+
+  /* ── Case Study ── */
+  .comp-preview .case-study {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+    transition: background 200ms ease, border-color 200ms ease;
+  }
+  .comp-preview .case-study-header {
+    background: var(--card);
+    padding: 12px 18px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    transition: background 200ms ease, border-color 200ms ease;
+  }
+  .comp-preview .case-study-label {
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: #fff;
+    background: var(--accent);
+    padding: 2px 8px;
+    border-radius: 4px;
+    flex-shrink: 0;
+  }
+  .comp-preview .case-study-title {
+    font-size: 14px;
+    font-weight: 600;
+  }
+  .comp-preview .case-study-body {
+    padding: 16px 18px;
+    font-size: 14px;
+    line-height: 1.7;
+  }
+  .comp-preview .case-study-body p { margin: 0 0 8px; }
+  .comp-preview .case-study-body p:last-child { margin-bottom: 0; }
+
+  /* ── Definition ── */
+  .comp-preview .definition {
+    list-style: none;
+  }
+  .comp-preview .definition dt {
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--accent-light);
+    margin-bottom: 4px;
+    padding-left: 14px;
+    position: relative;
+  }
+  .comp-preview .definition dt::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 4px;
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--accent);
+  }
+  .comp-preview .definition dd {
+    font-size: 14px;
+    line-height: 1.7;
+    color: var(--text-secondary);
+    margin: 0 0 16px 14px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid var(--border);
+  }
+  .comp-preview .definition dd:last-of-type {
+    border-bottom: none;
+    margin-bottom: 0;
+    padding-bottom: 0;
+  }
+
+  /* ── Expandable ── */
+  .comp-preview .expandable {
+    border: none;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+    transition: background 200ms ease, border-color 200ms ease;
+  }
+  .comp-preview .expandable summary {
+    padding: 14px 18px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    list-style: none;
+    transition: color 200ms ease;
+    user-select: none;
+  }
+  .comp-preview .expandable summary::-webkit-details-marker { display: none; }
+  .comp-preview .expandable summary::after {
+    content: '\25BC';
+    font-size: 10px;
+    color: var(--text-secondary);
+    transition: transform 250ms cubic-bezier(0.22, 1, 0.36, 1);
+    flex-shrink: 0;
+  }
+  .comp-preview .expandable[open] summary::after {
+    transform: rotate(180deg);
+  }
+  .comp-preview .expandable summary:hover { color: var(--accent); }
+  .comp-preview .expandable-content {
+    padding: 0 18px 16px;
+    font-size: 14px;
+    line-height: 1.7;
+    color: var(--text-secondary);
+  }
+  .comp-preview .expandable-content p { margin: 0; }
+
+  /* ── Quote Block ── */
+  .comp-preview .quote-block {
+    margin: 0;
+    padding: 0;
+  }
+  .comp-preview .quote-block blockquote {
+    border-left: 3px solid var(--accent);
+    background: var(--surface);
+    padding: 20px 22px;
+    margin: 0;
+    border-radius: 0 var(--radius) var(--radius) 0;
+    font-size: 16px;
+    font-style: italic;
+    line-height: 1.8;
+    color: var(--text);
+  }
+  .comp-preview .quote-block figcaption {
+    font-size: 13px;
+    color: var(--text-secondary);
+    margin-top: 8px;
+    padding-left: 18px;
+    font-style: normal;
+  }
+
+  /* ── Section Divider ── */
+  .comp-preview .section-divider {
+    border: none;
+    margin: 12px auto;
+    height: 1px;
+    background: linear-gradient(
+      90deg,
+      transparent,
+      var(--border) 20%,
+      var(--accent) 50%,
+      var(--border) 80%,
+      transparent
+    );
+    max-width: 280px;
+  }
+
+  /* ══════════════════════════════════════════════
+     Table of Contents (sidebar)
+     ══════════════════════════════════════════════ */
+  .page-layout {
+    max-width: 1100px;
+    margin: 0 auto;
+    display: flex;
+    gap: 0;
+  }
+  .toc-sidebar {
+    width: 200px;
+    flex-shrink: 0;
+    position: sticky;
+    top: 24px;
+    align-self: flex-start;
+    padding: 24px 0 24px 24px;
+    display: none;
+  }
+  @media (min-width: 960px) {
+    .toc-sidebar { display: block; }
+    .page-body { flex: 1; min-width: 0; }
+  }
+  .toc-sidebar nav {
+    font-size: 12px;
+    line-height: 1.4;
+  }
+  .toc-sidebar a {
+    display: block;
+    padding: 5px 12px;
+    color: var(--text-secondary);
+    border-left: 2px solid transparent;
+    text-decoration: none;
+    transition: color 200ms ease, border-color 200ms ease;
+  }
+  .toc-sidebar a:hover {
+    color: var(--text);
+    text-decoration: none;
+  }
+  .toc-sidebar a.active {
+    color: var(--accent-light);
+    border-left-color: var(--accent);
+  }
+
+  /* ══════════════════════════════════════════════
+     Responsive
+     ══════════════════════════════════════════════ */
+  @media (max-width: 640px) {
+    .page-header-inner { flex-direction: column; gap: 12px; }
+    .comp-preview { padding: 20px 16px; }
+    .comp-preview .compare { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<header class="page-header">
+  <div class="page-header-inner">
+    <div>
+      <h1>LearnKit 教案组件</h1>
+      <p>10 个预置内容组件，用于构建结构化的交互式教案</p>
+    </div>
+    <button class="theme-toggle" id="themeToggle"></button>
+  </div>
+</header>
+
+<div class="page-layout">
+  <aside class="toc-sidebar">
+    <nav id="toc">
+      <a href="#callout">1. 概念提示</a>
+      <a href="#key-point">2. 重点要点</a>
+      <a href="#quiz">3. 测验题</a>
+      <a href="#compare">4. 对比卡片</a>
+      <a href="#steps">5. 步骤流程</a>
+      <a href="#case-study">6. 案例分析</a>
+      <a href="#definition">7. 术语定义</a>
+      <a href="#expandable">8. 可展开区域</a>
+      <a href="#quote-block">9. 引用名言</a>
+      <a href="#section-divider">10. 分隔装饰</a>
+    </nav>
+  </aside>
+
+  <main class="page-body">
+
+    <!-- ═══════════════════════════════════════════
+         1. Callout
+         ═══════════════════════════════════════════ -->
+    <section class="comp-section" id="callout">
+      <div class="comp-section-title">
+        <span class="comp-num">01</span>概念提示 .callout
+      </div>
+      <p class="comp-desc">四种变体：info（蓝）、tip（绿）、warning（橙）、important（紫）。用于强调概念、提醒注意事项。</p>
+
+      <div class="comp-preview">
+        <div class="callout callout-info">
+          <div class="callout-title">核心概念</div>
+          <p>MDA 框架将游戏拆解为三个层次：Mechanics（机制）、Dynamics（动态）和 Aesthetics（体验）。</p>
+        </div>
+        <div class="callout callout-tip">
+          <div class="callout-title">提示</div>
+          <p>使用 <code style="font-family:var(--mono);font-size:12px;background:var(--card);border:1px solid var(--border);padding:1px 5px;border-radius:4px;">delta</code> 参数可以让移动逻辑与帧率无关。</p>
+        </div>
+        <div class="callout callout-warning">
+          <div class="callout-title">注意</div>
+          <p>不要在游戏循环外修改物理状态，否则可能导致不可预期的行为。</p>
+        </div>
+        <div class="callout callout-important">
+          <div class="callout-title">重要</div>
+          <p>ECS 是 Bevy 引擎的核心架构，后续所有章节都基于此构建。</p>
+        </div>
+      </div>
+      <div class="comp-code">
+        <div class="comp-code-header">
+          <span class="comp-code-label">HTML</span>
+          <button class="comp-code-copy" data-target="code-callout">Copy</button>
+        </div>
+        <pre id="code-callout"><code>&lt;div class="callout callout-info"&gt;
+  &lt;div class="callout-title"&gt;核心概念&lt;/div&gt;
+  &lt;p&gt;MDA 框架将游戏拆解为三个层次...&lt;/p&gt;
+&lt;/div&gt;
+
+&lt;!-- 变体：callout-info / callout-tip / callout-warning / callout-important --&gt;</code></pre>
+      </div>
+    </section>
+
+    <!-- ═══════════════════════════════════════════
+         2. Key Point
+         ═══════════════════════════════════════════ -->
+    <section class="comp-section" id="key-point">
+      <div class="comp-section-title">
+        <span class="comp-num">02</span>重点要点 .key-point
+      </div>
+      <p class="comp-desc">高亮一句话或一段关键知识。用于每个章节的核心结论，让读者一眼抓住重点。</p>
+
+      <div class="comp-preview">
+        <div class="key-point">
+          设计者从 Mechanics 出发思考，而玩家从 Aesthetics 出发感受。这种视角差异是 MDA 框架最核心的洞察。
+        </div>
+      </div>
+      <div class="comp-code">
+        <div class="comp-code-header">
+          <span class="comp-code-label">HTML</span>
+          <button class="comp-code-copy" data-target="code-keypoint">Copy</button>
+        </div>
+        <pre id="code-keypoint"><code>&lt;div class="key-point"&gt;
+  设计者从 Mechanics 出发思考，而玩家从 Aesthetics 出发感受。
+&lt;/div&gt;</code></pre>
+      </div>
+    </section>
+
+    <!-- ═══════════════════════════════════════════
+         3. Quiz
+         ═══════════════════════════════════════════ -->
+    <section class="comp-section" id="quiz">
+      <div class="comp-section-title">
+        <span class="comp-num">03</span>测验题 .quiz
+      </div>
+      <p class="comp-desc">选择题，点击选项即时反馈。用于章节末尾检验学习效果。</p>
+
+      <div class="comp-preview">
+        <div class="quiz">
+          <div class="quiz-question">在 MDA 框架中，"紧张刺激"属于哪个层次？</div>
+          <div class="quiz-options">
+            <button class="quiz-option" data-correct="false">Mechanics</button>
+            <button class="quiz-option" data-correct="false">Dynamics</button>
+            <button class="quiz-option" data-correct="true" data-explanation="Aesthetics 描述玩家的主观情感体验，如紧张、愉悦、好奇等。">Aesthetics</button>
+          </div>
+          <div class="quiz-feedback"></div>
+        </div>
+      </div>
+      <div class="comp-code">
+        <div class="comp-code-header">
+          <span class="comp-code-label">HTML</span>
+          <button class="comp-code-copy" data-target="code-quiz">Copy</button>
+        </div>
+        <pre id="code-quiz"><code>&lt;div class="quiz"&gt;
+  &lt;div class="quiz-question"&gt;在 MDA 框架中，"紧张刺激"属于哪个层次？&lt;/div&gt;
+  &lt;div class="quiz-options"&gt;
+    &lt;button class="quiz-option" data-correct="false"&gt;Mechanics&lt;/button&gt;
+    &lt;button class="quiz-option" data-correct="false"&gt;Dynamics&lt;/button&gt;
+    &lt;button class="quiz-option" data-correct="true"
+            data-explanation="Aesthetics 描述玩家的主观情感体验。"&gt;
+      Aesthetics
+    &lt;/button&gt;
+  &lt;/div&gt;
+  &lt;div class="quiz-feedback"&gt;&lt;/div&gt;
+&lt;/div&gt;</code></pre>
+      </div>
+    </section>
+
+    <!-- ═══════════════════════════════════════════
+         4. Compare
+         ═══════════════════════════════════════════ -->
+    <section class="comp-section" id="compare">
+      <div class="comp-section-title">
+        <span class="comp-num">04</span>对比卡片 .compare
+      </div>
+      <p class="comp-desc">两列或三列对比，适合概念对照、方案比较。自动根据列数分配颜色标记。</p>
+
+      <div class="comp-preview">
+        <div class="compare">
+          <div class="compare-item">
+            <div class="compare-title">设计者视角</div>
+            <p>M → D → A</p>
+            <ul>
+              <li>从规则出发</li>
+              <li>构建系统</li>
+              <li>期望产生体验</li>
+            </ul>
+          </div>
+          <div class="compare-item">
+            <div class="compare-title">玩家视角</div>
+            <p>A → D → M</p>
+            <ul>
+              <li>从感受出发</li>
+              <li>观察行为</li>
+              <li>推测规则</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+      <div class="comp-code">
+        <div class="comp-code-header">
+          <span class="comp-code-label">HTML</span>
+          <button class="comp-code-copy" data-target="code-compare">Copy</button>
+        </div>
+        <pre id="code-compare"><code>&lt;div class="compare"&gt;
+  &lt;div class="compare-item"&gt;
+    &lt;div class="compare-title"&gt;设计者视角&lt;/div&gt;
+    &lt;p&gt;M → D → A&lt;/p&gt;
+  &lt;/div&gt;
+  &lt;div class="compare-item"&gt;
+    &lt;div class="compare-title"&gt;玩家视角&lt;/div&gt;
+    &lt;p&gt;A → D → M&lt;/p&gt;
+  &lt;/div&gt;
+&lt;/div&gt;</code></pre>
+      </div>
+    </section>
+
+    <!-- ═══════════════════════════════════════════
+         5. Steps
+         ═══════════════════════════════════════════ -->
+    <section class="comp-section" id="steps">
+      <div class="comp-section-title">
+        <span class="comp-num">05</span>步骤流程 .steps
+      </div>
+      <p class="comp-desc">带编号和连接线的步骤，适合教程操作指引、设计流程。</p>
+
+      <div class="comp-preview">
+        <div class="steps">
+          <div class="step">
+            <div class="step-number">1</div>
+            <div class="step-content">
+              <div class="step-title">确定核心体验</div>
+              <p>从 Aesthetics 出发，想清楚你想让玩家感受到什么。</p>
+            </div>
+          </div>
+          <div class="step">
+            <div class="step-number">2</div>
+            <div class="step-content">
+              <div class="step-title">设计动态行为</div>
+              <p>思考什么样的 Dynamics 能产生目标体验。</p>
+            </div>
+          </div>
+          <div class="step">
+            <div class="step-number">3</div>
+            <div class="step-content">
+              <div class="step-title">构建底层机制</div>
+              <p>最后设计支撑动态行为的 Mechanics 规则和系统。</p>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="comp-code">
+        <div class="comp-code-header">
+          <span class="comp-code-label">HTML</span>
+          <button class="comp-code-copy" data-target="code-steps">Copy</button>
+        </div>
+        <pre id="code-steps"><code>&lt;div class="steps"&gt;
+  &lt;div class="step"&gt;
+    &lt;div class="step-number"&gt;1&lt;/div&gt;
+    &lt;div class="step-content"&gt;
+      &lt;div class="step-title"&gt;确定核心体验&lt;/div&gt;
+      &lt;p&gt;从 Aesthetics 出发，想清楚你想让玩家感受到什么。&lt;/p&gt;
+    &lt;/div&gt;
+  &lt;/div&gt;
+  &lt;div class="step"&gt;
+    &lt;div class="step-number"&gt;2&lt;/div&gt;
+    &lt;div class="step-content"&gt;
+      &lt;div class="step-title"&gt;设计动态行为&lt;/div&gt;
+      &lt;p&gt;思考什么样的 Dynamics 能产生目标体验。&lt;/p&gt;
+    &lt;/div&gt;
+  &lt;/div&gt;
+&lt;/div&gt;</code></pre>
+      </div>
+    </section>
+
+    <!-- ═══════════════════════════════════════════
+         6. Case Study
+         ═══════════════════════════════════════════ -->
+    <section class="comp-section" id="case-study">
+      <div class="comp-section-title">
+        <span class="comp-num">06</span>案例分析 .case-study
+      </div>
+      <p class="comp-desc">带标签和标题的案例卡片，用于分析具体游戏、项目或产品的设计。</p>
+
+      <div class="comp-preview">
+        <div class="case-study">
+          <div class="case-study-header">
+            <span class="case-study-label">案例</span>
+            <span class="case-study-title">俄罗斯方块</span>
+          </div>
+          <div class="case-study-body">
+            <p><strong>Mechanics：</strong>方块随机生成、旋转、下落、消行。</p>
+            <p><strong>Dynamics：</strong>随着速度加快，玩家被迫做出更快的决策，堆叠策略从保守转向冒险。</p>
+            <p><strong>Aesthetics：</strong>"挑战"和"紧张"——永远在崩溃边缘寻找秩序。</p>
+          </div>
+        </div>
+      </div>
+      <div class="comp-code">
+        <div class="comp-code-header">
+          <span class="comp-code-label">HTML</span>
+          <button class="comp-code-copy" data-target="code-case">Copy</button>
+        </div>
+        <pre id="code-case"><code>&lt;div class="case-study"&gt;
+  &lt;div class="case-study-header"&gt;
+    &lt;span class="case-study-label"&gt;案例&lt;/span&gt;
+    &lt;span class="case-study-title"&gt;俄罗斯方块&lt;/span&gt;
+  &lt;/div&gt;
+  &lt;div class="case-study-body"&gt;
+    &lt;p&gt;分析内容...&lt;/p&gt;
+  &lt;/div&gt;
+&lt;/div&gt;</code></pre>
+      </div>
+    </section>
+
+    <!-- ═══════════════════════════════════════════
+         7. Definition
+         ═══════════════════════════════════════════ -->
+    <section class="comp-section" id="definition">
+      <div class="comp-section-title">
+        <span class="comp-num">07</span>术语定义 .definition
+      </div>
+      <p class="comp-desc">使用语义化的 &lt;dl&gt; 标签定义术语，适合概念密集的章节。</p>
+
+      <div class="comp-preview">
+        <dl class="definition">
+          <dt>Mechanics（机制）</dt>
+          <dd>游戏的规则和系统——数据表示、算法、玩家可执行的操作。</dd>
+          <dt>Dynamics（动态）</dt>
+          <dd>机制在运行时产生的行为模式——玩家策略、系统涌现、博弈均衡。</dd>
+          <dt>Aesthetics（体验）</dt>
+          <dd>玩家的主观情感体验——乐趣、紧张、好奇、成就感。</dd>
+        </dl>
+      </div>
+      <div class="comp-code">
+        <div class="comp-code-header">
+          <span class="comp-code-label">HTML</span>
+          <button class="comp-code-copy" data-target="code-def">Copy</button>
+        </div>
+        <pre id="code-def"><code>&lt;dl class="definition"&gt;
+  &lt;dt&gt;Mechanics（机制）&lt;/dt&gt;
+  &lt;dd&gt;游戏的规则和系统——数据表示、算法、玩家可执行的操作。&lt;/dd&gt;
+  &lt;dt&gt;Dynamics（动态）&lt;/dt&gt;
+  &lt;dd&gt;机制在运行时产生的行为模式。&lt;/dd&gt;
+&lt;/dl&gt;</code></pre>
+      </div>
+    </section>
+
+    <!-- ═══════════════════════════════════════════
+         8. Expandable
+         ═══════════════════════════════════════════ -->
+    <section class="comp-section" id="expandable">
+      <div class="comp-section-title">
+        <span class="comp-num">08</span>可展开区域 .expandable
+      </div>
+      <p class="comp-desc">默认折叠，点击展开。基于 &lt;details&gt; 原生语义，用于延伸阅读、思考题答案。</p>
+
+      <div class="comp-preview">
+        <details class="expandable">
+          <summary>展开查看详细分析</summary>
+          <div class="expandable-content">
+            <p>俄罗斯方块的设计天才之处在于：它用极简的机制（7 种方块 + 重力 + 消行）就创造出了"永恒的紧张感"这一体验。玩家永远不可能"赢"，只能延迟"输"的到来——这正是 MDA 框架中 Mechanics 如何通过 Dynamics 产生 Aesthetics 的经典案例。</p>
+          </div>
+        </details>
+      </div>
+      <div class="comp-code">
+        <div class="comp-code-header">
+          <span class="comp-code-label">HTML</span>
+          <button class="comp-code-copy" data-target="code-expand">Copy</button>
+        </div>
+        <pre id="code-expand"><code>&lt;details class="expandable"&gt;
+  &lt;summary&gt;展开查看详细分析&lt;/summary&gt;
+  &lt;div class="expandable-content"&gt;
+    &lt;p&gt;详细内容...&lt;/p&gt;
+  &lt;/div&gt;
+&lt;/details&gt;</code></pre>
+      </div>
+    </section>
+
+    <!-- ═══════════════════════════════════════════
+         9. Quote Block
+         ═══════════════════════════════════════════ -->
+    <section class="comp-section" id="quote-block">
+      <div class="comp-section-title">
+        <span class="comp-num">09</span>引用名言 .quote-block
+      </div>
+      <p class="comp-desc">带来源归属的引用，用于专家名言、论文摘要、经典表述。</p>
+
+      <div class="comp-preview">
+        <figure class="quote-block">
+          <blockquote>游戏设计不是关于规则，而是关于体验。</blockquote>
+          <figcaption>— Jesse Schell, The Art of Game Design</figcaption>
+        </figure>
+      </div>
+      <div class="comp-code">
+        <div class="comp-code-header">
+          <span class="comp-code-label">HTML</span>
+          <button class="comp-code-copy" data-target="code-quote">Copy</button>
+        </div>
+        <pre id="code-quote"><code>&lt;figure class="quote-block"&gt;
+  &lt;blockquote&gt;游戏设计不是关于规则，而是关于体验。&lt;/blockquote&gt;
+  &lt;figcaption&gt;— Jesse Schell, The Art of Game Design&lt;/figcaption&gt;
+&lt;/figure&gt;</code></pre>
+      </div>
+    </section>
+
+    <!-- ═══════════════════════════════════════════
+         10. Section Divider
+         ═══════════════════════════════════════════ -->
+    <section class="comp-section" id="section-divider">
+      <div class="comp-section-title">
+        <span class="comp-num">10</span>分隔装饰 .section-divider
+      </div>
+      <p class="comp-desc">章节之间的视觉分隔。比普通 &lt;hr&gt; 更精致，中部有 accent 色渐变。</p>
+
+      <div class="comp-preview">
+        <p style="font-size:14px;color:var(--text-secondary);text-align:center;margin-bottom:8px;">...上一章节内容结束</p>
+        <hr class="section-divider">
+        <p style="font-size:14px;color:var(--text-secondary);text-align:center;margin-top:8px;">下一章节内容开始...</p>
+      </div>
+      <div class="comp-code">
+        <div class="comp-code-header">
+          <span class="comp-code-label">HTML</span>
+          <button class="comp-code-copy" data-target="code-divider">Copy</button>
+        </div>
+        <pre id="code-divider"><code>&lt;hr class="section-divider"&gt;</code></pre>
+      </div>
+    </section>
+
+  </main>
+</div>
+
+<script>
+(function() {
+  'use strict';
+
+  // Theme toggle
+  var html = document.documentElement;
+  var themeBtn = document.getElementById('themeToggle');
+
+  function getPreferredTheme() {
+    var stored = localStorage.getItem('learnkit-theme');
+    if (stored) return stored;
+    return window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark';
+  }
+
+  function applyTheme(theme) {
+    html.setAttribute('data-theme', theme);
+    themeBtn.textContent = theme === 'dark' ? '\u2600 Light' : '\u263D Dark';
+    localStorage.setItem('learnkit-theme', theme);
+  }
+
+  applyTheme(getPreferredTheme());
+  themeBtn.addEventListener('click', function() {
+    var current = html.getAttribute('data-theme');
+    applyTheme(current === 'dark' ? 'light' : 'dark');
+  });
+
+  // Quiz interaction
+  document.addEventListener('click', function(e) {
+    var btn = e.target.closest('.quiz-option');
+    if (!btn || btn.classList.contains('answered')) return;
+
+    var block = btn.closest('.quiz');
+    var options = block.querySelectorAll('.quiz-option');
+    var feedback = block.querySelector('.quiz-feedback');
+    var isCorrect = btn.getAttribute('data-correct') === 'true';
+
+    options.forEach(function(opt) { opt.classList.add('answered'); });
+
+    if (isCorrect) {
+      btn.classList.add('correct');
+      if (feedback) {
+        var explanation = btn.getAttribute('data-explanation') || '';
+        feedback.innerHTML = '<strong style="color:var(--completed);">正确！</strong> ' + explanation;
+      }
+    } else {
+      btn.classList.add('wrong');
+      options.forEach(function(opt) {
+        if (opt.getAttribute('data-correct') === 'true') opt.classList.add('correct');
+      });
+      if (feedback) {
+        var correctBtn = block.querySelector('[data-correct="true"]');
+        var explanation = correctBtn ? (correctBtn.getAttribute('data-explanation') || '') : '';
+        feedback.innerHTML = '<strong style="color:var(--failed);">不对。</strong> ' + explanation;
+      }
+    }
+  });
+
+  // Copy code
+  document.addEventListener('click', function(e) {
+    var copyBtn = e.target.closest('.comp-code-copy');
+    if (!copyBtn) return;
+
+    var targetId = copyBtn.getAttribute('data-target');
+    var codeEl = document.getElementById(targetId);
+    if (!codeEl) return;
+
+    var text = codeEl.textContent;
+    navigator.clipboard.writeText(text).then(function() {
+      copyBtn.textContent = 'Copied';
+      copyBtn.classList.add('copied');
+      setTimeout(function() {
+        copyBtn.textContent = 'Copy';
+        copyBtn.classList.remove('copied');
+      }, 1500);
+    });
+  });
+
+  // TOC active state on scroll
+  var tocLinks = document.querySelectorAll('#toc a');
+  var sections = [];
+  tocLinks.forEach(function(link) {
+    var id = link.getAttribute('href').slice(1);
+    var el = document.getElementById(id);
+    if (el) sections.push({ id: id, el: el, link: link });
+  });
+
+  function updateToc() {
+    var scrollY = window.scrollY + 80;
+    var active = sections[0];
+    for (var i = 0; i < sections.length; i++) {
+      if (sections[i].el.offsetTop <= scrollY) {
+        active = sections[i];
+      }
+    }
+    tocLinks.forEach(function(l) { l.classList.remove('active'); });
+    if (active) active.link.classList.add('active');
+  }
+
+  window.addEventListener('scroll', updateToc, { passive: true });
+  updateToc();
+})();
+</script>
+
+</body>
+</html>
