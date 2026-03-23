@@ -11,7 +11,7 @@
     "interactive-lessons"
   ],
   "author": "Chasey",
-  "license": "MIT",
+  "license": "BUSL-1.1",
   "scripts": {
     "test": "vitest run",
     "test:watch": "vitest"
