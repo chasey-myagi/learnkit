@@ -1,0 +1,111 @@
+name: Publish Skill Plugin
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      bump:
+        description: "Version bump type"
+        required: true
+        default: patch
+        type: choice
+        options:
+          - patch
+          - minor
+
+permissions:
+  contents: write
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Setup git
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Determine version bump
+        id: bump
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "type=${{ inputs.bump }}" >> $GITHUB_OUTPUT
+          else
+            MSG=$(git log -1 --pretty=%B)
+            if echo "$MSG" | grep -q '\[minor\]'; then
+              echo "type=minor" >> $GITHUB_OUTPUT
+            elif echo "$MSG" | grep -q '\[patch\]'; then
+              echo "type=patch" >> $GITHUB_OUTPUT
+            else
+              echo "type=skip" >> $GITHUB_OUTPUT
+            fi
+          fi
+
+      - name: Bump version
+        if: steps.bump.outputs.type != 'skip'
+        run: |
+          BUMP=${{ steps.bump.outputs.type }}
+
+          # 读取当前版本
+          CURRENT=$(node -p "require('./package.json').version")
+          echo "Current: $CURRENT"
+
+          # npm version (更新 package.json + git tag)
+          NEW=$(npm version $BUMP --no-git-tag-version)
+          echo "New: $NEW"
+
+          # 同步到 plugin.json
+          if [ -f ".claude-plugin/plugin.json" ]; then
+            node -e "
+              const fs = require('fs');
+              const p = JSON.parse(fs.readFileSync('.claude-plugin/plugin.json'));
+              p.version = '${NEW#v}';
+              fs.writeFileSync('.claude-plugin/plugin.json', JSON.stringify(p, null, 2) + '\n');
+            "
+          fi
+
+          # 同步到 marketplace.json
+          if [ -f ".claude-plugin/marketplace.json" ]; then
+            node -e "
+              const fs = require('fs');
+              const m = JSON.parse(fs.readFileSync('.claude-plugin/marketplace.json'));
+              if (m.plugins && m.plugins[0]) m.plugins[0].version = '${NEW#v}';
+              fs.writeFileSync('.claude-plugin/marketplace.json', JSON.stringify(m, null, 2) + '\n');
+            "
+          fi
+
+          # 提交 + tag
+          git add -A
+          git commit -m "$NEW"
+          git tag "$NEW"
+          git push origin main --tags
+
+      - name: Generate release notes
+        if: steps.bump.outputs.type != 'skip'
+        run: |
+          NEW=$(node -p "'v' + require('./package.json').version")
+          PREV=$(git describe --tags --abbrev=0 HEAD~1 2>/dev/null || echo "")
+
+          if [ -n "$PREV" ]; then
+            NOTES=$(git log ${PREV}..HEAD~1 --pretty=format:"- %s" --no-merges)
+          else
+            NOTES="Initial release"
+          fi
+
+          gh release create "$NEW" --title "$NEW" --notes "$NOTES"
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

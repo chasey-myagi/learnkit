@@ -1,0 +1,122 @@
+name: CI — Skill Plugin
+
+on:
+  push:
+    branches: [dev, main]
+    paths:
+      - "skills/**"
+      - ".claude-plugin/**"
+      - "hooks/**"
+  pull_request:
+    branches: [main, dev]
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Validate skill frontmatter
+        run: |
+          errors=0
+          for skill_file in skills/*/SKILL.md; do
+            [ -f "$skill_file" ] || continue
+            skill_dir=$(dirname "$skill_file")
+            skill_name=$(basename "$skill_dir")
+
+            # 检查 YAML frontmatter 存在
+            if ! head -1 "$skill_file" | grep -q '^---'; then
+              echo "ERROR: $skill_file 缺少 YAML frontmatter"
+              errors=$((errors + 1))
+              continue
+            fi
+
+            # 提取 frontmatter
+            frontmatter=$(sed -n '/^---$/,/^---$/p' "$skill_file")
+
+            # 检查 name 字段
+            if ! echo "$frontmatter" | grep -q '^name:'; then
+              echo "ERROR: $skill_file 缺少 name 字段"
+              errors=$((errors + 1))
+            fi
+
+            # 检查 description 字段
+            if ! echo "$frontmatter" | grep -q '^description:'; then
+              echo "ERROR: $skill_file 缺少 description 字段"
+              errors=$((errors + 1))
+            fi
+
+            echo "OK: $skill_name"
+          done
+
+          if [ $errors -gt 0 ]; then
+            echo "发现 $errors 个错误"
+            exit 1
+          fi
+
+      - name: Validate plugin manifest
+        run: |
+          if [ -f ".claude-plugin/plugin.json" ]; then
+            python3 -c "
+          import json, sys
+          with open('.claude-plugin/plugin.json') as f:
+              data = json.load(f)
+          required = ['name', 'description', 'version']
+          missing = [k for k in required if k not in data]
+          if missing:
+              print(f'ERROR: plugin.json 缺少字段: {missing}')
+              sys.exit(1)
+          print(f'OK: {data[\"name\"]} v{data[\"version\"]}')
+          "
+          fi
+
+      - name: Check version consistency
+        run: |
+          versions=()
+
+          if [ -f ".claude-plugin/plugin.json" ]; then
+            v=$(python3 -c "import json; print(json.load(open('.claude-plugin/plugin.json'))['version'])")
+            versions+=("plugin.json:$v")
+          fi
+
+          if [ -f "package.json" ]; then
+            v=$(python3 -c "import json; print(json.load(open('package.json'))['version'])")
+            versions+=("package.json:$v")
+          fi
+
+          if [ -f ".claude-plugin/marketplace.json" ]; then
+            v=$(python3 -c "import json; d=json.load(open('.claude-plugin/marketplace.json')); print(d.get('plugins',[{}])[0].get('version','?'))")
+            versions+=("marketplace.json:$v")
+          fi
+
+          if [ ${#versions[@]} -le 1 ]; then
+            echo "OK: 只有一个版本源"
+            exit 0
+          fi
+
+          unique=$(printf '%s\n' "${versions[@]}" | cut -d: -f2 | sort -u | wc -l)
+          if [ "$unique" -gt 1 ]; then
+            echo "ERROR: 版本号不一致:"
+            printf '  %s\n' "${versions[@]}"
+            exit 1
+          fi
+
+          echo "OK: 版本一致 (${versions[0]})"
+
+      - name: Validate markdown links
+        run: |
+          errors=0
+          for md_file in skills/**/*.md; do
+            [ -f "$md_file" ] || continue
+            dir=$(dirname "$md_file")
+
+            # 检查本地文件引用
+            grep -oP '(?<=\()(?!http)[^)]+\.md(?=\))' "$md_file" 2>/dev/null | while read -r ref; do
+              if [ ! -f "$dir/$ref" ] && [ ! -f "$ref" ]; then
+                echo "ERROR: $md_file 引用了不存在的文件: $ref"
+                errors=$((errors + 1))
+              fi
+            done
+          done
+
+          exit $errors

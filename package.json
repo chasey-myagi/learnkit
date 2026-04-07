@@ -1,8 +1,10 @@
 {
-  "name": "learnkit",
-  "version": "0.2.0",
-  "type": "module",
+  "author": "Chasey",
   "description": "Personal learning toolkit — Claude Code Skills + Rust CLI + React WebUI",
+  "devDependencies": {
+    "jsdom": "^29.0.1",
+    "vitest": "^4.1.0"
+  },
   "keywords": [
     "claude-code",
     "learning",
@@ -10,14 +12,19 @@
     "skills",
     "interactive-lessons"
   ],
-  "author": "Chasey",
   "license": "BUSL-1.1",
+  "lint-staged": {
+    "**/*.json": "prettier --write",
+    "**/*.md": "prettier --write"
+  },
+  "name": "learnkit",
   "scripts": {
+    "format": "prettier --write \"**/*.md\" \"**/*.json\"",
+    "format:check": "prettier --check \"**/*.md\" \"**/*.json\"",
+    "prepare": "husky",
     "test": "vitest run",
     "test:watch": "vitest"
   },
-  "devDependencies": {
-    "jsdom": "^29.0.1",
-    "vitest": "^4.1.0"
-  }
+  "type": "module",
+  "version": "0.2.0"
 }
