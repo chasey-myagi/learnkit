@@ -54,21 +54,65 @@ fi
 learnkit --help
 ```
 
-### 3. 检测 Backend
+### 3. 检测 Frontend 构建产物
+
+```bash
+PLUGIN_DIR=$(find ~/.claude/plugins/cache/learnkit -name "Cargo.toml" -path "*/cli/*" | head -1 | xargs dirname 2>/dev/null)
+FRONTEND_DIST=""
+
+if [ -n "$PLUGIN_DIR" ]; then
+  FRONTEND_DIST="$(dirname $PLUGIN_DIR)/frontend/dist"
+fi
+
+ls "$FRONTEND_DIST/index.html" 2>/dev/null
+```
+
+如果 `dist/` 不存在，**自动构建**：
+
+```bash
+FRONTEND_DIR="$(dirname $PLUGIN_DIR)/frontend"
+cd "$FRONTEND_DIR"
+npm install --silent
+npm run build
+```
+
+### 4. 检测 Templates 完整性
+
+```bash
+ls ~/.learnkit/templates/shell.html \
+   ~/.learnkit/templates/lesson.css \
+   ~/.learnkit/templates/lesson.js 2>/dev/null
+```
+
+如果任何文件缺失，**从 plugin 缓存同步**：
+
+```bash
+mkdir -p ~/.learnkit/templates
+TEMPLATES_SRC="$(dirname $PLUGIN_DIR)/cli/templates"
+cp "$TEMPLATES_SRC/shell.html" \
+   "$TEMPLATES_SRC/lesson.css" \
+   "$TEMPLATES_SRC/lesson.js" \
+   ~/.learnkit/templates/
+```
+
+### 5. 检测 Backend
 
 ```bash
 curl -s http://localhost:13135/api/health
 ```
 
-如果未运行，**自动启动**：
+如果未运行，**自动启动**（必须带 `--frontend-dir`）：
 
 ```bash
-learnkit serve --port 13135 &
+learnkit serve --port 13135 --frontend-dir "$FRONTEND_DIST" &
 sleep 2
 curl -s http://localhost:13135/api/health
 ```
 
-### 4. 检测数据目录
+> **注意**：不带 `--frontend-dir` 启动会导致前端 JS/CSS MIME type 错误（`application/octet-stream`）。
+> 必须指向构建好的 `dist/` 目录，不能指向源码目录。
+
+### 6. 检测数据目录
 
 ```bash
 ls ~/.learnkit/ 2>/dev/null
@@ -83,7 +127,9 @@ LearnKit 环境检测
 ==================
 ✅ Rust: rustc 1.xx.x
 ✅ CLI: learnkit v0.1.0 (~/.cargo/bin/learnkit)
-✅ Backend: http://localhost:13135 运行中
+✅ Frontend: dist/ 已构建
+✅ Templates: shell.html / lesson.css / lesson.js 就绪
+✅ Backend: http://localhost:13135 运行中（带 --frontend-dir）
 ✅ 数据目录: ~/.learnkit/
 
 环境就绪！开始使用：

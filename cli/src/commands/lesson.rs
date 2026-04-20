@@ -161,7 +161,7 @@ pub fn list(program: &str, status: Option<&str>) -> Result<()> {
 /// Open a lesson in the browser via the backend HTTP server
 pub fn open(program: &str, subject: &str, lesson: &str) -> Result<()> {
     let url = format!(
-        "http://localhost:13135/lessons/{}/lessons/{}/{}",
+        "http://localhost:13135/lessons/{}/{}/{}",
         program, subject, lesson
     );
 

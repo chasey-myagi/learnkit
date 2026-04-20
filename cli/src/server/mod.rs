@@ -54,7 +54,7 @@ pub fn create_router_with_frontend(
         .route("/api/programs/:slug/ask", post(ask::submit_ask))
         .route("/api/programs/:slug/answer/:request_id", get(ask::poll_answer))
         // Dynamic lesson rendering (replaces static file serving)
-        .route("/lessons/:program/lessons/:subject/:lesson", get(lessons::serve_lesson))
+        .route("/lessons/:program/:subject/:lesson", get(lessons::serve_lesson))
         // Static assets (CSS/JS for lesson pages)
         .nest_service("/static", ServeDir::new(templates_dir))
         .layer(CorsLayer::permissive())
