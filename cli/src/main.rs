@@ -306,5 +306,29 @@ fn resolve_frontend_dist(explicit: Option<String>) -> Option<std::path::PathBuf>
         }
     }
 
+    // 4. Auto-detect from ~/.learnkit/frontend/dist (conventional install location)
+    if let Some(home) = std::env::var("HOME").ok().map(std::path::PathBuf::from) {
+        let candidate = home.join(".learnkit/frontend/dist");
+        if candidate.is_dir() {
+            return Some(candidate);
+        }
+    }
+
+    // 5. Auto-detect from Claude plugin cache (~/.claude/plugins/cache/learnkit/*/frontend/dist)
+    if let Some(home) = std::env::var("HOME").ok().map(std::path::PathBuf::from) {
+        let cache_root = home.join(".claude/plugins/cache/learnkit");
+        if let Ok(entries) = std::fs::read_dir(&cache_root) {
+            let mut candidates: Vec<std::path::PathBuf> = entries
+                .flatten()
+                .map(|e| e.path().join("frontend/dist"))
+                .filter(|p| p.is_dir())
+                .collect();
+            candidates.sort();
+            if let Some(best) = candidates.into_iter().last() {
+                return Some(best);
+            }
+        }
+    }
+
     None
 }

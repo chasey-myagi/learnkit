@@ -25,7 +25,7 @@ export function LessonItem({ lesson, programSlug, isLast }: LessonItemProps) {
   const isClickable = lesson.status === 'prepared' || lesson.status === 'in_progress' || lesson.status === 'completed';
   const handleClick = () => {
     if (isClickable) {
-      window.location.href = `/lessons/${programSlug}/lessons/${lesson.subject}/${lesson.lesson}.html`;
+      window.location.href = `/lessons/${programSlug}/${lesson.subject}/${lesson.lesson}`;
     }
   };
 

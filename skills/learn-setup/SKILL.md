@@ -74,6 +74,14 @@ FRONTEND_DIR="$(dirname $PLUGIN_DIR)/frontend"
 cd "$FRONTEND_DIR"
 npm install --silent
 npm run build
+FRONTEND_DIST="$FRONTEND_DIR/dist"
+```
+
+构建完成后，**复制到固定路径**（供 CLI 自动检测）：
+
+```bash
+mkdir -p ~/.learnkit/frontend
+cp -r "$FRONTEND_DIST" ~/.learnkit/frontend/dist
 ```
 
 ### 4. 检测 Templates 完整性
